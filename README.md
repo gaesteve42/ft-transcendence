@@ -50,7 +50,6 @@ React/Vue, Node/Python, PostgreSQL, WebSockets, OAuth
 ### ✅ Portfolio-ready
 - Projet concret et original
 - Demo impressive (temps réel)
-- Montre qu'on comprend les users
 
 ---
 
@@ -71,7 +70,7 @@ React/Vue, Node/Python, PostgreSQL, WebSockets, OAuth
    └─ Intersection des bibliothèques + filtres
 
 5. Roll the dice 🎲
-   └─ Sélection aléatoire + animation
+   └─ Sélection aléatoire + animation ( ou pas, on verra ensemble si on veut que ce soit random ou pas)
 
 6. Résultat affiché à tout le monde simultanément
    └─ Session sauvegardée dans l'historique
@@ -224,25 +223,11 @@ Flow :
 - Pas de persistence (ou 50 derniers messages)
 
 ### 7. Algorithme de sélection
-```javascript
-// Simple mais efficace
-function selectGame(commonGames, filters)
-{
-    // 1. Filtrer selon critères
-    let filtered = commonGames.filter(game =>
-	{
-        if (filters.genre && !game.genres.includes(filters.genre))
-            return false;
-        if (filters.playerCount && game.maxPlayers < filters.playerCount)
-            return false;
-        return true;
-    });
-    // 2. Fallback sur tous les jeux si aucun match
-    if (filtered.length === 0) filtered = commonGames;
-    // 3. Sélection aléatoire
-    return filtered[Math.floor(Math.random() * filtered.length)];
-}
-```
+- Simple mais efficace pour commencer
+- Filter selon les critères des utilisateurs
+- Fallback sur tous les jeux si aucun match entre les utilisateurs
+- Sélection aléatoire / Sélection spécifique et plus précise
+
 **Pas de ML pour le MVP** - Random intelligent suffit
 
 ### 8. Stats et historique
@@ -429,7 +414,7 @@ Technique :
 
 Ces features sont **explicitement PAS** dans le MVP :
 
-❌ Mode Solo (questionnaire)
+❌ Mode Solo (questionnaire ?)
 
 ❌ Algo ML complexe
 
