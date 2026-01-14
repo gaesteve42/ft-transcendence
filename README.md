@@ -1,7 +1,5 @@
 # Aucune idee du nom pour l instant ( Vortex ? FindYourGame ?)
 
-*Ce projet a été créé dans le cadre du cursus 42*
-
 ---
 
 ## 📋 Sommaire
