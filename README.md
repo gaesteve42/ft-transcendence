@@ -1,479 +1,352 @@
-# Aucune idee du nom pour l instant ( Vortex ? FindYourGame ?)
+# FindYourGame - Brief Projet
+
+*Projet Transcendance 42 - Équipe [Leo, Gauthier, Kevin, Pierre]*
 
 ---
 
-## 📋 Sommaire
-1. [Vue d'ensemble](#vue-densemble)
-2. [Pourquoi ce projet ?](#pourquoi-ce-projet)
-3. [Concept](#concept)
-4. [Stack technique](#stack-technique)
-5. [Scope MVP (14 points)](#scope-mvp-14-points)
-6. [Fonctionnalités clés](#fonctionnalités-clés)
-7. [Planning](#planning)
-8. [Organisation d'équipe](#organisation-déquipe)
+## 🎯 Le Concept
+
+**Problème :** "À quoi on joue ce soir ?"
+
+**Solution :** Une plateforme web qui synchronise les bibliothèques Steam de ton groupe d'amis et recommande intelligemment les meilleurs jeux à jouer ensemble selon vos envies du moment.
+
+**Focus MVP :** Mode Groupe uniquement
 
 ---
 
-## 🎯 Vue d'ensemble
+## 🎮 Comment ça marche ?
 
-**nom-du-site** est une plateforme web qui résout un problème qu'on a tous : *"À quoi on joue ce soir ?"*
+### Flow utilisateur
+```
+1. Tu crées une session → tu obtiens un lien
 
-Au lieu de passer 30 minutes à scroller nos bibliothèques Steam, notre site :
-- 🎲 **Mode Groupe (Roulette)** : Synchronise les bibliothèques et laisse le dé décider
-- 🧙‍♂️ **Mode Solo (Quest)** : Un questionnaire pour trouver ton prochain jeu *(Phase 2)*
+2. Tes potes rejoignent via le lien
+   └─ Tout le monde se voit en temps réel
 
-**Focus MVP** : Mode Groupe uniquement
+3. Chaque participant indique ses envies :
+   ├─ Mood : Chill / Compétitif / Coopératif / Fun
+   └─ Genre préféré
+   └─ combien d argent pret a mettre ( 10$, 20$, 30$...)
+
+4. Le système analyse :
+   ├─ Trouve les jeux que TOUT LE MONDE possède ( si aucun jeu possible, jeu a buy ? / jeu gratuit ?)
+   ├─ Calcule un score de compatibilité pour chaque jeu
+   └─ Prend en compte vos préférences du moment
+
+5. Résultat : Top 5 jeux recommandés
+   └─ Avec scores
+
+6. Le groupe vote
+   └─ Session sauvegardée dans l'historique
+```
 
 ---
 
 ## 💡 Pourquoi ce projet ?
 
 ### ✅ On résout NOTRE problème
-Construire un outil qu'on va vraiment utiliser nous garde motivés.
+Pas un projet théorique, on construit un outil qu'on utilisera vraiment.
 
-### ✅ Scope réaliste et flexible
-- **MVP simple** : Roulette + bibliothèques Steam = déjà utilisable
-- **Extensions naturelles** : Mode solo, stats avancées, algo ML
-- **Fallbacks** : Chaque feature complexe a une version simple
+### ✅ Scope réaliste
+- MVP simple mais fonctionnel = 14+ points garantis
+- Extensible si on a le temps (stats avancées, mode solo, etc.)
+- Chaque feature a un fallback simple
 
-### ✅ Stack "industry-standard"
-React/Vue, Node/Python, PostgreSQL, WebSockets, OAuth
-→ Compétences qu'on utilisera en entreprise
+### ✅ Stack moderne
+- Technologies demandées en entreprise
+- Compétences valorisables sur le CV
+- Pas de technos obscures
 
-### ✅ Répartition claire des rôles
-- Frontend : UI/UX de la roulette
-- Backend : API + intégration Steam
-- Real-time : Sessions WebSocket
-- Data : Algo + stats
-→ Pas de dépendances bloquantes
-
-### ✅ Portfolio-ready
-- Projet concret et original
-- Demo impressive (temps réel)
+### ✅ Rôles clairs
+- Chacun a son domaine (frontend, backend, real-time, data)
+- Pas de dépendances bloquantes entre nous
+- Parallélisation du travail possible
 
 ---
 
-## 🎮 Concept
-
-### Flow du Mode Groupe
-```
-1. User crée une session → lien partageable
-
-2. Les potes rejoignent via le lien
-   └─ Tout le monde voit qui est là (temps réel)
-
-3. Configuration des filtres
-   ├─ Genre (Action, Coop, Indie...)
-   └─ Nombre de joueurs (2-4)
-
-4. Backend trouve les jeux en commun
-   └─ Intersection des bibliothèques + filtres
-
-5. Roll the dice 🎲
-   └─ Sélection aléatoire + animation ( ou pas, on verra ensemble si on veut que ce soit random ou pas)
-
-6. Résultat affiché à tout le monde simultanément
-   └─ Session sauvegardée dans l'historique
-```
-
----
-
-## 🛠️ Stack technique
+## 🛠️ Stack Technique
 
 ### Frontend
-```
-Framework: React (Vite) ou Vue.js
-Style: Tailwind CSS
-Real-time: Socket.io-client
-HTTP: Axios
-```
+- **React** (avec Vite) + **Tailwind CSS**
+- Socket.io-client (temps réel)
+- Axios (appels API)
+- React Router (navigation)
 
 ### Backend
-```
-Runtime: Node.js
-Framework: Express
-WebSockets: Socket.io
-Database: PostgreSQL
-ORM: Prisma
-Auth: JWT + Passport.js (OAuth)
-```
+- **Node.js** + **Express**
+- **PostgreSQL** + **Prisma** (ORM)
+- Socket.io (WebSockets)
+- Passport.js (OAuth Steam)
+- bcrypt + JWT (auth)
 
 ### DevOps
-```
-Containers: Docker + Docker Compose
-Proxy: Nginx (HTTPS)
-```
+- **Docker** + Docker Compose
+- Nginx (reverse proxy HTTPS)
 
 ### APIs externes
+- Steam Web API (bibliothèques + métadonnées jeux)
+- IGDB API (backup pour infos jeux)
+
+---
+
+## 🎯 Modules pour 14 points
+
+### Web (6 points)
+- Use frameworks frontend + backend **(Major - 2pts)**
+- Real-time features WebSockets **(Major - 2pts)**
+- User interaction (chat, profils, amis) **(Major - 2pts)**
+
+### User Management (3 points)
+- Standard user management **(Major - 2pts)**
+- OAuth 2.0 Steam **(Minor - 1pt)**
+
+### Bonus (6 points pour sécurité)
+- Use ORM Prisma **(Minor - 1pt)**
+- Game statistics **(Minor - 1pt)**
+- Notification system **(Minor - 1pt)**
+- Advanced search **(Minor - 1pt)**
+- Custom design system **(Minor - 1pt)**
+- File upload (avatars) **(Minor - 1pt)**
+
+**Total : 15 points** (marge de sécurité)
+
+---
+
+## 🔑 Features MVP (Ce qui DOIT marcher)
+
+### Auth & Profils
+- Inscription/Login (email + password)
+- Connexion Steam OAuth → import auto de la biblio
+- Profil utilisateur (avatar, bio, bibliothèque)
+
+### Social
+- Système d'amis (add/remove, liste)
+- Status online/offline (temps réel)
+
+### Session de groupe (CORE)
+- Création de session → lien unique partageable
+- Les potes rejoignent (updates temps réel)
+- Chacun indique ses préférences (mood, durée, genre)
+- **Algorithme intelligent** :
+  - Trouve les jeux en commun
+  - Calcule un score selon les préférences du groupe
+  - Retourne Top 5 jeux avec explications
+- Vote ou choix du host
+- Chat intégré (temps réel)
+- Session sauvegardée automatiquement
+
+### Historique & Stats
+- Liste des sessions passées (date, participants, jeu)
+- Stats simples :
+  - Nombre de sessions
+  - Top 3 jeux les plus joués
+  - Top 3 amis avec qui tu joues
+
+### Autres
+- Search/filter dans sa bibliothèque
+- Notifications (invitations à des sessions)
+
+---
+
+## 🧠 L'Algorithme (Logique)
+
+**Objectif :** Pas de random bête, un vrai matching intelligent.
+
+### Comment ça marche ?
 ```
-Steam Web API: Import bibliothèque + données jeux
-IGDB API: Métadonnées jeux (backup)
+Pour chaque jeu en commun :
+
+1. Mood matching (40% du score)
+   └─ Le jeu correspond aux moods choisis par le groupe ?
+
+2. Genre matching (30% du score)
+   └─ Le jeu correspond aux genres préférés ?
+
+3. Player count (20% du score)
+   └─ Le jeu supporte le nombre de joueurs ?
+
+4. Freshness bonus (10% du score)
+   └─ Le jeu n'a pas été joué récemment par le groupe ?
+
+→ Score total sur 100
+→ On affiche le Top 5
+```
+
+### Mapping Mood → Tags de jeux
+
+- **Chill** → Tags : casual, relaxing, exploration
+- **Compétitif** → Tags : competitive, pvp, ranked
+- **Coopératif** → Tags : coop, co-op, pve, team
+- **Fun** → Tags : party, funny, arcade
+
+### Exemple de résultat
+```
+🎮 Recommandations pour votre groupe :
+
+1. ⭐⭐⭐⭐⭐ Overcooked 2 (96%)
+   └─ Match parfait : Coop + Fun + 4 joueurs
+
+2. ⭐⭐⭐⭐ Rocket League (85%)
+   └─ Bon match : Compétitif + sessions courtes
+
+3. ⭐⭐⭐⭐ Left 4 Dead 2 (82%)
+   └─ Match : Coop + Action
+
+4. ⭐⭐⭐ GTA V (68%)
+   └─ Match partiel : Action mais sessions longues
+
+5. ⭐⭐⭐ Minecraft (65%)
+   └─ Match partiel : mood mixte
 ```
 
 ---
 
-## 🎯 Scope MVP (14 points)
+## 📅 Planning (4 semaines)
 
-### Requirements Mandatory (0 points mais obligatoires)
-- ✅ App web : Frontend + Backend + Database
-- ✅ Docker (une seule commande pour lancer)
-- ✅ HTTPS sur le backend
-- ✅ Compatible Chrome
-- ✅ Git propre (tout le monde contribue)
-- ✅ Privacy Policy + Terms of Service
-- ✅ Support multi-utilisateurs
-- ✅ Auth basique (email/password hashé)
-- ✅ Validation inputs (frontend + backend)
-- ✅ CSS framework
-- ✅ Variables d'environnement (.env)
-- ✅ Schema DB clair
-- ✅ README complet
+### Semaine 1 : Setup + Auth
+**Objectif :** Infrastructure + Authentification
+- Docker setup complet
+- Database schema
+- Auth (register/login + Steam OAuth)
+- Pages Register/Login frontend
 
-### Sélection de modules (15 points)
-
-#### Web (6 points)
-| Module | Type | Points |
-|--------|------|--------|
-| Use frameworks (frontend + backend) | Major | 2 |
-| Real-time features (WebSockets) | Major | 2 |
-| User interaction (chat, profils, amis) | Major | 2 |
-
-#### User Management (4 points)
-| Module | Type | Points |
-|--------|------|--------|
-| Standard user management | Major | 2 |
-| OAuth 2.0 (Steam) | Minor | 1 |
-| Game statistics | Minor | 1 |
-
-#### Bonus (5 points)
-| Module | Type | Points |
-|--------|------|--------|
-| Use ORM (Prisma) | Minor | 1 |
-| Notification system | Minor | 1 |
-| Advanced search | Minor | 1 |
-| Custom design system | Minor | 1 |
-| PWA (si temps) | Minor | 1 |
-
-**Total : 15 points** (1 point de marge)
+**Deliverable :** On peut créer un compte et se connecter avec Steam
 
 ---
 
-## 🔑 Fonctionnalités clés
+### Semaine 2 : Profils + Biblios + Amis
+**Objectif :** Données utilisateurs + Social
+- Profils (view/edit, avatars)
+- Import biblio Steam
+- Système d'amis
+- Affichage bibliothèque de jeux
 
-### 1. Authentification
-- **Email/Password** : Inscription classique (bcrypt)
-- **Steam OAuth** : Login en un clic + import auto de la biblio
-- **Fallback** : Upload manuel CSV/JSON si OAuth plante
-
-### 2. Profils utilisateurs
-```
-Page profil (/profile/:username)
-├─ Avatar (upload ou défaut)
-├─ Username + Bio
-├─ Bibliothèque de jeux
-├─ Stats : sessions jouées, jeu préféré
-└─ Gestion d'amis (add/remove)
-```
-
-### 3. Système d'amis
-- Add/remove simple (pas de "pending request" pour MVP)
-- Status online/offline (via WebSocket)
-- Page liste d'amis : `/friends`
-
-### 4. Bibliothèque de jeux
-```
-Sources :
-├─ Steam API (import auto)
-└─ Upload manuel (fallback CSV)
-
-Données par jeu :
-├─ ID (Steam AppID)
-├─ Nom
-├─ Image de couverture
-├─ Genres/Tags
-└─ Nombre de joueurs (min-max)
-```
-
-### 5. Sessions de groupe (Feature principale)
-```
-Création :
-POST /api/sessions/create → /session/:id
-
-Events WebSocket :
-├─ user_joined : Mise à jour liste participants
-├─ user_left : Retrait de la liste
-├─ filters_changed : Re-calcul jeux communs
-├─ roll_dice : Animation roulette
-└─ result_ready : Affichage résultat
-
-Flow :
-1. Créer session
-2. Partager lien
-3. Attendre participants (updates live)
-4. Configurer filtres (host)
-5. Roll the dice 🎲
-6. Voir résultat (tous en même temps)
-7. Session auto-sauvegardée
-```
-
-### 6. Chat basique
-- Intégré dans la page de session
-- Temps réel via WebSocket
-- Format simple : "Username: message"
-- Pas de persistence (ou 50 derniers messages)
-
-### 7. Algorithme de sélection
-- Simple mais efficace pour commencer
-- Filter selon les critères des utilisateurs
-- Fallback sur tous les jeux si aucun match entre les utilisateurs
-- Sélection aléatoire / Sélection spécifique et plus précise
-
-**Pas de ML pour le MVP** - Random intelligent suffit
-
-### 8. Stats et historique
-```
-/history
-├─ Liste des sessions passées
-│  ├─ Date
-│  ├─ Participants
-│  └─ Jeu choisi
-
-/stats
-├─ Nombre total de sessions
-├─ Top 5 jeux les plus joués
-├─ Top 3 potes avec qui tu joues
-└─ Graph simple : sessions par semaine
-```
-
-### 9. Recherche avancée
-```
-/library
-├─ Barre de recherche (nom du jeu)
-├─ Filtres :
-│  ├─ Genre (dropdown)
-│  ├─ Multijoueur (toggle)
-│  └─ Nombre joueurs (slider 1-8)
-└─ Tri :
-   ├─ Alphabétique
-   ├─ Date d'ajout
-   └─ Popularité
-```
-
-### 10. Notifications
-```
-Types :
-├─ Invitation à une session
-└─ Ami ajouté (optionnel)
-
-Affichage :
-├─ Icône cloche avec badge (non lues)
-├─ Dropdown liste notifs
-└─ Clic → marquer lu + redirect
-```
+**Deliverable :** Profils complets, on voit nos jeux, on peut add des amis
 
 ---
 
-## 📅 Planning
+### Semaine 3 : Sessions + Algo + Chat
+**Objectif :** Feature principale (CORE)
+- WebSocket setup (sessions temps réel)
+- Page session complète
+- Algorithme de recommandation avec scoring
+- Chat intégré
+- Vote/choix final
 
-### Semaine 1 : Fondations
-**Objectif** : Infra + Auth basique
-
-- [ ] Setup Docker (PostgreSQL, Nginx, containers)
-- [ ] Schema database
-- [ ] Structure frontend/backend
-- [ ] Auth email/password
-- [ ] Pages Register + Login
-
-**Deliverable** : On peut créer un compte et se login
+**Deliverable :** Session end-to-end fonctionnelle avec algo qui donne des résultats cohérents
 
 ---
 
-### Semaine 2 : Features core
-**Objectif** : Profils + Biblio + Amis
+### Semaine 4 : Finitions + Validation
+**Objectif :** Modules restants + Polish
+- Historique sessions
+- Stats basiques
+- Notifications
+- Search/filter avancé
+- Privacy Policy + Terms
+- README complet
+- Tests finaux + bug fixes
 
-- [ ] OAuth Steam
-- [ ] Import auto bibliothèque
-- [ ] Profils (view/edit)
-- [ ] Upload avatar
-- [ ] Système d'amis
-- [ ] Affichage bibliothèque
-
-**Deliverable** : On peut se connecter avec Steam, voir ses jeux, add des amis
-
----
-
-### Semaine 3 : Mode Groupe
-**Objectif** : Sessions temps réel
-
-- [ ] Setup WebSocket (Socket.io)
-- [ ] Création sessions + liens uniques
-- [ ] Tracking participants temps réel
-- [ ] Algo intersection biblios
-- [ ] Système de filtres
-- [ ] Roulette/sélection
-- [ ] Chat intégré
-
-**Deliverable** : Session de groupe fonctionne end-to-end
+**Deliverable :** Projet validable à 100%
 
 ---
 
-### Semaine 4 : Polish + Modules
-**Objectif** : MVP complet
+## 👥 Organisation d'Équipe
 
-- [ ] Historique + stats
-- [ ] Advanced search
-- [ ] Notifications
-- [ ] Privacy Policy + Terms
-- [ ] Bug fixing + tests
-- [ ] README
-- [ ] Prep déploiement
+### Rôles (à définir ensemble)
 
-**Deliverable** : Projet validable (14+ points)
+**Product Owner** (1 personne)
+- Vision produit + priorités
+- Validation des features
+- Décisions UX/UI
 
----
+**Project Manager** (1 personne)
+- Organisation quotidienne
+- Planning + tracking
+- Coordination équipe
 
-## 👥 Organisation d'équipe
+**Tech Lead** (1 personne)
+- Architecture technique
+- Décisions tech
+- Code reviews critiques
 
-### Rôles recommandés
+**Developers** (tous)
+- Frontend Lead : React + UI/UX
+- Backend Lead : API + Database
+- Real-time Dev : WebSockets + Chat
+- Data/Algo : Scoring + Stats
 
-**Developers (Tous les membres)**
-
-Spécialisations suggérées :
-
-**Dev Frontend**
-- Components React/Vue
-- Styling Tailwind
-- WebSocket client
-- Responsive design
-
-**Dev Backend**
-- API Express
-- Database + Prisma
-- Auth logic
-- Intégration Steam API
-
-**Dev Full-stack / Real-time**
-- WebSocket server (Socket.io)
-- Session management
-- Sync état temps réel
-- Chat
-
-**Dev Ops / Stats**
-- Algo sélection jeux
-- Calculs stats
-- Logique search/filter
-- Data viz
+> Une personne peut avoir plusieurs rôles (ex: PO + Frontend Dev)
 
 ---
 
-## ✅ Critères de succès
+## 🚫 Hors Scope MVP
 
-### Checklist MVP (doit marcher pour validation)
+On ne fait **PAS** dans le MVP (Phase 2 si temps) :
+
+❌ Mode Solo (questionnaire personnel)
+❌ Algo ML complexe (on fait du scoring simple)
+❌ Multi-plateformes (Epic, Xbox, PlayStation)
+❌ Gamification (badges, XP, achievements)
+❌ Stats avancées (graphiques complexes, trends)
+❌ PWA (installation mobile)
+❌ Public API documentée
+❌ Plusieurs langues (anglais uniquement)
+❌ Voice chat
+
+---
+
+## ✅ Checklist de Réussite
+
+### Le projet est validable si :
 ```
-Auth & Profils :
-□ Créer compte (email/password)
-□ Login avec Steam
-□ Jeux Steam importés auto
-□ Voir et éditer profil
-□ Upload avatar
+Auth :
+□ Register + Login fonctionnent
+□ Steam OAuth + import biblio OK
 
-Amis :
-□ Add/remove amis
-□ Voir liste amis
-□ Status online (temps réel)
+Profils :
+□ Profils éditables avec avatars
+□ Bibliothèques de jeux affichées
 
-Sessions groupe :
-□ Créer session avec lien
-□ Amis peuvent rejoindre
-□ Liste participants update temps réel
-□ Filtrer jeux (genre, nb joueurs)
-□ Roulette sélectionne jeu aléatoire
-□ Résultat affiché simultanément
-□ Chat fonctionne
+Social :
+□ Système d'amis fonctionne
+□ Status online/offline
 
-Historique & Stats :
-□ Voir historique sessions
-□ Stats basiques (top jeux, etc.)
+Sessions :
+□ Création + join via lien
+□ Temps réel (participants, chat)
+□ Préférences → Top 5 recommandations pertinentes
+□ Session sauvegardée
 
-Search & Notifs :
-□ Chercher/filtrer sa bibliothèque
-□ Recevoir notifications
+Autres :
+□ Historique accessible
+□ Stats basiques
+□ Notifications marchent
+□ Search/filter biblio
 
 Technique :
-□ Plusieurs users simultanés OK
-□ Lance avec une commande Docker
+□ Multi-utilisateurs simultanés OK
+□ Docker → une commande
 □ HTTPS configuré
 □ Pas d'erreurs console
 □ Privacy + Terms accessibles
-□ README complet
+□ README complet (rôles, modules, setup)
 ```
 
 ---
 
-## 🚫 Hors scope (MVP)
+## 🎯 En Résumé
 
-Ces features sont **explicitement PAS** dans le MVP :
+**Objectif :** Un outil qui résout vraiment le problème "À quoi jouer ce soir ?"
 
-❌ Mode Solo (questionnaire ?)
+**Comment :** Algo intelligent basé sur les préférences du moment, pas du random
 
-❌ Algo ML complexe
+**Scope :** Features essentielles pour garantir 14+ points, pas de fioritures
 
-❌ Import multi-plateformes (Epic, Xbox, PlayStation)
+**Timing :** 4 semaines, planning réaliste et serré
 
-❌ Upload manuel biblio (sauf si OAuth fail)
-
-❌ Voice chat
-
-❌ Intégration streaming
-
-❌ App mobile native
-
-❌ Plusieurs langues
-
-❌ Gamification avancée (badges, XP)
-
-❌ Public API documentée
+**Philosophie :** Mieux vaut un MVP propre et fonctionnel qu'un projet avec plein de features à moitié finies
 
 ---
 
-## 🔥 Phase 2 (Si temps)
-
-Après validation du MVP :
-
-1. **Mode Solo - Quest** : Questionnaire perso
-
-2. **Algo ML** : Collaborative filtering
-
-3. **Multi-plateformes** : Epic, Xbox, PlayStation
-
-4. **Gamification** : Badges, XP, challenges
-
-5. **Stats avancées** : Trends, prédictions
-
-6. **PWA** : Install mobile, offline
-
-7. **i18n** : Français, Anglais, Espagnol
-
-8. **Mode Tournoi** : Système de brackets
-
----
-
-## 📞 Next Steps
-
-1. **Kickoff Meeting**
-   - Review ce document ensemble
-   - Assigner les rôles
-   - Confirmer les choix tech
-
-2. **Setup**
-   - Créer repo GitHub
-   - Setup outil de PM (Trello/GitHub Projects)
-   - Init Docker environment
-   - Définir workflow Git (branches, PRs)
-
-3. **Sprint Planning Semaine 1**
-   - Découper les tâches
-   - Assigner responsabilités
-   - Setup daily standup (10min)
-
----
+**Let's build something useful! 🚀**
