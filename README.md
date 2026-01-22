@@ -7,26 +7,16 @@
 ## 🛠️ Stack Technique
 
 ### Frontend
-- **React** (avec React) + **Tailwind CSS**
-
-- Socket.io-client (temps réel)
-- Axios (appels API)
-- React Router (navigation)
+- TypeScript
+- **React** + **Tailwind CSS**
 
 ### Backend
+- TypeScript
 - **Node.js** + **Express**
-
-- Socket.io (WebSockets)
-- Passport.js (OAuth Steam)
-- bcrypt + JWT (auth)
-
-### DevOps
-- **Docker** + Docker Compose
-- Nginx (reverse proxy HTTPS)
 
 ### APIs externes
 - Steam Web API (bibliothèques + métadonnées jeux)
-- IGDB API (backup pour infos jeux)
+- IGDB API (DB immense de jeux si jamais pas de compte steam pour user)
 
 ---
 
@@ -43,11 +33,11 @@
 ### IA (2 points)
 - Recommendation system using machine learning. **(Major - 2pts)**
 
-### DEVOPS (4 points)
+### DevOps (4 points)
 - Infrastructure for log management using ELK **(Major - 2pts)**
 - Monitoring system with Prometheus and Grafana. **(Major - 2pts)**
 
-### Bonus
+### Bonus ( si on a le temps ou si ca se fait "tout seul")
 - OAuth 2.0 Steam **(Minor - 1pt)**
 - Notification system **(Minor - 1pt)**
 - Advanced search **(Minor - 1pt)**
@@ -56,13 +46,6 @@
 - Health check and status page system **(Minor - 1pt)**
 
 ---
-
-### Mapping Mood → Tags de jeux
-
-- **Chill** → Tags : casual, relaxing, exploration
-- **Compétitif** → Tags : competitive, pvp, ranked
-- **Coopératif** → Tags : coop, co-op, pve, team
-- **Fun** → Tags : party, funny, arcade
 
 ### Exemple de résultat
 ```
