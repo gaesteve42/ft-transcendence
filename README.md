@@ -12,7 +12,7 @@
 
 ### Backend
 - TypeScript
-- **Node.js** + **Express**
+- **Node.js** + **Nest.js**
 
 ### APIs externes
 - Steam Web API (bibliothèques + métadonnées jeux)
