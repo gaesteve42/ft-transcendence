@@ -3,13 +3,15 @@ import { IncomingMessage, ServerResponse } from "http";
 import { sendJson } from "./response";
 import { getLobbiesById } from "./lobbies";
 import { LobbyResult } from "./types/lobbies";
+import { readJsonBody } from "./utils/http";
 
 
 export function router(req:IncomingMessage, res:ServerResponse): void
 {
 	
 
-	if (req.method === "GET" && req.url === "/api/health"){
+	if (req.method === "GET" && req.url === "/api/health")
+	{
 		sendJson(res, 200, { ok :true});
 		return;
 	}
@@ -39,26 +41,6 @@ export function router(req:IncomingMessage, res:ServerResponse): void
 	}
 	sendJson(res, 404, {error: "Not found"});
 }
-
-
-
-/*change le 3eme else if 
-// si le lobbies id est trouver ->200 sinon -> 404
-
-export function checkId(req: IncomingMessage): string | null
-{
-	let str = req.url;
-	if (str === undefined)
-		return null;
-	if (str.startsWith("/lobbies/"))
-	{
-		let id = str.split("/lobbies/", str?.length);
-		return true;
-	}
-	if (str.)
-	return false;	
-}
-*/
 
 export function extractLobbyId(url: string | undefined): string | null{
 
