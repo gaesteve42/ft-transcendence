@@ -16,7 +16,7 @@ function isEmpty(str: string): boolean {
 }
 
 const lobbies = new Map<string, Lobby>();
-function createLobby(name: string, maxPlayers: number): LobbyResult{
+export function createLobby(name: string, maxPlayers: number): LobbyResult{
 	const lobby: Lobby = {
 		id : "id",
 		name : name,
