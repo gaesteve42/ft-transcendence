@@ -34,7 +34,7 @@ function createLobby(name: string, maxPlayers: number): LobbyResult{
 }
 
 
-function getLobbiesById(id: string): LobbyResult
+export function getLobbiesById(id: string): LobbyResult
 {
 	const lobby = lobbies.get(id);
 	if (lobby === undefined)
