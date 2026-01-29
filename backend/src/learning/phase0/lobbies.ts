@@ -39,7 +39,7 @@ export function joinLobby(lobbyId: string, playerId: string): LobbyResult
 	const lobby = result.lobby;
 	if (lobby.players.length >= lobby.maxPlayers)
 		return {ok:false, error: "Too many players in this lobby"};
-	if (playerId.length == 0)
+	if (playerId.length === 0)
 		return {ok:false, error: "Player ID is empty"};
 	if (lobby.players.includes(playerId))
 		return {ok:false, error: "Player is already inside the lobby"};
