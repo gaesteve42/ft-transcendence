@@ -1,54 +1,51 @@
 import { useState } from 'react'
 //import { Link } from 'react-router'
 
-const [username, setUsername] = useState('');
-const [email, setEmail] = useState('');
-const [password, setPassword] = useState('');
-const [confirmPassword, setConfirmPassword] = useState('');
-
-const handleSubmit = (e: React.SyntheticEvent<HTMLFormElement>) => {
-	e.preventDefault();
-	if (password !== confirmPassword)
-	{
-		console.log("Les mots de passe ne correspondent pas");
-		return;
-	}
-	console.log({ username, email, password });
-};
-
 function Register()
 {
+	const [username, setUsername] = useState('');
+	const [email, setEmail] = useState('');
+	const [password, setPassword] = useState('');
+	const [confirmPassword, setConfirmPassword] = useState('');
+	const handleSubmit = (e: React.SyntheticEvent<HTMLFormElement>) =>
+	{
+		e.preventDefault();
+		if (password !== confirmPassword)
+		{
+			console.log("Les mots de passe ne correspondent pas");
+			return;
+		}
+		console.log({ username, email, password });
+	};
 	return(
 	<div className="min-h-screen bg-gray-800 text-white flex items-center justify-center">
-		<div>
-			<form onSubmit={handleSubmit}>
-				<input
+			<form onSubmit={handleSubmit} className="flex flex-col gap-6 w-50">
+				<input className = "w-full"
 				type ="username"
 				placeholder="Nom d'utilisateur"
 				value={username}
 				onChange={(e) => setUsername(e.target.value)}
 				/>
-				<input
+				<input className="w-full"
 				type ="email"
 				placeholder="E-mail"
-				value={username}
+				value={email}
 				onChange={(e) => setEmail(e.target.value)}
 				/>
-				<input
+				<input className="w-full"
 				type ="password"
 				placeholder="Mot de passe"
-				value={username}
+				value={password}
 				onChange={(e) => setPassword(e.target.value)}
 				/>
-				<input
+				<input className="w-full"
 				type ="password"
 				placeholder="Confirmez le mot de passe"
-				value={username}
+				value={confirmPassword}
 				onChange={(e) => setConfirmPassword(e.target.value)}
 				/>
 			<button type="submit"> S'inscrire </button>
 			</form>
-		</div>
 	</div>
 	)
 }
