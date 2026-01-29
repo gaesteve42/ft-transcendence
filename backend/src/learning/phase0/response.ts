@@ -1,4 +1,5 @@
 import { ServerResponse } from "http";
+
 export function sendJson(
 	res : ServerResponse,
 	statusCode : number,

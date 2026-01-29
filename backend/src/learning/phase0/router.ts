@@ -1,19 +1,16 @@
-
 import { IncomingMessage, ServerResponse } from "http";
 import { sendJson } from "./response";
 import { getLobbiesById, createLobby } from "./lobbies";
-import { readJsonBody } from "./utils/http";
+import { readJsonBody} from "./utils/http";
+import { extractLobbyId } from "./utils/router";
 
 function handleGet(req: IncomingMessage, res: ServerResponse): boolean
 {
-	if (req.method !== "GET")
-  		return false;
 	if (req.url === "/api/health")
 	{
 		sendJson(res, 200, { ok: true });
 		return true;
 	}
-
 	const id = extractLobbyId(req.url);
 	if (id !== null)
 	{
@@ -24,14 +21,11 @@ function handleGet(req: IncomingMessage, res: ServerResponse): boolean
 			sendJson(res, 404, { error: result.error });
 		return true;
 	}
-
 	return false;
 }
 
 function handlePost(req: IncomingMessage, res: ServerResponse): boolean
 {
-	if (req.method !== "POST")
-  		return false;
 	if (req.url !== "/api/lobbies")
 		return false;
 	readJsonBody(req)
@@ -41,17 +35,14 @@ function handlePost(req: IncomingMessage, res: ServerResponse): boolean
 				sendJson(res, 400, { error: "Invalid payload" });
 				return;
 			}
-
 			const obj = body as Record<string, unknown>;
 			const name = obj["name"];
 			const maxPlayers = obj["maxPlayers"];
-
 			if (typeof name !== "string" || typeof maxPlayers !== "number")
 			{
 				sendJson(res, 400, { error: "Invalid payload" });
 				return;
 			}
-
 			const result = createLobby(name, maxPlayers);
 			if (result.ok)
 				sendJson(res, 201, result.lobby);
@@ -61,7 +52,6 @@ function handlePost(req: IncomingMessage, res: ServerResponse): boolean
 		.catch(() => {
 			sendJson(res, 400, { error: "Invalid JSON" });
 		});
-
 	return true;
 }
 
@@ -72,20 +62,4 @@ export function router(req: IncomingMessage, res: ServerResponse): void
 	if (req.method === "POST" && handlePost(req, res))
 		return;
 	sendJson(res, 404, { error: "Not found" });
-}
-
-export function extractLobbyId(url: string | undefined): string | null{
-
-	const prefix = "/api/lobbies/";
-	if (url === undefined)
-		return null;
-	else
-	{
-		if (url.startsWith(prefix) === false)
-			return null;
-		let id = url.slice(prefix.length);
-		if (id.length === 0 )
-			return null;
-		return (id);
-	}
 }
