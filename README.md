@@ -1,10 +1,10 @@
-# FindYourGame - Brief Projet
+# GameFinder
 
 _Projet Transcendance 42 - Équipe [Leo, Gauthier, Kevin, Pierre]_
 
 ---
 
-## 🛠️ Stack Technique
+## Stack Technique
 
 ### Frontend
 
@@ -23,7 +23,7 @@ _Projet Transcendance 42 - Équipe [Leo, Gauthier, Kevin, Pierre]_
 
 ---
 
-## 🎯 Modules pour 18 points
+## Modules pour 18 points
 
 ### Web (9 points)
 
@@ -58,25 +58,6 @@ _Projet Transcendance 42 - Équipe [Leo, Gauthier, Kevin, Pierre]_
 
 ---
 
-### Exemple de résultat
-
-```
-🎮 Recommandations pour votre groupe :
-
-1. ⭐⭐⭐⭐⭐ Overcooked 2 (96%)
-   └─ Match parfait : Coop + Fun + 4 joueurs
-
-2. ⭐⭐⭐⭐ Rocket League (85%)
-   └─ Bon match : Compétitif + sessions courtes
-
-3. ⭐⭐⭐⭐ Left 4 Dead 2 (82%)
-   └─ Match : Coop + Action
-
-4. ⭐⭐⭐ GTA V (68%)
-   └─ Match partiel : Action mais sessions longues
-
-5. ⭐⭐⭐ Minecraft (65%)
-   └─ Match partiel : mood mixte
-```
+## partie progression front
 
 ---
