@@ -24,7 +24,7 @@ export default App
 
 /*
 
-Ce que je veux focus en premier sur react de mon apprentissage
+Ce que je veux focus dans l ordre pour bien comprendre react
 
 Les composants : une fonction qui retourne du JSX (du HTML dans du JavaScript)
 Les props : passer des données d'un composant parent à un enfant
