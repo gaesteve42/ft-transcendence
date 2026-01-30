@@ -46,3 +46,27 @@ export function joinLobby(lobbyId: string, playerId: string): LobbyResult
 	lobby.players.push(playerId);
 	return {ok: true, lobby};
 }
+
+/**
+ * 
+ * @param URL permet de decouper plus proprement les query strings et les cas limites 
+ * @returns 
+ */
+export function extractJoinLobbyId(url: string | undefined ) : string | null
+{
+	const prefix = "/api/lobbies/";
+	const suffix = "/join";
+
+	if (url === undefined)
+		return (null);
+	const parsed = new URL(url, "http://localhost");
+	const path = parsed.pathname;
+	if (!path.startsWith(prefix) || !path.endsWith(suffix))
+		return (null);
+	const end = path.length - suffix.length;
+	const id = path.slice(prefix.length, end);
+	if (id.length === 0)
+		return (null);
+	return (id);
+}
+
