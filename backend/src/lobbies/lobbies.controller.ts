@@ -1,6 +1,7 @@
-import { Controller, Get, Post, Param, Body} from "@nestjs/common";
+import { Controller, Get, Post, Param, Body, HttpCode} from "@nestjs/common";
 import { LobbiesService } from "./lobbies.service";
 import { CreateLobbyDto } from "./dto/create-lobby.dto";
+import { JoinLobbyDto } from "./dto/join-lobby.dto";
 
 
 
@@ -20,5 +21,10 @@ export class LobbiesController{
 	{
 		return this.service.createLobby(body.name, body.maxPlayers);
 	}
-	
+	@HttpCode(200)
+	@Post(":id/join")
+	join(@Param("id") id : string, @Body() body : JoinLobbyDto)
+	{
+		return this.service.joinLobby(id, body.playerId);
+	}
 } 
