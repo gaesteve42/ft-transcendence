@@ -21,7 +21,7 @@ export function createLobby(name: string, maxPlayers: number): LobbyResult
 	return {ok:true,lobby};
 }
 
-export function getLobbiesById(id: string): LobbyResult
+export function getLobbyById(id: string): LobbyResult
 {
 	const lobby = lobbies.get(id);
 	if (lobby === undefined)
@@ -32,7 +32,7 @@ export function getLobbiesById(id: string): LobbyResult
 
 export function joinLobby(lobbyId: string, playerId: string): LobbyResult
 {
-	const result = getLobbiesById(lobbyId);
+	const result = getLobbyById(lobbyId);
 	if (!result.ok) 
 		return {ok:false, error: result.error};
 	const lobby = result.lobby;
