@@ -27,4 +27,4 @@ export class LobbiesController{
 	{
 		return this.service.joinLobby(id, body.playerId);
 	}
-} 
+}

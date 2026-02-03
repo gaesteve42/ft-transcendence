@@ -1,30 +1,46 @@
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
-import { getLobbyById as getLobbyByIdLogic, createLobby as createLobbyLogic, joinLobby as joinLobbyLogic} from "./lobbies.logic";
+import { Lobby } from "./types/lobby";
+import { randomUUID } from "crypto";
 
 @Injectable()
 export class LobbiesService{
-	getLobbyById(id: string){
-		const result = getLobbyByIdLogic(id);
-		if (!result.ok){
-			throw new NotFoundException(result.error);
-		}
-		return result.lobby;
-	}
-	createLobby(name: string, maxPlayers: number){
-		const result = createLobbyLogic(name, maxPlayers);
-		if (!result.ok){
-			throw new BadRequestException(result.error);
-		}
-		return result.lobby;
-	}
-	joinLobby(lobbyId: string, playerId: string)
+	private lobbies: Map<string, Lobby>;
+	constructor()
 	{
-		const result = joinLobbyLogic(lobbyId, playerId);
-		if (!result.ok){
-			if (result.error === "Lobby not found")
-				throw new NotFoundException(result.error);
-			throw new BadRequestException(result.error);
-		}
-		return result.lobby;
+		this.lobbies = new Map<string, Lobby>();
+	}
+	createLobby(name: string, maxPlayers: number) : Lobby
+	{
+		if (name.length === 0)
+     			throw new BadRequestException("Invalid name");
+		if (maxPlayers < 1 || maxPlayers > 4)
+			throw new BadRequestException("Invalid maxPlayers");
+		const lobby: Lobby = 
+		{
+			id: randomUUID(),
+			name: name,
+			maxPlayers: maxPlayers,
+			players: [],
+		};
+		this.lobbies.set(lobby.id, lobby);
+    		return	(lobby);
+	}
+	getLobbyById(id: string) : Lobby{
+		const lobby = this.lobbies.get(id);
+		if (lobby === undefined)
+			throw new NotFoundException("Lobby not found");
+		return (lobby);
+	}
+	joinLobby(lobbyId: string, playerId: string) : Lobby
+	{
+		const lobby = this.getLobbyById(lobbyId);
+		if (playerId.length === 0)
+			throw new BadRequestException("Player ID is empty");
+		if (lobby.players.includes(playerId))
+			throw new BadRequestException("Player is already inside the lobby");
+		if (lobby.players.length >= lobby.maxPlayers)
+			throw new BadRequestException("Too many players in this lobby");
+		lobby.players.push(playerId);
+    		return (lobby);
 	}
 }

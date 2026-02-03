@@ -3,8 +3,6 @@ import { BadRequestException, INestApplication } from "@nestjs/common";
 import request from "supertest";
 import { App } from "supertest/types";
 import { AppModule } from "./../src/app.module";
-import { STATUS_CODES } from "http";
-import { error } from "console";
 
 describe("Lobbies (e2e)", () => {
   let app: INestApplication<App>;

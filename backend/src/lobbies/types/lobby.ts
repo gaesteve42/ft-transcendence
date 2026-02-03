@@ -4,8 +4,3 @@ export type Lobby = {
   maxPlayers: number;
   players: string[];
 };
-
-export type LobbyResult =
-  | { ok: true; lobby: Lobby }
-  | { ok: false; error: string };
-  
