@@ -1,5 +1,6 @@
 import { Lobby, LobbyResult } from "./types/lobby";
 import { isEmpty } from "../common/utils/strings";
+import { randomUUID } from "crypto";
 
 const lobbies = new Map<string, Lobby>();
 export function createLobby(name: string, maxPlayers: number): LobbyResult
@@ -15,8 +16,7 @@ export function createLobby(name: string, maxPlayers: number): LobbyResult
 		return {ok:false, error:"Invalid name"};
 	else if (maxPlayers < 1 || maxPlayers > 4)
 		return  {ok: false, error:"Invalid maxPlayers" };	
-	const id = Math.random();
-	lobby.id = id.toString();
+	lobby.id = randomUUID();
 	lobbies.set(lobby.id, lobby);
 	return {ok:true,lobby};
 }
