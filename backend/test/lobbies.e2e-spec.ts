@@ -63,7 +63,7 @@ describe("Lobbies (e2e)", () => {
 		expect(res.body.id.length).toBeGreaterThan(30);
 		expect(resGet.body.name).toBe("Lobby get");
 		expect(resGet.body.maxPlayers).toBe(3);
-	})
+	});
 	it("GET /api/lobbies/:id returns 404 when not found", async() => {
 		const res = await request(app.getHttpServer())
 		.get("/api/lobbies/does-not-exist")
@@ -72,7 +72,30 @@ describe("Lobbies (e2e)", () => {
 		expect(res.body.statusCode).toBe(404);
 		expect(res.body.error).toBe("Not Found");
 		expect(res.body.message).toBe("Lobby not found");
-	})
+	});
+	it("GET /api/lobbies returns a list", async() =>{
+		await request(app.getHttpServer())
+		.post("/api/lobbies")
+    		.send({ name: "Lobby A", maxPlayers: 2 })
+    		.expect(201);
+
+		await request(app.getHttpServer())
+		.post("/api/lobbies")
+		.send({ name: "Lobby B", maxPlayers: 3 })
+		.expect(201);
+		const res = await request(app.getHttpServer())
+		.get("/api/lobbies")
+		.expect(200);
+
+		expect(Array.isArray(res.body)).toBe(true);
+		expect(res.body.length).toBeGreaterThanOrEqual(2);
+
+		expect(res.body[0]).toHaveProperty("id");
+		expect(res.body[0]).toHaveProperty("name");
+		expect(res.body[0]).toHaveProperty("maxPlayers");
+		expect(res.body[0]).toHaveProperty("players");
+
+	});
 	it("JOIN /api/lobbies/:id/join joins and enforces rules", async() => {
 		const res = await request(app.getHttpServer())
 		.post("/api/lobbies")
@@ -110,5 +133,5 @@ describe("Lobbies (e2e)", () => {
 		.send({playerId: "p3"})
 		.expect(400);
 		expect(joinFull.body.message).toBe("Too many players in this lobby");
-	})
+	});
 });

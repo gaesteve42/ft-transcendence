@@ -16,6 +16,11 @@ export class LobbiesController{
 	id(@Param("id") id : string) {
 		return this.service.getLobbyById(id);
 	}
+	@Get()
+	list()
+	{
+		return this.service.listLobbies();
+	}
 	@Post()
 	create(@Body() body : CreateLobbyDto)
 	{

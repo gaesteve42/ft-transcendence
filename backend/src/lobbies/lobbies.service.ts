@@ -43,4 +43,8 @@ export class LobbiesService{
 		lobby.players.push(playerId);
     		return (lobby);
 	}
+	listLobbies() : Lobby[]
+	{
+		return Array.from(this.lobbies.values());
+	}
 }
