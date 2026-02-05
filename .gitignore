@@ -1,5 +1,24 @@
+# Node / Front
+node_modules/
+npm-debug.log*
+yarn-error.log*
+
+# Python
+venv/
+.venv/
+__pycache__/
+
+# Build
+dist/
+build/
+
+# OS / IDE
 .DS_Store
+.vscode/
 
 # DevOps
 .env
+
+# Miscellanous
+.idea/
 
