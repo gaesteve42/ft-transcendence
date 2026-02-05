@@ -1,57 +1,8 @@
 import Button from '../components/ui/Button'
-import {
-	GiBroadsword, GiCrossbow, GiDragonHead, GiMountainRoad,
-	GiShield, GiCastle, GiCrossedSwords, GiSkullCrossedBones,
-	GiTreasureMap, GiCrystalBall, GiWizardStaff, GiHelmet,
-	GiCrown, GiTorch, GiCompass, GiScrollUnfurled,
-	GiGamepad, GiAxeSword, GiSwordInStone,
-} from 'react-icons/gi'
-import type { IconType } from 'react-icons' //react_icons sert uniquement ici pour l'instant, on peut avoir des icons plutôt cools qui correspondent au site
-
-const BACKGROUND_ICONS: { Icon: IconType; color: string; top: string; left?: string; right?: string; rotate: number; size: number }[] = [
-	{ Icon: GiBroadsword, color: '#ef4444', top: '3%', left: '7%', rotate: -20, size: 32 },
-	{ Icon: GiCrossbow, color: '#f59e0b', top: '6%', right: '9%', rotate: 15, size: 28 },
-	{ Icon: GiDragonHead, color: '#9239e4', top: '5%', left: '21%', rotate: -5, size: 34 },
-	{ Icon: GiMountainRoad, color: '#22c55e', top: '12%', left: '77%', rotate: 8, size: 30 },
-	{ Icon: GiShield, color: '#3b82f6', top: '16%', left: '14%', rotate: -12, size: 26 },
-	{ Icon: GiCastle, color: '#a855f7', top: '20%', right: '6%', rotate: 10, size: 34 },
-	{ Icon: GiCrossedSwords, color: '#00bfff', top: '25%', left: '4%', rotate: 18, size: 30 },
-	{ Icon: GiSkullCrossedBones, color: '#dc2626', top: '33%', left: '82%', rotate: 12, size: 26 },
-	{ Icon: GiTreasureMap, color: '#eab308', top: '38%', left: '10%', rotate: -15, size: 32 },
-	{ Icon: GiCrystalBall, color: '#ec4899', top: '42%', right: '7%', rotate: 5, size: 28 },
-	{ Icon: GiWizardStaff, color: '#8b5cf6', top: '48%', left: '78%', rotate: -10, size: 30 },
-	{ Icon: GiHelmet, color: '#00bfff', top: '52%', left: '5%', rotate: 14, size: 28 },
-	{ Icon: GiCrown, color: '#f59e0b', top: '56%', right: '14%', rotate: -6, size: 26 },
-	{ Icon: GiTorch, color: '#f97316', top: '62%', left: '18%', rotate: 20, size: 30 },
-	{ Icon: GiCompass, color: '#22c55e', top: '66%', right: '5%', rotate: -12, size: 32 },
-	{ Icon: GiScrollUnfurled, color: '#14b8a6', top: '75%', left: '80%', rotate: 8, size: 28 },
-	{ Icon: GiGamepad, color: '#9239e4', top: '75%', left: '8%', rotate: -18, size: 34 },
-	{ Icon: GiAxeSword, color: '#ef4444', top: '88%', left: '13%', rotate: -8, size: 30 },
-	{ Icon: GiSwordInStone, color: '#3b82f6', top: '90%', right: '10%', rotate: 15, size: 32 },
-]
 
 function Home() {
 	return (
 		<div className="relative">
-			{/* Background gaming icons */}
-			<div className="absolute inset-0 overflow-hidden pointer-events-none">
-				{BACKGROUND_ICONS.map(({ Icon, color, top, left, right, rotate, size }, i) => (
-					<Icon
-						key={i}
-						className="absolute"
-						style={{
-							top,
-							left,
-							right,
-							transform: `rotate(${rotate}deg)`,
-							opacity: 0.5,
-							color,
-							fontSize: size,
-						}}
-					/>
-				))}
-			</div>
-
 			{/* App name Section */}
 			<section className="relative">
 				<div className="relative z-10 flex flex-col items-center justify-center text-center px-6 pt-28 pb-20">
@@ -122,7 +73,7 @@ function Home() {
 				<div className="grid md:grid-cols-3 gap-6">
 					<FeatureCard
 						step="01"
-						title="Construis ta ludothèque"
+						title="Construis ta bibliothèque"
 						description="Parcours notre catalogue et coche les jeux que tu possèdes ou que tu as déjà testés. Plus ton profil est complet, meilleures sont les recommandations."
 						color="#00bfff"
 					/>
