@@ -12,11 +12,13 @@ __pycache__/
 dist/
 build/
 
-# Env
-.env
-.env.*
-
 # OS / IDE
 .DS_Store
-.idea/
 .vscode/
+
+# DevOps
+.env
+
+# Miscellanous
+.idea/
+
