@@ -14,7 +14,7 @@ _Projet Transcendance 42 - Équipe [Leo, Gauthier, Kevin, Pierre]_
 ### Backend
 
 - TypeScript
-- **Node.js** + **Nest.js**
+- **Node.js** + **NestJS**
 
 ### APIs externes
 
