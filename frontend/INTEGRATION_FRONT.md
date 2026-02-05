@@ -3,7 +3,7 @@
 
 ## Comment déployer ton code
 
-1. Copier l'entiereté de tes sources frontend dans le dossier ./backend/
+1. Copier l'entiereté de tes sources frontend dans le dossier ./frontend/
    ```bash
    cp -r ../ft-transcendance/frontend/*
    ```
