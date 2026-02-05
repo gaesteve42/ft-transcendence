@@ -28,7 +28,7 @@ export class UsersService{
 		this.userIdByEmail.set(user.email, user.id);
 		this.userIdByUsername.set(user.username, user.id);
 		return (user);
-	} 
+	}
 	findByUsername(username: string): User | undefined{
 		const userName = this.userIdByUsername.get(username);
 		if (userName === undefined)
