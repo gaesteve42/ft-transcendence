@@ -28,12 +28,12 @@ Depuis ton app NestJS, connecte toi a PostgreSQL avec:
 ```
 Host: postgres (not localhost!)
 Port: 5432
-Database: findmygame_db
-User: findmygame
-Password: findmygame_password
+Database: gamefinder_db
+User: gamefinder
+Password: gamefinder_password
 ```
 
-- J'avais set-up "findmygame" au départ mais faut qu'on trouve un placeholder commun, qu'on arrete de se mélanger les pinceaux. "GameFinder" si j'ai bien pigé ?
+- Placeholder de nom définitif pour nous : GameFinder zé partis, migration faite pour ma part.
 
 ## Hot-reload
 

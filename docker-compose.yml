@@ -1,7 +1,7 @@
 services:
   postgres:
     image: postgres:16
-    container_name: findmygame_db
+    container_name: gamefinder_db
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
@@ -12,11 +12,11 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
-      - findmygame_network
+      - gamefinder_network
 
   pgadmin:
     image: dpage/pgadmin4:latest
-    container_name: findmygame_pgadmin
+    container_name: gamefinder_pgadmin
     restart: unless-stopped
     environment:
       PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL}
@@ -26,13 +26,13 @@ services:
     depends_on:
       - postgres
     networks:
-      - findmygame_network
+      - gamefinder_network
 
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: findmygame_backend
+    container_name: gamefinder_backend
     restart: unless-stopped
     environment:
       PORT: ${BACKEND_PORT}
@@ -49,13 +49,13 @@ services:
     depends_on:
       - postgres
     networks:
-      - findmygame_network
+      - gamefinder_network
 
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    container_name: findmygame_frontend
+    container_name: gamefinder_frontend
     restart: unless-stopped
     ports:
       - "${FRONTEND_PORT}:5173"
@@ -63,11 +63,11 @@ services:
       - ./frontend:/usr/src/app
       - /usr/src/app/node_modules
     networks:
-      - findmygame_network
+      - gamefinder_network
 
   nginx:
     image: nginx:alpine
-    container_name: findmygame_nginx
+    container_name: gamefinder_nginx
     restart: unless-stopped
     ports:
       - "80:80"
@@ -77,11 +77,11 @@ services:
       - backend
       - frontend
     networks:
-      - findmygame_network
+      - gamefinder_network
 
 volumes:
   postgres_data:
 
 networks:
-  findmygame_network:
+  gamefinder_network:
     driver: bridge
