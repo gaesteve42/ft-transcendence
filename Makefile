@@ -1,4 +1,4 @@
-.PHONY: all up logs down clean fclean re
+.PHONY: all up logs down clean fclean prune re re-nocache
 
 all: up
 
@@ -22,4 +22,13 @@ fclean:
 	@docker compose down --rmi all 2>/dev/null || true
 	@echo "Cleanup complete."
 
+prune: fclean
+	@echo "Removing ALL Docker cache..."
+	@docker builder prune --all --force
+	@docker system prune --all --volumes --force
+	@echo "Complete purge done."
+
 re: fclean all
+
+re-nocache: prune
+	@docker compose up -d --build --no-cache
