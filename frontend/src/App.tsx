@@ -1,22 +1,24 @@
 import { BrowserRouter, Routes, Route } from 'react-router'
+import Layout from './components/layout/Layout'
 import Home from './pages/Home'
-import Login from './pages/Login.tsx'
-import Profile from './pages/Profile.tsx'
-import Register from './pages/Register.tsx'
-import Session from './pages/Session.tsx'
+import Login from './pages/Login'
+import Register from './pages/Register'
+import Profile from './pages/Profile'
+import Session from './pages/Session'
 
-function App()
-{
+function App() {
 	return (
-	<BrowserRouter>
-	<Routes>
-		<Route path="/" element={<Home/>} />
-		<Route path="/Register" element={<Register/>} />
-		<Route path="/Login" element={<Login/>} />
-		<Route path="/Profile" element={<Profile/>} />
-		<Route path="/session" element={<Session/>} />
-	</Routes>
-	</BrowserRouter>
+		<BrowserRouter>
+			<Routes>
+				<Route element={<Layout />}>
+					<Route path="/" element={<Home />} />
+					<Route path="/register" element={<Register />} />
+					<Route path="/login" element={<Login />} />
+					<Route path="/profile" element={<Profile />} />
+					<Route path="/session" element={<Session />} />
+				</Route>
+			</Routes>
+		</BrowserRouter>
 	)
 }
 

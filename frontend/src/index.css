@@ -1,1 +1,110 @@
 @import "tailwindcss";
+
+@theme {
+	--color-dark-950: #13132b;
+	--color-dark-900: #1e1e32;
+	--color-dark-800: #252540;
+	--color-dark-700: #2e2e4a;
+	--color-dark-600: #3a3a5c;
+	--color-dark-500: #4a4a6a;
+
+	--color-violet-500: #9239e4;
+	--color-violet-600: #7c2ec8;
+	--color-violet-400: #a855f7;
+
+	--color-cyan-500: #00bfff;
+	--color-cyan-400: #33ccff;
+
+	--color-green-500: #22c55e;
+	--color-blue-500: #3b82f6;
+	--color-red-500: #ef4444;
+	--color-orange-500: #f59e0b;
+	--color-pink-500: #ec4899;
+
+	--color-text-primary: #f1f5f9;
+	--color-text-secondary: #94a3b8;
+	--color-text-muted: #64748b;
+}
+
+body {
+	background-color: var(--color-dark-900);
+	color: var(--color-text-primary);
+	font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+/* Glow animations */
+@keyframes glow-pulse {
+
+	0%,
+	100% {
+		opacity: 0.4;
+	}
+
+	50% {
+		opacity: 0.8;
+	}
+}
+
+@keyframes float {
+
+	0%,
+	100% {
+		transform: translateY(0px);
+	}
+
+	50% {
+		transform: translateY(-20px);
+	}
+}
+
+@keyframes float-slow {
+
+	0%,
+	100% {
+		transform: translateY(0px) scale(1);
+	}
+
+	50% {
+		transform: translateY(-10px) scale(1.05);
+	}
+}
+
+.animate-glow-pulse {
+	animation: glow-pulse 3s ease-in-out infinite;
+}
+
+.animate-float {
+	animation: float 6s ease-in-out infinite;
+}
+
+.animate-float-slow {
+	animation: float-slow 8s ease-in-out infinite;
+}
+
+/* Gradient text utility */
+.text-gradient-main {
+	background: linear-gradient(135deg, #00bfff, #9239e4);
+	-webkit-background-clip: text;
+	-webkit-text-fill-color: transparent;
+	background-clip: text;
+}
+
+.text-gradient-violet {
+	background: linear-gradient(135deg, #9239e4, #a855f7);
+	-webkit-background-clip: text;
+	-webkit-text-fill-color: transparent;
+	background-clip: text;
+}
+
+/* Glow shadows */
+.glow-violet {
+	box-shadow: 0 0 20px rgba(146, 57, 228, 0.3), 0 0 60px rgba(146, 57, 228, 0.1);
+}
+
+.glow-cyan {
+	box-shadow: 0 0 20px rgba(0, 191, 255, 0.3), 0 0 60px rgba(0, 191, 255, 0.1);
+}
+
+.glow-violet-strong {
+	box-shadow: 0 0 30px rgba(146, 57, 228, 0.5), 0 0 80px rgba(146, 57, 228, 0.2);
+}
