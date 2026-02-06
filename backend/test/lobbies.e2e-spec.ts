@@ -1,8 +1,11 @@
 import { Test, TestingModule } from "@nestjs/testing";
-import { BadRequestException, INestApplication } from "@nestjs/common";
+import { INestApplication } from "@nestjs/common";
 import request from "supertest";
 import { App } from "supertest/types";
 import { AppModule } from "./../src/app.module";
+
+process.env.JWT_SECRET = "test-secret";
+process.env.JWT_EXPIRES_IN = "900";
 
 describe("Lobbies (e2e)", () => {
   let app: INestApplication<App>;
@@ -17,7 +20,7 @@ describe("Lobbies (e2e)", () => {
 	});
 
 	afterAll(async () => {
-	await app.close();
+	if (app) await app.close();
 	});
 
 	it("POST /api/lobbies creates a lobby", async () => {
