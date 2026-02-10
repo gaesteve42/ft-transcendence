@@ -26,7 +26,7 @@ function Login()
 					return;
 				}
 				localStorage.setItem("accessToken", data.accessToken);
-				navigate("/");
+				navigate("/Dashboard");
 			}
 			catch
 			{
