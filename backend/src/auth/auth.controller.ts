@@ -3,6 +3,7 @@ import { AuthService } from "./auth.service";
 import { RegisterDto } from "./dto/register.dto";
 import { LoginDto } from "./dto/login.dto";
 import { JwtAuthGuard } from "./jwt-auth.guard";
+import { CurrentUser } from "./current-user.decorator";
 
 
 @Controller("api/auth")
@@ -20,7 +21,7 @@ export class AuthController{
 	}
 	@UseGuards(JwtAuthGuard)
 	@Get("me")
-	me(@Request()req){
-		return req.user;
+	me(@CurrentUser() user: {id: string, email: string, username: string}){
+		return user;
 	}
 }
