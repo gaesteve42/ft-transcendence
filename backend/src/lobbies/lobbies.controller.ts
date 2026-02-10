@@ -20,10 +20,11 @@ export class LobbiesController{
 	{
 		return this.service.listLobbies();
 	}
+	@UseGuards(JwtAuthGuard)
 	@Post()
-	create(@Body() body : CreateLobbyDto)
+	create(@Body() body : CreateLobbyDto, @CurrentUser("id") userID: string)
 	{
-		return this.service.createLobby(body.name, body.maxPlayers);
+		return this.service.createLobby(body.name, body.maxPlayers, userID);
 	}
 	@HttpCode(200)
 	@UseGuards(JwtAuthGuard)

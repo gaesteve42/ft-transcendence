@@ -6,7 +6,7 @@ export class CreateLobbyDto
 	@IsNotEmpty()
 	name: string;
 	@IsInt()
-	@Min(1)
+	@Min(2)
 	@Max(4)
 	maxPlayers: number;
 }

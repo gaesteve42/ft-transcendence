@@ -3,4 +3,5 @@ export type Lobby = {
   name: string;
   maxPlayers: number;
   players: string[];
+  ownerId: string;
 };

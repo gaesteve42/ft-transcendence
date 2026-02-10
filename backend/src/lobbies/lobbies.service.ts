@@ -9,18 +9,29 @@ export class LobbiesService{
 	{
 		this.lobbies = new Map<string, Lobby>();
 	}
-	createLobby(name: string, maxPlayers: number) : Lobby
+	/**
+	 * 
+	 * @param name 
+	 * @param maxPlayers 
+	 * @param userId Need to be connected to create a lobby + auto join 
+	 * @returns 
+	 */
+	createLobby(name: string, maxPlayers: number, userId: string) : Lobby
 	{
-		if (name.length === 0)
+		const cleanName = name.trim();
+		if (cleanName.length === 0)
      			throw new BadRequestException("Invalid name");
-		if (maxPlayers < 1 || maxPlayers > 4)
+		if (!Number.isInteger(maxPlayers) || maxPlayers  < 2 || maxPlayers > 4)
 			throw new BadRequestException("Invalid maxPlayers");
+		if (!userId || userId.length === 0)
+			throw new BadRequestException("Invalid user");
 		const lobby: Lobby = 
 		{
 			id: randomUUID(),
-			name: name,
+			name: cleanName,
 			maxPlayers: maxPlayers,
-			players: [],
+			players: [userId],
+			ownerId: userId,
 		};
 		this.lobbies.set(lobby.id, lobby);
     		return	(lobby);
