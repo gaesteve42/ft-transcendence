@@ -22,3 +22,5 @@ build/
 # Miscellanous
 .idea/
 
+# claude
+.claude
