@@ -1,5 +1,6 @@
 import { useState } from 'react'
 //import { Link } from 'react-router'
+import { useNavigate } from 'react-router'
 
 function Register()
 {
@@ -7,15 +8,36 @@ function Register()
 	const [email, setEmail] = useState('');
 	const [password, setPassword] = useState('');
 	const [confirmPassword, setConfirmPassword] = useState('');
-	const handleSubmit = (e: React.SyntheticEvent<HTMLFormElement>) =>
+	const [error, setError] = useState('');
+	const navigate = useNavigate();
+	const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) =>
 	{
 		e.preventDefault();
+		setError('');
 		if (password !== confirmPassword)
 		{
-			console.log("Les mots de passe ne correspondent pas");
+			setError("Les mots de passe ne correspondent pas");
 			return;
 		}
-		console.log({ username, email, password });
+		try {
+			const response = await fetch("/api/auth/register", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ email, username, password })
+			});
+			const data = await response.json();
+			if (!response.ok)
+			{
+				setError(data.message);
+				return;
+			}
+			localStorage.setItem("accessToken", data.accessToken);
+			navigate("/");
+		}
+		catch
+		{
+			setError("Erreur réseau, réessayez plus tard");
+		}
 	};
 	return(
 	<div className="min-h-screen bg-gray-800 text-white flex items-center justify-center">
@@ -44,6 +66,7 @@ function Register()
 					value={confirmPassword}
 					onChange={(e) => setConfirmPassword(e.target.value)}
 				/>
+			{error && <p className="text-red-500">{error}</p>}
 			<button type="submit" className="bg-blue-500 hover:bg-blue-700 px-4 py-2 rounded-lg font-semibold transition-colors">
 			S'inscrire
 			</button>
