@@ -25,32 +25,13 @@ export class AuthService{
 	}
 	async login(dto: LoginDto): Promise<{ accessToken: string }> {
 	const user = this.users.findByEmail(dto.email);
-	console.log("[login] email:", dto.email, "userFound:", !!user);
 	if (!user)
 		throw new UnauthorizedException("Invalid credentials");
-
-	const ok = await bcrypt.compare(dto.password, user.passwordHash);
-	console.log("[login] passwordMatch:", ok);
-	if (!ok)
+	const checkPassword = await bcrypt.compare(dto.password, user.passwordHash);
+	if (!checkPassword)
 		throw new UnauthorizedException("Invalid credentials");
-
 	return { accessToken: this.jwt.sign({ sub: user.id }) };
 	}
-	/**
-	 * 
-	 * @param dto 
-	 * @returns 
-	 
-	async login(dto: LoginDto): Promise<{accessToken: string}>{
-		const user = this.users.findByEmail(dto.email);
-		if (user === undefined)
-			throw new UnauthorizedException("Invalid credentials");
-		const checkPassword = await bcrypt.compare(dto.password, user.passwordHash);
-		if (checkPassword === false)
-			throw new UnauthorizedException("Invalid credentials");
-		return {accessToken: this.jwt.sign({ sub : user.id})};
-	}
-	*/
 }
 
  

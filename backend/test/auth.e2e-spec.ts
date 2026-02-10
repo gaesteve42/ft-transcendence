@@ -1,9 +1,8 @@
 import { Test, TestingModule } from "@nestjs/testing";
-import { INestApplication, ValidationPipe} from "@nestjs/common";
+import { INestApplication, ValidationPipe } from "@nestjs/common";
 import request from "supertest";
 import { App } from "supertest/types";
 import { AppModule } from "../src/app.module";
-
 
 describe("Auth (e2e)", () => {
 	let app: INestApplication<App>;
@@ -16,14 +15,13 @@ describe("Auth (e2e)", () => {
 		app = moduleFixture.createNestApplication();
 
 		app.useGlobalPipes(
-		new ValidationPipe({
-		whitelist: true,
-		transform: true,
-		forbidNonWhitelisted: true,
-		}),
+			new ValidationPipe({
+				whitelist: true,
+				transform: true,
+				forbidNonWhitelisted: true,
+			}),
 		);
 
-await app.init();
 		await app.init();
 	});
 
@@ -32,8 +30,9 @@ await app.init();
 	});
 
 	it("POST /api/auth/register registers a user", async () => {
-		const email = `u_${Date.now()}@test.com`;
-		const username = `user_${Date.now()}`;
+		const stamp = Date.now();
+		const email = `u_${stamp}@test.com`;
+		const username = `user_${stamp}`;
 
 		const res = await request(app.getHttpServer())
 			.post("/api/auth/register")
@@ -51,7 +50,8 @@ await app.init();
 	});
 
 	it("POST /api/auth/register rejects username too short (DTO)", async () => {
-		const email = `u_${Date.now()}@test.com`;
+		const stamp = Date.now();
+		const email = `u_${stamp}@test.com`;
 
 		const res = await request(app.getHttpServer())
 			.post("/api/auth/register")
@@ -64,12 +64,19 @@ await app.init();
 
 		expect(res.body.statusCode).toBe(400);
 		expect(res.body.error).toBe("Bad Request");
-		expect(Array.isArray(res.body.message)).toBe(true);
+
+		/* message can be string (BadRequestException) OR array (class-validator) */
+		const msg = res.body.message;
+		if (Array.isArray(msg))
+			expect(msg.join(" ")).toContain("username");
+		else
+			expect(String(msg)).toContain("username");
 	});
 
 	it("POST /api/auth/login returns token when credentials are valid", async () => {
-		const email = `u_${Date.now()}@test.com`;
-		const username = `user_${Date.now()}`;
+		const stamp = Date.now();
+		const email = `u_${stamp}@test.com`;
+		const username = `user_${stamp}`;
 		const password = "Str0ngP@ssw0rd!";
 
 		await request(app.getHttpServer())
@@ -85,11 +92,13 @@ await app.init();
 		expect(res.body).toEqual({
 			accessToken: expect.any(String),
 		});
+		expect(res.body.accessToken.length).toBeGreaterThan(10);
 	});
 
 	it("GET /api/auth/me returns current user when token is valid", async () => {
-		const email = `u_${Date.now()}@test.com`;
-		const username = `user_${Date.now()}`;
+		const stamp = Date.now();
+		const email = `u_${stamp}@test.com`;
+		const username = `user_${stamp}`;
 		const password = "Str0ngP@ssw0rd!";
 
 		await request(app.getHttpServer())
@@ -114,5 +123,24 @@ await app.init();
 			email,
 			username,
 		});
+	});
+
+	it("GET /api/auth/me returns 401 when no token", async () => {
+		const res = await request(app.getHttpServer())
+			.get("/api/auth/me")
+			.expect(401);
+
+		expect(res.body.statusCode).toBe(401);
+		expect(res.body.message).toBe("Unauthorized");
+	});
+
+	it("GET /api/auth/me returns 401 when token is invalid", async () => {
+		const res = await request(app.getHttpServer())
+			.get("/api/auth/me")
+			.set("Authorization", "Bearer invalid.token.here")
+			.expect(401);
+
+		expect(res.body.statusCode).toBe(401);
+		expect(res.body.message).toBe("Unauthorized");
 	});
 });

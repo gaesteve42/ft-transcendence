@@ -5,7 +5,6 @@ import { AppModule } from "../src/app.module";
 
 describe("Auth (e2e)", () => {
 	let app: INestApplication;
-
 	beforeEach(async () => {
 		const moduleFixture: TestingModule = await Test.createTestingModule({
 			imports: [AppModule],
@@ -20,7 +19,6 @@ describe("Auth (e2e)", () => {
 				transform: true,
 			}),
 		);
-
 		await app.init();
 	});
 
