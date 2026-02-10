@@ -1,11 +1,12 @@
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import { Lobby } from "./types/lobby";
 import { randomUUID } from "crypto";
+import { AuditLoggerService } from "src/common/logging/audit-logger.service";
 
 @Injectable()
 export class LobbiesService{
 	private lobbies: Map<string, Lobby>;
-	constructor()
+	constructor(private readonly audit: AuditLoggerService)
 	{
 		this.lobbies = new Map<string, Lobby>();
 	}
@@ -34,6 +35,7 @@ export class LobbiesService{
 			ownerId: userId,
 		};
 		this.lobbies.set(lobby.id, lobby);
+		this.audit.lobbyCreated(lobby.id, userId);
     		return	(lobby);
 	}
 	getLobbyById(id: string) : Lobby{
@@ -52,6 +54,7 @@ export class LobbiesService{
 		if (lobby.players.length >= lobby.maxPlayers)
 			throw new BadRequestException("Too many players in this lobby");
 		lobby.players.push(playerId);
+		this.audit.lobbyJoin(lobbyId, playerId);
     		return (lobby);
 	}
 	listLobbies() : Lobby[]
