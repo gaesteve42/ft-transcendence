@@ -22,15 +22,22 @@ export class LobbiesController{
 	}
 	@UseGuards(JwtAuthGuard)
 	@Post()
-	create(@Body() body : CreateLobbyDto, @CurrentUser("id") userID: string)
+	create(@Body() body : CreateLobbyDto, @CurrentUser("id") userId: string)
 	{
-		return this.service.createLobby(body.name, body.maxPlayers, userID);
+		return this.service.createLobby(body.name, body.maxPlayers, userId);
 	}
-	@HttpCode(200)
 	@UseGuards(JwtAuthGuard)
+	@HttpCode(200)
 	@Post(":id/join")
 	join(@Param("id") lobbyId: string, @CurrentUser("id") userId: string)
 	{
 		return this.service.joinLobby(lobbyId, userId);
+	}
+	@UseGuards(JwtAuthGuard)
+	@HttpCode(200)
+	@Post(":id/leave")
+	leave(@Param("id") lobbyId: string, @CurrentUser("id") userId: string)
+	{
+		return this.service.leaveLobby(lobbyId, userId);
 	}
 }

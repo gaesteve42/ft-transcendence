@@ -61,4 +61,21 @@ export class LobbiesService{
 	{
 		return Array.from(this.lobbies.values());
 	}
+	leaveLobby(lobbyId: string, userId: string) : Lobby
+	{
+		const lobby = this.getLobbyById(lobbyId);
+		if ( !userId || userId.length === 0)
+			throw new BadRequestException("User invalid");
+		if (!lobby.players.includes(userId))
+			throw new BadRequestException("Player is not inside the lobby");
+		lobby.players = lobby.players.filter((id) => id !== userId);
+		if (lobby.players.length === 0)
+		{
+			this.lobbies.delete(lobby.id);
+			return lobby;
+		}
+		if (lobby.ownerId === userId)
+			lobby.ownerId = lobby.players[0];
+		return lobby;
+	}
 }
