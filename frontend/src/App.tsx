@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route } from 'react-router'
+import { AuthProvider } from './context/AuthContext'
 import Layout from './components/layout/Layout'
 import Home from './pages/Home'
 import Login from './pages/Login'
@@ -10,16 +11,18 @@ import Dashboard from './pages/Dashboard'
 function App() {
 	return (
 		<BrowserRouter>
-			<Routes>
+			<AuthProvider>
+				<Routes>
 				<Route element={<Layout />}>
 					<Route path="/" element={<Home />} />
 					<Route path="/register" element={<Register />} />
 					<Route path="/login" element={<Login />} />
 					<Route path="/profile" element={<Profile />} />
 					<Route path="/session" element={<Session />} />
-					<Route path="/Dashboard" element={<Dashboard />} />
+					<Route path="/dashboard" element={<Dashboard />} />
 				</Route>
 			</Routes>
+			</AuthProvider>
 		</BrowserRouter>
 	)
 }

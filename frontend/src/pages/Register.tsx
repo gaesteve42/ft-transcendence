@@ -1,6 +1,6 @@
 import { useState } from 'react'
-//import { Link } from 'react-router'
 import { useNavigate } from 'react-router'
+import { useAuth } from '../context/AuthContext'
 
 function Register()
 {
@@ -10,6 +10,7 @@ function Register()
 	const [confirmPassword, setConfirmPassword] = useState('');
 	const [error, setError] = useState('');
 	const navigate = useNavigate();
+	const { login } = useAuth();
 	const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) =>
 	{
 		e.preventDefault();
@@ -31,8 +32,8 @@ function Register()
 				setError(data.message);
 				return;
 			}
-			localStorage.setItem("accessToken", data.accessToken);
-			navigate("/Dashboard");
+			login(data.accessToken);
+			navigate("/dashboard");
 		}
 		catch
 		{

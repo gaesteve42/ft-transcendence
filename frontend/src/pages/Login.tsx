@@ -1,14 +1,14 @@
 import { useState } from 'react'
-//import { Link } from 'react-router'
 import { useNavigate } from 'react-router'
+import { useAuth } from '../context/AuthContext'
 
-// Rajouter une gestion de mot de passe incorrect
 function Login()
 {
 	const [email, setEmail] = useState('');
 	const [password, setPassword] = useState('');
 	const [error, setError] = useState('');
 	const navigate = useNavigate();
+	const { login } = useAuth();
 	const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) =>
 		{
 			e.preventDefault();
@@ -25,8 +25,8 @@ function Login()
 					setError(data.message);
 					return;
 				}
-				localStorage.setItem("accessToken", data.accessToken);
-				navigate("/Dashboard");
+				login(data.accessToken);
+				navigate("/dashboard");
 			}
 			catch
 			{
