@@ -4,7 +4,7 @@ function Dashboard()
 {
 	const navigate = useNavigate();
 	return(
-	<div className="min-h-screen bg-gray-800 text-white flex flex-col items-center justify-center">
+	<div className="min-h-screen bg-dark-900 text-white flex flex-col items-center justify-center">
 		<div className="text-center">
 			<h1 className="text-4xl font-bold mb-4">GameFinder</h1>
 			<p className="text-gray-400 mb-8">Vous êtes login</p>
