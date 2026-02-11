@@ -57,7 +57,3 @@ _Projet Transcendance 42 - Équipe [Leo, Gauthier, Kevin, Pierre]_
 - File upload (avatars) **(Minor - 1pt)**
 
 ---
-
-## partie progression front
-
----
