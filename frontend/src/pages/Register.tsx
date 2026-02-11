@@ -1,6 +1,12 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router'
 import { useAuth } from '../context/AuthContext'
+import Input from '../components/ui/Input'
+
+type RegisterResponse = {
+	message?: string
+	accessToken?: string
+}
 
 function Register()
 {
@@ -26,14 +32,16 @@ function Register()
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({ email, username, password })
 			});
-			const data = await response.json();
+			const data = await response.json() as RegisterResponse;
 			if (!response.ok)
 			{
-				setError(data.message);
+				setError(data.message || "Erreur d'inscription");
 				return;
 			}
-			login(data.accessToken);
-			navigate("/dashboard");
+			if (data.accessToken) {
+				login(data.accessToken);
+				navigate("/dashboard");
+			}
 		}
 		catch
 		{
@@ -41,29 +49,34 @@ function Register()
 		}
 	};
 	return(
-	<div className="min-h-screen bg-gray-800 text-white flex items-center justify-center">
-			<form onSubmit={handleSubmit} className="flex flex-col gap-6 w-50">
-				<input className = "w-full"
-					type ="username"
-					placeholder="Nom d'utilisateur"
+	<div className="min-h-screen bg-dark-900 text-white flex items-center justify-center">
+			<form onSubmit={handleSubmit} className="flex flex-col gap-6 w-96">
+			<h1 className="text-3xl font-bold text-center mb-4">Inscription</h1>
+				<Input
+					type="text"
+					label="Username"
+					placeholder="Username"
 					value={username}
 					onChange={(e) => setUsername(e.target.value)}
 				/>
-				<input className="w-full"
-					type ="email"
-					placeholder="E-mail"
+				<Input
+					type="email"
+					label="Email"
+					placeholder="exemple@email.com"
 					value={email}
 					onChange={(e) => setEmail(e.target.value)}
 				/>
-				<input className="w-full"
-					type ="password"
-					placeholder="Mot de passe"
+				<Input
+					type="password"
+					label="Password"
+					placeholder="••••••••"
 					value={password}
 					onChange={(e) => setPassword(e.target.value)}
 				/>
-				<input className="w-full"
-					type ="password"
-					placeholder="Confirmez le mot de passe"
+				<Input
+					type="password"
+					label="ConfirmPassword"
+					placeholder="••••••••"
 					value={confirmPassword}
 					onChange={(e) => setConfirmPassword(e.target.value)}
 				/>

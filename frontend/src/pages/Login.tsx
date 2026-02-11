@@ -1,6 +1,12 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router'
 import { useAuth } from '../context/AuthContext'
+import Input from '../components/ui/Input'
+
+type LoginResponse = {
+	message?: string
+	accessToken?: string
+}
 
 function Login()
 {
@@ -19,14 +25,16 @@ function Login()
 					headers: { "Content-Type": "application/json" },
 					body: JSON.stringify({email, password})
 				});
-				const data = await response.json();
+				const data = await response.json() as LoginResponse;
 				if (!response.ok)
 				{
-					setError(data.message);
+					setError(data.message || 'Erreur de connexion');
 					return;
 				}
-				login(data.accessToken);
-				navigate("/dashboard");
+				if (data.accessToken) {
+					login(data.accessToken);
+					navigate("/dashboard");
+				}
 			}
 			catch
 			{
@@ -34,22 +42,27 @@ function Login()
 			}
 		};
 		return(
-			<div className="min-h-screen bg-gray-800 text-white flex items-center justify-center">
-					<form onSubmit={handleSubmit} className="flex flex-col gap-6 w-50">
-						<input className="w-full"
-							type ="email"
-							placeholder="E-mail"
+			<div className="min-h-screen bg-dark-900 text-white flex items-center justify-center">
+					<form onSubmit={handleSubmit} className="flex flex-col gap-6 w-96">
+						<h1 className="text-3xl font-bold text-center mb-4">Connexion</h1>
+						<Input
+							type="email"
+							label="Email"
+							placeholder="exemple@email.com"
 							value={email}
 							onChange={(e) => setEmail(e.target.value)}
 						/>
-						<input className="w-full"
-							type ="password"
-							placeholder="Mot de passe"
+						<Input
+							type="password"
+							label="password"
+							placeholder="••••••••"
 							value={password}
 							onChange={(e) => setPassword(e.target.value)}
 						/>
 					{error && <p className="text-red-500">{error}</p>}
-					<button type="submit" className="bg-blue-500 hover:bg-blue-700 px-4 py-2 rounded-lg font-semibold transition-colors">
+					<button
+						type="submit"
+						className="bg-blue-500 hover:bg-blue-700 px-4 py-2 rounded-lg font-semibold transition-colors">
 					Se connecter
 					</button>
 					</form>
