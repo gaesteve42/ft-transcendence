@@ -1,0 +1,10 @@
+# my global config for gamefinder
+global:
+  scrape_interval: 15s
+
+# my services scrapping rules
+scrape_configs:
+  - job_name: prometheus
+    static_configs:
+     - targets: ['localhost:9090']
+    
