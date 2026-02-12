@@ -97,8 +97,35 @@ services:
     ports:
         - "8001:8001"
 
+  prometheus:
+    image: prom/prometheus
+    container_name: gamefinder_prometheus
+    restart: unless-stopped
+    ports: 
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    networks:
+      - gamefinder_network
+
+  grafana:
+    image: grafana/grafana
+    container_name: gamefinder_grafana
+    restart: unless-stopped
+    volumes:
+      - grafana_data:/var/lib/grafana
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+    networks:
+      - gamefinder_network
+
 volumes:
   postgres_data:
+  prometheus_data:
+  grafana_data:
 
 networks:
   gamefinder_network:
