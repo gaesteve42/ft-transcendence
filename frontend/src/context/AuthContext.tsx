@@ -20,6 +20,7 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
 	const login = (token: string) => {
 		localStorage.setItem("accessToken", token)
 		setIsLoggedIn(true)
+		navigate("/dashboard")
 	}
 
 	const logout = () => {

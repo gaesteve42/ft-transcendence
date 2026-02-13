@@ -6,43 +6,34 @@ import Button from '../ui/Button'
 function Header() {
 	const { isLoggedIn, logout } = useAuth()
 	return (
-		<header className="bg-dark-800 border-b border-dark-600">
-			<nav className="px-10 py-5 flex items-center justify-between">
-				<Link to="/" className="text-2xl font-bold text-gradient-main">
-					GameFinder
-				</Link>
-				<div className="flex items-center gap-4">
-					{isLoggedIn ? (
-						<>
-							<Link to="/dashboard" className="text-text-secondary hover:text-text-primary transition-colors">
-								Dashboard
-							</Link>
-							<Link to="/library" className="text-text-secondary hover:text-text-primary transition-colors">
-								Library
-							</Link>
-							<Link to="/session" className="text-text-secondary hover:text-text-primary transition-colors">
-								Session
-							</Link>
-							<Link to="/profile" className="text-text-secondary hover:text-text-primary transition-colors">
-								Profile
-							</Link>
-							<Button variant="secondary" onClick={logout}>
-								Logout
-							</Button>
-						</>
-					) : (
-						<>
-							<Button variant="primary" to="/register">
-								Create an account
-							</Button>
-							<Button variant="blue" to="/login">
-								Login
-							</Button>
-						</>
-					)}
-				</div>
-			</nav>
-		</header>
+			<header className="bg-dark-800 border-b border-dark-600">
+				<nav className="px-10 py-5 flex items-center justify-between">
+					<Link to={isLoggedIn ? "/dashboard" : "/"} className="text-2xl font-bold text-gradient-main">
+						GameFinder
+					</Link>
+					<div className="flex items-center gap-4">
+						{isLoggedIn ? (
+							<>
+								<Link to="/profile" className="text-text-secondary hover:text-text-primary transition-colors">
+									Profile
+								</Link>
+								<Button variant="secondary" onClick={logout}>
+									Logout
+								</Button>
+							</>
+						) : (
+							<>
+								<Button variant="primary" to="/register">
+									Create an account
+								</Button>
+								<Button variant="blue" to="/login">
+									Login
+								</Button>
+							</>
+						)}
+					</div>
+				</nav>
+			</header>
 	)
 }
 
