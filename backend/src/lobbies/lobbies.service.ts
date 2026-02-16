@@ -3,6 +3,8 @@ import { Lobby } from "./types/lobby";
 import { AuditLoggerService } from "src/common/logging/audit-logger.service";
 import { PrismaService } from "src/prisma/prisma.service";
 import { Prisma, Lobby as PrismaLobby} from "@prisma/client";
+import { error } from "console";
+import { createErrorClass } from "rxjs/internal/util/createErrorClass";
 
 type LobbyWithMembers = {
 	id: string;
@@ -27,6 +29,34 @@ export class LobbiesService{
 	}
 	private isUniqueConstraintError(error: unknown): error is Prisma.PrismaClientKnownRequestError {
 				return (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002");
+	}
+	private isSerializationFailure(error: unknown): error is Prisma.PrismaClientKnownRequestError {
+		return (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2034");
+	}
+	/**
+	 * 
+	 * @param operation Transaction with a limited number of tries.
+	 * @param tx Life of tx is only between the start and end of operation. The goal is to copy this.prisma but
+	 * in a safe way to prevent concurrantial problems.
+	 * @returns 
+	 */
+	private async runSerializable<T>(
+		operation: (tx: Prisma.TransactionClient) => Promise<T>,
+	): Promise<T> {
+		const maxRetries = 3;
+		for (let attempt = 1; attempt <= maxRetries; attempt++){
+			try{
+				return (await this.prisma.$transaction(
+					async (tx) => operation(tx),
+					{isolationLevel: Prisma.TransactionIsolationLevel.Serializable},
+				));
+			} catch (error: unknown){
+				if (!this.isSerializationFailure(error) || attempt === maxRetries){
+					throw error;
+				}
+			}
+		}
+		throw new Error("Unreachable");
 	}
 	private async getLobbyRaw(id: string): Promise<LobbyWithMembers | null> {
 		return (this.prisma.lobby.findUnique)({
@@ -59,21 +89,24 @@ export class LobbiesService{
 			throw new BadRequestException("Invalid maxPlayers");
 		if (!userId || userId.length === 0)
 			throw new BadRequestException("Invalid user");
-		const lobby = await this.prisma.lobby.create({
-			data: {
-				name: cleanName,
-				maxPlayers: maxPlayers,
-				ownerId: userId,
-			},
-		});
-		await this.prisma.lobbyMember.create({
-			data:{
-				lobbyId: lobby.id,
-				userId: userId,
-			}
-		});
-		this.audit.lobbyCreated(lobby.id, userId);
-		return (this.getLobbyById(lobby.id));
+		return this.runSerializable(async (tx) => {
+			const lobby = await tx.lobby.create({
+				data: {
+					name: cleanName,
+					maxPlayers: maxPlayers,
+					ownerId: userId,
+				},
+			});
+			await tx.lobbyMember.create({
+				data:{
+					lobbyId: lobby.id,
+					userId: userId,
+				},
+			});
+			this.audit.lobbyCreated(lobby.id, userId);
+			const lobbyRaw = await this.findLobbyRawOrThrow(tx, lobby.id);
+			return this.toDomain(lobbyRaw);
+		}) 
 	}
 	async getLobbyById(id: string): Promise<Lobby> {
 		const lobby = await this.getLobbyRaw(id);
@@ -81,32 +114,63 @@ export class LobbiesService{
 			throw new NotFoundException("Lobby not found");
 		return (this.toDomain(lobby));
 	}
-
-	async joinLobby(lobbyId: string, playerId: string) : Promise <Lobby>
-	{
+	private assertJoinAllowed(lobby: Lobby, playerId: string): void{
 		if (!playerId || playerId.length === 0)
 			throw new BadRequestException("Player ID is empty");
-		const lobby = await this.getLobbyById(lobbyId);
 		if (lobby.players.includes(playerId))
 			throw new BadRequestException("Player is already inside the lobby");
 		if (lobby.players.length >= lobby.maxPlayers)
 			throw new BadRequestException("Too many players in this lobby");
+	}
+	private async createMembershipOrThrow(
+		tx: Prisma.TransactionClient,
+		lobbyId: string,
+		playerId: string,
+	): Promise<void>{
 		try{
-			await this.prisma.lobbyMember.create({
-   			data: {
-				lobbyId,
-				userId: playerId,
+			await tx.lobbyMember.create({
+				data:{
+					lobbyId: lobbyId,
+					userId: playerId,
 				},
 			});
-		}
-		catch (error:unknown) {
-			if (!this.isUniqueConstraintError(error)){
+		}catch (error: unknown){
+			if (!this.isUniqueConstraintError(error))
 				throw error;
-			}
-			throw new BadRequestException("Player is already inside a lobby");	
+			throw new BadRequestException("Player is already inside a lobby");
 		}
-		this.audit.lobbyJoin(lobbyId, playerId);
-    		return (this.getLobbyById(lobbyId));
+	}
+	private async findLobbyRawOrThrow(
+		tx: Prisma.TransactionClient,
+		lobbyId: string,
+	): Promise<LobbyWithMembers>{
+		const lobbyRaw = await tx.lobby.findUnique({
+			where: {id: lobbyId},
+			select: {
+				id: true,
+				name: true,
+				maxPlayers: true,
+				ownerId: true,
+				members:{
+					select: {userId: true},
+					orderBy: {joinedAt: "asc"},
+				},
+			},
+		});
+		if (!lobbyRaw)
+			throw new NotFoundException("Lobby not found");
+		return (lobbyRaw);
+	}
+	async joinLobby(lobbyId: string, playerId: string) : Promise <Lobby>{
+		return this.runSerializable(async (tx) => {
+			const lobbyRaw = await this.findLobbyRawOrThrow(tx, lobbyId);
+			const lobby = this.toDomain(lobbyRaw);
+			this.assertJoinAllowed(lobby, playerId);
+			await this.createMembershipOrThrow(tx, lobbyId, playerId);
+			this.audit.lobbyJoin(lobbyId, playerId);
+			const updatedRaw = await this.findLobbyRawOrThrow(tx, lobbyId);
+			return this.toDomain(updatedRaw);
+		});
 	}
 	async listLobbies(): Promise<Lobby[]> {
 		const lobbies = await this.prisma.lobby.findMany({
@@ -124,38 +188,78 @@ export class LobbiesService{
 		});
 		return (lobbies.map((lobby) => this.toDomain(lobby)));
 	}
-	async leaveLobby(lobbyId: string, userId: string) : Promise <Lobby>
-	{
+	private assertLeaveAllowed(lobby: Lobby, userId: string): void{
 		if (!userId || userId.length === 0)
 			throw new BadRequestException("User invalid");
-		const lobby = await this.getLobbyById(lobbyId);
 		if (!lobby.players.includes(userId))
 			throw new BadRequestException("Player is not inside the lobby");
-		await this.prisma.lobbyMember.delete({
+	}
+	private async removeMembershipOrThrow(
+		tx:Prisma.TransactionClient,
+		lobbyId: string,
+		userId: string,
+	): Promise<void>{
+		await tx.lobbyMember.delete({
 			where: {
-				lobbyId_userId: { lobbyId, userId },
+				lobbyId_userId:{
+					lobbyId: lobbyId,
+					userId: userId,
 				},
-			});
-		const remainingMembers = await this.prisma.lobbyMember.findMany({
-			where: {lobbyId},
+			},
+		});
+	}
+	private async handleOwnerTransferOrLobbyDelete(
+		tx: Prisma.TransactionClient,
+		lobby: Lobby,
+		lobbyId: string,
+		leavingUserId: string,
+	): Promise <void>{
+		const remainingMembers = await tx.lobbyMember.findMany({
+			where: {lobbyId: lobbyId},
 			select: {userId: true},
-			orderBy: { joinedAt: "asc"},
+			orderBy: {joinedAt: "asc"},
 		});
 		if (remainingMembers.length === 0){
-			await this.prisma.lobby.delete({
-				where: {id: lobbyId},
+			await tx.lobby.delete({
+				where:{id: lobbyId},
 			});
-			return {
-			...lobby,
-			players: [],
-			};
+			return ;
 		}
-		if (lobby.ownerId === userId){
-			await this.prisma.lobby.update({
+		if (lobby.ownerId === leavingUserId){
+			await tx.lobby.update({
 				where: {id: lobbyId},
 				data: {ownerId: remainingMembers[0].userId},
 			});
 		}
-		return (this.getLobbyById(lobbyId));
+	}
+	async leaveLobby(lobbyId: string, userId: string) : Promise <Lobby>
+	{
+		return this.runSerializable(async (tx) => {
+			const lobbyRaw = await this.findLobbyRawOrThrow(tx, lobbyId);
+			const lobby = this.toDomain(lobbyRaw);
+
+			this.assertLeaveAllowed(lobby, userId);
+			await this.removeMembershipOrThrow(tx, lobbyId, userId);
+			await this.handleOwnerTransferOrLobbyDelete(tx, lobby, lobbyId, userId);
+			const updatedRaw = await tx.lobby.findUnique({
+				where: {id: lobbyId},
+				select:{
+					id: true,
+					name: true,
+					maxPlayers: true,
+					ownerId: true,
+					members: {
+						select: {userId: true},
+						orderBy:{ joinedAt:"asc"},
+					},
+				},
+			});
+			if (!updatedRaw)
+				return {
+			...lobby,
+			players:[],
+		};
+		return this.toDomain(updatedRaw);
+		});
 	}
 }
