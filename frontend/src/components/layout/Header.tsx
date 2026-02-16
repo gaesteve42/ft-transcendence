@@ -14,7 +14,7 @@ function Header() {
 					<div className="flex items-center gap-4">
 						{isLoggedIn ? (
 							<>
-								<Link to="/profile" className="text-text-secondary hover:text-text-primary transition-colors">
+								<Link to="/profile" className="text-text-secondary hover:text-text-purple transition-colors">
 									Profile
 								</Link>
 								<Button variant="secondary" onClick={logout}>
@@ -23,7 +23,7 @@ function Header() {
 							</>
 						) : (
 							<>
-								<Button variant="primary" to="/register">
+								<Button variant="purple" to="/register">
 									Create an account
 								</Button>
 								<Button variant="blue" to="/login">

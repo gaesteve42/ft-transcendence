@@ -21,14 +21,14 @@
 	--color-orange-500: #f59e0b;
 	--color-pink-500: #ec4899;
 
-	--color-text-primary: #f1f5f9;
+	--color-text-purple: #f1f5f9;
 	--color-text-secondary: #94a3b8;
 	--color-text-muted: #64748b;
 }
 
 body {
 	background-color: var(--color-dark-900);
-	color: var(--color-text-primary);
+	color: var(--color-text-purple);
 	font-family: 'Inter', system-ui, -apple-system, sans-serif;
 }
 

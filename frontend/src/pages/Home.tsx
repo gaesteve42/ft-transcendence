@@ -41,23 +41,23 @@ function Home() {
 				</h2>
 				<div className="bg-dark-800/50 border border-dark-600/50 rounded-xl p-8 md:p-10">
 					<p className="text-text-secondary leading-relaxed mb-4">
-						On est quatre potes — <span className="text-text-primary font-medium">
+						On est quatre potes — <span className="text-text-purple font-medium">
 							Leo, Gauthier, Kevin et Pierre</span> — et comme beaucoup de joueurs,
-						on a perdu <span className="text-text-primary font-medium">des heures
+						on a perdu <span className="text-text-purple font-medium">des heures
 							à débattre</span> de ce qu'on allait jouer le soir même.
 					</p>
 					<p className="text-text-secondary leading-relaxed mb-4">
-						Entre les <span className="text-text-primary font-medium">goûts
+						Entre les <span className="text-text-purple font-medium">goûts
 							différents</span>, les jeux que tout le monde n'a pas, et les
 						"Ouais mais moi j'ai pas envie de ça ce soir"… on a eu l'idée de
-						GameFinder : <span className="text-text-primary font-medium">
+						GameFinder : <span className="text-text-purple font-medium">
 							un outil qui fait le taf à notre place</span>.
 					</p>
 					<p className="text-text-secondary leading-relaxed">
 						Le concept ? Vous créez une session, chacun indique son
-						<span className="text-text-primary font-medium"> mood et ses envies
+						<span className="text-text-purple font-medium"> mood et ses envies
 							du moment</span>, et notre algorithme vous sort les jeux qui vont
-						plaire à <span className="text-text-primary font-medium">tout le
+						plaire à <span className="text-text-purple font-medium">tout le
 							monde</span>. Simple, rapide, efficace.
 					</p>
 				</div>

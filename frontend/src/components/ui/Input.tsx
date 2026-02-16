@@ -17,7 +17,7 @@ function Input({ type = 'text', placeholder, value, onChange, label }: InputProp
 				placeholder={placeholder}
 				value={value}
 				onChange={onChange}
-				className="w-full bg-dark-700 border border-dark-500 rounded-lg px-4 py-3 text-text-primary
+				className="w-full bg-dark-700 border border-dark-500 rounded-lg px-4 py-3 text-text-purple
 				placeholder-text-muted focus:outline-none focus:border-violet-500 transition-colors"
 			/>
 		</div>
