@@ -7,15 +7,23 @@ datasource db {
   	provider = "postgresql"
   	url      = env("DATABASE_URL")
 }
-
+enum AuthProvider{
+	LOCAL
+	STEAM
+}
 
 model User{
-	id		String		@id @default(uuid())
-	email		String		@unique
-	username	String		@unique
-	passwordHash	String		
-	createdAt	DateTime	@default(now())
-	updatedAt	DateTime	@updatedAt
+	id			String		@id @default(uuid())
+	steamId			String?		@unique
+	avatarUrl		String?	
+	email			String		@unique
+	username		String		@unique
+	passwordHash		String?		
+	createdAt		DateTime	@default(now())
+	updatedAt		DateTime	@updatedAt
+	steamLinkedAt		DateTime?	
+	lastSteamUpdated	DateTime?
+	authProvider		AuthProvider	@default(LOCAL)
 
 	ownedLobbies	Lobby[]		@relation("LobbyOwner")
 	memberships	LobbyMember[]
@@ -34,8 +42,6 @@ model Lobby{
 	members		LobbyMember[]
 	tagPreferences	LobbyTagPreference[]
 }
-
-
 
 model LobbyMember {
 	lobbyId 	String
@@ -63,6 +69,7 @@ model LobbyTagPreference{
 	@@index([lobbyId, userId])
 	@@index([tagId])
 }
+
 model Tag{
 	id		String		@id @default(uuid())
 	slug		String		@unique
