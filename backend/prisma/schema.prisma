@@ -19,6 +19,7 @@ model User{
 
 	ownedLobbies	Lobby[]		@relation("LobbyOwner")
 	memberships	LobbyMember[]
+	tagPreferences	LobbyTagPreference[]
 }
 
 model Lobby{
@@ -31,6 +32,7 @@ model Lobby{
 
 	owner		User		@relation("LobbyOwner", fields: [ownerId], references: [id], onDelete: Restrict, onUpdate: Cascade)
 	members		LobbyMember[]
+	tagPreferences	LobbyTagPreference[]
 }
 
 
@@ -45,5 +47,28 @@ model LobbyMember {
 
 	@@id([lobbyId, userId])
 	@@unique([userId])
+}
+
+model LobbyTagPreference{
+	lobbyId		String		
+	userId		String		
+	tagId		String		
+	createdAt	DateTime	@default(now())
+
+	lobby	Lobby	@relation(fields: [lobbyId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+ 	user  	User	@relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  	tag	Tag	@relation(fields: [tagId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+	
+	@@id([lobbyId, userId, tagId])
+	@@index([lobbyId, userId])
+	@@index([tagId])
+}
+model Tag{
+	id		String		@id @default(uuid())
+	slug		String		@unique
+	label		String
+	createdAt	DateTime	@default(now())
+	updatedAt	DateTime	@updatedAt
+	preferences	LobbyTagPreference[]
 }
 	

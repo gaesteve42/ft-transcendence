@@ -3,8 +3,8 @@ import { Lobby } from "./types/lobby";
 import { AuditLoggerService } from "src/common/logging/audit-logger.service";
 import { PrismaService } from "src/prisma/prisma.service";
 import { Prisma, Lobby as PrismaLobby} from "@prisma/client";
-import { error } from "console";
-import { createErrorClass } from "rxjs/internal/util/createErrorClass";
+import { arrayNotEmpty } from "class-validator";
+import { SetLobbyTagsDto } from "./dto/set-lobby-tags.dto";
 
 type LobbyWithMembers = {
 	id: string;
@@ -261,5 +261,57 @@ export class LobbiesService{
 		};
 		return this.toDomain(updatedRaw);
 		});
+	}
+	async setPlayerTags(lobbyId: string, userId: string, tagIds: string[]): Promise<{lobbyId: string; userId: string; tagIds: string[]}> {
+		if (!tagIds || tagIds.length === 0)
+			throw new BadRequestException("Tags not found");
+		return this.runSerializable(async (tx) => {
+			const lobby = await tx.lobby.findUnique(
+				{where: {id: lobbyId},
+				select: {id: true}});
+			if (!lobby)
+				throw new NotFoundException("Lobby not found");
+			const membership = await tx.lobbyMember.findUnique({
+				where: {lobbyId_userId: {lobbyId, userId}},
+				select: {userId: true},
+			});
+			if (!membership)
+				throw new BadRequestException("Player is not inside the lobby");
+			const existingTags = await tx.tag.findMany({
+				where: {id: {in : tagIds}},
+				select: {id:true},
+			});
+			if (existingTags.length !== tagIds.length)
+				throw new BadRequestException("One or more tags are invalid");
+			await tx.lobbyTagPreference.deleteMany({
+				where: { lobbyId, userId },
+				});
+			await tx.lobbyTagPreference.createMany({
+				data: tagIds.map((tagId) => ({
+					lobbyId,
+					userId,
+					tagId,
+					})),
+			});
+			return { lobbyId, userId, tagIds };
+		})
+	}
+	async getLobbyReadiness(lobbyId: string): Promise<{lobbyId: string; totalPlayers: number; playersWithTags: number; ready: boolean; missingUserIds: string[]}> {
+		const lobby = await this.getLobbyById(lobbyId);
+		const totalPlayers = lobby.players.length;
+
+		const tagRows = await this.prisma.lobbyTagPreference.findMany({
+			where: {lobbyId: lobbyId},
+			select: {userId: true},
+		});
+		const usersWithTags = new Set(tagRows.map((row) => row.userId));
+		const missingUserIds = lobby.players.filter((id) => !usersWithTags.has(id));
+		return {
+			lobbyId: lobbyId,
+			totalPlayers,
+			playersWithTags: totalPlayers - missingUserIds.length,
+			ready : missingUserIds.length === 0 && totalPlayers > 0,
+			missingUserIds,
+		};
 	}
 }
