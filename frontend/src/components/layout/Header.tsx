@@ -6,7 +6,7 @@ import Button from '../ui/Button'
 function Header() {
 	const { isLoggedIn, logout } = useAuth()
 	return (
-			<header className="bg-dark-800 border-b border-dark-600">
+			<header className="bg-dark-800 border-b border-dark-600 relative z-20">
 				<nav className="px-10 py-5 flex items-center justify-between">
 					<Link to={isLoggedIn ? "/dashboard" : "/"} className="text-2xl font-bold text-gradient-main">
 						GameFinder

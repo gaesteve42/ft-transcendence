@@ -3,7 +3,7 @@ import Button from '../components/ui/Button'
 function Dashboard()
 {
 	return (
-	<div className="min-h-screen bg-dark-900 text-white px-6 py-12">
+	<div className="text-white px-6 py-12">
 		<div className="max-w-6xl mx-auto">
 			{/*Header */}
 			<div className="text-center mb-16">

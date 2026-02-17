@@ -49,7 +49,7 @@ function Register()
 		}
 	};
 	return(
-	<div className="min-h-screen bg-dark-900 text-white flex items-center justify-center">
+	<div className="min-h-screen text-white flex items-center justify-center">
 			<form onSubmit={handleSubmit} className="flex flex-col gap-6 w-96">
 			<h1 className="text-3xl font-bold text-center mb-4">Inscription</h1>
 				<Input
