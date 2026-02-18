@@ -10,24 +10,24 @@ function Layout() {
 						background: 'radial-gradient(ellipse at 50% 40%, rgba(80, 60, 120, 0.20) 0%, rgba(40, 80, 100, 0.15) 35%, transparent 65%)',
 					}}
 				/>
-				<div className="absolute top-[10%] left-[15%] w-[500px] h-[500px]"
+				<div className="absolute top-[10%] left-[15%] w-125 h-125"
 					style={{
 						background: 'radial-gradient(circle, #9239e4, transparent 75%)',
-						opacity: 0.18,
+						opacity: 0.25,
 						filter: 'blur(60px)',
 					}}
 				/>
-				<div className="absolute top-[25%] left-[35%] w-[400px] h-[400px] ..."
+				<div className="absolute top-[25%] left-[35%] w-100 h-100 ..."
 					style={{
 						background: 'radial-gradient(circle, #00bfff, transparent 50%)',
-						opacity: 0.18,
+						opacity: 0.25,
 						filter: 'blur(70px)',
 					}}
 				/>
-				<div className="absolute top-[5%] left-[45%] w-[450px] h-[450px] ..."
+				<div className="absolute top-[5%] left-[45%] w-110 h-110 ..."
 					style={{
 						background: 'radial-gradient(circle, #9239e4, transparent 80%)',
-						opacity: 0.18,
+						opacity: 0.25,
 						filter: 'blur(80px)',
 					}}
 				/>
