@@ -1,7 +1,8 @@
-import { Injectable, BadRequestException} from "@nestjs/common";
+import { Injectable, BadRequestException, NotFoundException} from "@nestjs/common";
 import { User } from "./types/users";
 import { PrismaService } from "src/prisma/prisma.service";
-import {Prisma, User as PrismaUser} from "@prisma/client";
+import { Prisma, User as PrismaUser, AuthProvider } from "@prisma/client";
+
 
 @Injectable()
 export class UsersService{
@@ -11,18 +12,26 @@ export class UsersService{
 		private toDomain(user: PrismaUser): User{
 			return{
 				 	id: user.id,
+					steamId: user.steamId,
+					avatarUrl: user.avatarUrl,
 					email: user.email,
 					username: user.username,
 					passwordHash: user.passwordHash,
+					steamLinkedAt : user.steamLinkedAt,
+					lastSteamUpdated: user.lastSteamUpdated,
+					authProvider: user.authProvider,
 			};	
 	}
 		private isUniqueConstraintError(error: unknown): error is Prisma.PrismaClientKnownRequestError {
   			return (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002");
 	}
-	async create(email:string, username: string, passwordHash: string): Promise<User>{
+		private isNotFoundError(error: unknown): error is Prisma.PrismaClientKnownRequestError {
+  			return (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2025");
+	}
+	async createLocalUser(email:string, username: string, passwordHash: string): Promise<User>{
 		try {
 			const created = await this.prisma.user.create({
-				data: {email, username,  passwordHash},
+				data: {email, username, passwordHash},
 		});
 		return (this.toDomain(created));
 		} catch (error: unknown)
@@ -59,5 +68,51 @@ export class UsersService{
 		if (!user)
 			return (undefined);
 		return (this.toDomain(user));
+	}
+	async findBySteamId(steamId: string): Promise <User | undefined> {
+		const user =  await this.prisma.user.findUnique({
+			where : {steamId}
+		});
+		if (!user)
+			return undefined;
+		return (this.toDomain(user));
+	}
+	async createSteamUser(input:{steamId: string, username: string, avatarUrl: string | null}): Promise<User> {
+		try {
+			const created = await this.prisma.user.create({
+				data: {steamId: input.steamId, username: input.username, avatarUrl: input.avatarUrl, authProvider: AuthProvider.STEAM, steamLinkedAt : new Date()},
+			})
+			return (this.toDomain(created))
+		}
+		catch(error: unknown){
+			if (!this.isUniqueConstraintError(error))
+				throw error;
+			let target = "";
+			if(Array.isArray(error.meta?.target))
+			{
+				target = error.meta.target.map((value) => String(value)).join(",");
+			}
+			if (target.includes("steamId"))
+				throw new BadRequestException("Steam account already linked");
+    			if (target.includes("username"))
+				throw new BadRequestException("Username already used");
+			throw new BadRequestException("User already exists");
+		}
+	}
+	async updateSteamProfile(userId: string, avatarUrl: string, lastSteamUpdated: Date): Promise <User>{
+		try{
+			const updated = await this.prisma.user.update({
+			where: {id: userId},
+			data:{avatarUrl: avatarUrl, lastSteamUpdated: lastSteamUpdated}
+			})
+			return (this.toDomain(updated));
+	
+		}
+		catch(error:unknown)
+		{
+			if (this.isNotFoundError(error))
+				throw new NotFoundException("User not found");
+			throw error;
+		}
 	}
 }

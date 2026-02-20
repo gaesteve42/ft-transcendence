@@ -17,15 +17,15 @@ export class AuthService{
 	async register(dto: RegisterDto): Promise<{accessToken: string }>{
 		this.audit.log("auth.register.attempt", {email: dto.email});
 		const passwordHash = await bcrypt.hash(dto.password, 10);
-		const user = await this.users.create(dto.email, dto.username, passwordHash);
-		this.audit.log("auth.register.success", { userId: user.id, email: user.email });
+		const user = await this.users.createLocalUser(dto.email, dto.username, passwordHash);
+		this.audit.log("auth.register.success", { userId: user.id, email: dto.email});
 		const token = this.jwt.sign({ sub : user.id});
 		return {accessToken: token};
 	}
 	async login(dto: LoginDto): Promise<{ accessToken: string }> {
 		this.audit.log("auth.login.attempt", { email: dto.email });
 	const user = await this.users.findByEmail(dto.email);
-	if (!user){
+	if (!user || !user.passwordHash){
 		this.audit.warn("auth.login.fail", { email: dto.email, reason: "not_found" });
 		throw new UnauthorizedException("Invalid credentials");
 	}
@@ -34,7 +34,7 @@ export class AuthService{
 		this.audit.warn("auth.login.fail", { email: dto.email, reason: "bad_password" });
 		throw new UnauthorizedException("Invalid credentials");
 	}
-	this.audit.log("auth.login.success", { userId: user.id, email: user.email });
+	this.audit.log("auth.login.success", { userId: user.id, email: dto.email });
 	return { accessToken: this.jwt.sign({ sub: user.id }) };
 	}
 }
