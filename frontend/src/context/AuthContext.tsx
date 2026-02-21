@@ -14,31 +14,27 @@ type AuthContextType = {
 const AuthContext = createContext<AuthContextType | null>(null)
 
 function AuthProvider({ children }: { children: React.ReactNode }) {
-	const [isLoggedIn, setIsLoggedIn] = useState(() => !!localStorage.getItem("accessToken"))
+	const [isLoggedIn, setIsLoggedIn] = useState(() => !!localStorage.getItem('accessToken'))
 	const navigate = useNavigate()
 
 	const login = (token: string) => {
-		localStorage.setItem("accessToken", token)
+		localStorage.setItem('accessToken', token)
 		setIsLoggedIn(true)
-		navigate("/dashboard")
+		navigate('/dashboard')
 	}
 
 	const logout = () => {
-		localStorage.removeItem("accessToken")
+		localStorage.removeItem('accessToken')
 		setIsLoggedIn(false)
-		navigate("/")
+		navigate('/')
 	}
 
-	return (
-		<AuthContext.Provider value={{ isLoggedIn, login, logout }}>
-			{children}
-		</AuthContext.Provider>
-	)
+	return <AuthContext.Provider value={{ isLoggedIn, login, logout }}>{children}</AuthContext.Provider>
 }
 
 function useAuth() {
 	const context = useContext(AuthContext)
-	if (!context) throw new Error("useAuth doit être utilisé dans un AuthProvider")
+	if (!context) throw new Error('useAuth doit être utilisé dans un AuthProvider')
 	return context
 }
 

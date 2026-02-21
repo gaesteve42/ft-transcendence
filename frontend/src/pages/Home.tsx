@@ -29,44 +29,32 @@ function Home() {
 						Trouvez le jeu parfait pour votre groupe d'amis
 					</p>
 					<p className="text-xl text-text-secondary max-w-2xl">
-						Créez une session, partagez vos envies, et laissez notre algorithme
-						vous recommander les meilleurs jeux pour votre groupe.
+						Créez une session, partagez vos envies, et laissez notre algorithme vous recommander les meilleurs jeux pour
+						votre groupe.
 					</p>
 				</div>
 			</section>
 			{/* Qui sommes-nous Section */}
 			<section className="relative z-10 max-w-4xl mx-auto px-6 py-24">
-				<h2 className="text-3xl font-bold text-center mb-10">
-					Qui sommes-nous ?
-				</h2>
+				<h2 className="text-3xl font-bold text-center mb-10">Qui sommes-nous ?</h2>
 				<div className="bg-dark-800/50 border border-dark-600/50 rounded-xl p-8 md:p-10">
 					<p className="text-text-secondary leading-relaxed mb-4">
-						On est quatre potes — <span className="text-text-purple font-medium">
-							Leo, Gauthier, Kevin et Pierre</span> — et comme beaucoup de joueurs,
-						on a perdu <span className="text-text-purple font-medium">des heures
-							à débattre</span> de ce qu'on allait jouer le soir même.
+						On est quatre potes — Leo, Gauthier, Kevin et Pierre — et comme beaucoup de joueurs, on a perdu des heures à
+						débattre de ce qu'on allait jouer le soir même.
 					</p>
 					<p className="text-text-secondary leading-relaxed mb-4">
-						Entre les <span className="text-text-purple font-medium">goûts
-							différents</span>, les jeux que tout le monde n'a pas, et les
-						"Ouais mais moi j'ai pas envie de ça ce soir"… on a eu l'idée de
-						GameFinder : <span className="text-text-purple font-medium">
-							un outil qui fait le taf à notre place</span>.
+						Entre les goûts différents , les jeux que tout le monde n'a pas, et les besoins de chacun, on a eu l'idée de
+						GameFinder : un outil qui met fin aux débats.
 					</p>
-					<p className="text-text-secondary leading-relaxed">
-						Le concept ? Vous créez une session, chacun indique son
-						<span className="text-text-purple font-medium"> mood et ses envies
-							du moment</span>, et notre algorithme vous sort les jeux qui vont
-						plaire à <span className="text-text-purple font-medium">tout le
-							monde</span>. Simple, rapide, efficace.
+					<p className="text-text-secondary leading-relaxed mb-4">
+						Le concept ? Vous créez une session, chacun indique ses préférences et ses envies du moment, et notre
+						algorithme vous propose les jeux qui vont plaire à tout le monde . Simple, rapide, efficace.
 					</p>
 				</div>
 			</section>
 			{/* Features Section */}
 			<section className="relative z-10 max-w-5xl mx-auto px-6 py-24">
-				<h2 className="text-3xl font-bold text-center mb-4">
-					Comment ça marche ?
-				</h2>
+				<h2 className="text-3xl font-bold text-center mb-4">Comment ça marche ?</h2>
 				<p className="text-text-muted text-center mb-14 max-w-lg mx-auto">
 					En trois étapes simples, trouve le jeu idéal pour ta prochaine session.
 				</p>
@@ -74,13 +62,13 @@ function Home() {
 					<FeatureCard
 						step="01"
 						title="Construis ta bibliothèque"
-						description="Parcours notre catalogue et coche les jeux que tu possèdes ou que tu as déjà testés. Plus ton profil est complet, meilleures sont les recommandations."
+						description="Parcours notre catalogue et coche les jeux que tu possèdes ou connecte ton compte à Steam. Plus ton profil est complet, meilleures sont les recommandations."
 						color="#00bfff"
 					/>
 					<FeatureCard
 						step="02"
 						title="Créer une session"
-						description="Lance une session, invite tes amis, et chacun indique son mood du moment : chill, compétitif, coopératif... Notre algorithme fait le reste."
+						description="Lance une session, invite tes amis, et chacun indique ses préférences. Notre algorithme trouvera les jeux les plus adaptés pour vous."
 						color="#9239e4"
 					/>
 					<FeatureCard
@@ -100,10 +88,10 @@ function Home() {
 					}}
 				/>
 				<div className="relative z-10 max-w-2xl mx-auto text-center">
-					<h2 className="text-3xl md:text-4xl font-bold mb-10">
-						Prêt à trouver ton prochain jeu ?
-					</h2>
-					<Button to="/register" variant="blue">Rejoins-nous</Button>
+					<h2 className="text-3xl md:text-4xl font-bold mb-10">Prêt à trouver ton prochain jeu ?</h2>
+					<Button to="/register" variant="blue">
+						Rejoins-nous
+					</Button>
 				</div>
 			</section>
 		</div>
@@ -129,10 +117,7 @@ function FeatureCard({ step, title, description, color }: FeatureCardProps) {
 			>
 				ÉTAPE {step}
 			</span>
-			<h3
-				className="text-xl font-semibold mb-3 transition-colors"
-				style={{ color }}
-			>
+			<h3 className="text-xl font-semibold mb-3 transition-colors" style={{ color }}>
 				{title}
 			</h3>
 			<p className="text-text-secondary text-sm leading-relaxed">{description}</p>

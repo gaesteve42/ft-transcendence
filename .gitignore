@@ -24,3 +24,7 @@ build/
 
 # claude
 .claude
+
+#Workspace settings
+.vscode
+.prettierrc

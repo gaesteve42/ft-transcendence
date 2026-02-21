@@ -19,13 +19,15 @@ type GameResult = {
 	coverColor: string
 }
 
+//prettier-ignore
 const mockUsers: User[] = [
-	{ id: '1', username: 'gauthier', avatar: 'pp', isReady: true, isHost: true },
-	{ id: '2', username: 'KevLePn', avatar: 'pp', isReady: true, isHost: false },
-	{ id: '3', username: 'LeoLaColocMaudite', avatar: 'pp', isReady: true, isHost: false},
-	{ id: '4', username: 'Caillou', avatar: 'pp', isReady: true, isHost: false},
+	{ id: '1', username: 'gauthier', avatar: 'G', isReady: true, isHost: true },
+	{ id: '2', username: 'Kev', avatar: 'K', isReady: true, isHost: false },
+	{ id: '3', username: 'Leo', avatar: 'L', isReady: true, isHost: false },
+	{ id: '4', username: 'Pierre', avatar: 'C', isReady: true, isHost: false },
 ]
 
+//prettier-ignore
 const mockGames: GameResult[] = [
 	{ id: 1, title: 'Among Us', genre: 'Party', coverColor: '#1a1a2e' },
 	{ id: 2, title: 'Stardew Valley', genre: 'Simulation', coverColor: '#2d4a2d' },
@@ -41,11 +43,9 @@ function Session() {
 	const [isCalculating, setIsCalculating] = useState(false)
 	const [revealedGames, setRevealedGames] = useState(0)
 	const [copied, setCopied] = useState(false)
-	const allReady = users.every(p => p.isReady)
+	const allReady = users.every((p) => p.isReady)
 
-	const toggleReady = () => setUsers(prev =>
-		prev.map(p => p.isHost ? { ...p, isReady: !p.isReady } : p)
-	)
+	const toggleReady = () => setUsers((prev) => prev.map((p) => (p.isHost ? { ...p, isReady: !p.isReady } : p)))
 
 	const copyCode = () => {
 		navigator.clipboard.writeText(sessionCode)
@@ -61,7 +61,7 @@ function Session() {
 
 	const launchAlgo = async () => {
 		setIsCalculating(true)
-		await new Promise(r => setTimeout(r, 2000))
+		await new Promise((r) => setTimeout(r, 2000))
 		setIsCalculating(false)
 		setPhase('results')
 		mockGames.forEach((_, i) => {
@@ -102,17 +102,21 @@ function Session() {
 				</div>
 
 				<div className="text-center">
-					<Button variant="secondary" onClick={resetSession}>Nouvelle session</Button>
+					<Button variant="secondary" onClick={resetSession}>
+						Nouvelle session
+					</Button>
 				</div>
 			</div>
 		)
 	}
 
-	const hostParticipant = users.find(p => p.isHost)!
+	const hostParticipant = users.find((p) => p.isHost)!
 	return (
 		<div className="max-w-lg mx-auto px-6 py-12">
-			<h1 className="text-3xl font-bold mb-1 text-center"> Session de {users.find(p => p.isHost)?.username} </h1>
-			<p className="text-text-muted text-sm mb-8 text-center">Invitez vos amis, Remplissez le formulaire puis lancez l'algorithme</p>
+			<h1 className="text-3xl font-bold mb-1 text-center"> Session de {users.find((p) => p.isHost)?.username} </h1>
+			<p className="text-text-muted text-sm mb-8 text-center">
+				Invitez vos amis, Remplissez le formulaire puis lancez l'algorithme
+			</p>
 			{/* Code de session */}
 			<div className="bg-dark-800 border border-dark-600 rounded-xl px-6 py-4 flex items-center justify-between mb-6">
 				<div>
@@ -130,18 +134,16 @@ function Session() {
 					{copied ? '✓ Copié' : '📋 Copier le lien'}
 				</button>
 			</div>
-			{/* Liste des participants */}
+			{/* Liste des utilisateurs */}
 			<div className="mb-6">
 				<div className="flex items-center justify-between mb-3">
-					<p className="text-text-secondary text-xs font-semibold uppercase tracking-wider">
-						Users ({users.length}/4)
-					</p>
+					<p className="text-text-secondary text-xs font-semibold uppercase tracking-wider">Users ({users.length}/4)</p>
 					<p className="text-text-muted text-xs">
-						{users.filter(p => p.isReady).length}/{users.length} prêts
+						{users.filter((p) => p.isReady).length}/{users.length} prêts
 					</p>
 				</div>
 				<div className="space-y-2">
-					{users.map(p => (
+					{users.map((p) => (
 						<div key={p.id} className="bg-dark-800 border border-dark-600 rounded-xl px-4 py-3 flex items-center gap-4">
 							<div className="w-9 h-9 rounded-full bg-dark-700 border border-dark-500 flex items-center justify-center text-lg shrink-0">
 								{p.avatar}
@@ -159,11 +161,13 @@ function Session() {
 									{hostParticipant.isReady ? '✓ Prêt' : 'Pas prêt'}
 								</button>
 							) : (
-								<span className={`px-3 py-1 rounded-full text-xs font-medium border ${
-									p.isReady
-										? 'bg-green-500/20 text-green-400 border-green-500/30'
-										: 'bg-dark-700 text-text-muted border-dark-500'
-								}`}>
+								<span
+									className={`px-3 py-1 rounded-full text-xs font-medium border ${
+										p.isReady
+											? 'bg-green-500/20 text-green-400 border-green-500/30'
+											: 'bg-dark-700 text-text-muted border-dark-500'
+									}`}
+								>
 									{p.isReady ? '✓ Prêt' : 'En attente...'}
 								</span>
 							)}

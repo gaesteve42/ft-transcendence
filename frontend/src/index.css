@@ -1,4 +1,4 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 @theme {
 	--color-dark-950: #13132b;
@@ -34,7 +34,6 @@ body {
 
 /* Glow animations */
 @keyframes glow-pulse {
-
 	0%,
 	100% {
 		opacity: 0.4;
@@ -46,7 +45,6 @@ body {
 }
 
 @keyframes float {
-
 	0%,
 	100% {
 		transform: translateY(0px);
@@ -58,7 +56,6 @@ body {
 }
 
 @keyframes float-slow {
-
 	0%,
 	100% {
 		transform: translateY(0px) scale(1);
