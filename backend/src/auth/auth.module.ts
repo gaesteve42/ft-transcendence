@@ -6,6 +6,9 @@ import { JwtModule } from "@nestjs/jwt";
 import { ConfigService } from "@nestjs/config";
 import { JwtStrategy } from "./jwt.strategy";
 import { LoggingModule } from "src/common/logging/logging.module";
+import { SteamAuthService } from "./steam-auth.service";
+import { SteamStrategy } from "./steam-strategy";
+
 
 @Module({
 	imports: [
@@ -28,6 +31,6 @@ import { LoggingModule } from "src/common/logging/logging.module";
 		}),
 	],
 	controllers:[AuthController],
-	providers:[AuthService, JwtStrategy],
+	providers:[AuthService, JwtStrategy, SteamAuthService, SteamStrategy],
 })
 export class AuthModule{}

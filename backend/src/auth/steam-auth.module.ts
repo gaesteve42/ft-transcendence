@@ -6,7 +6,8 @@ import { LoggingModule } from "src/common/logging/logging.module";
 import { JwtModule } from "@nestjs/jwt";
 
 @Module({
-	import: [UsersModule,
+	imports: [UsersModule,
 		LoggingModule, JwtModule],
 	providers: [SteamAuthService],
 })
+export class SteamAuthModule{}
