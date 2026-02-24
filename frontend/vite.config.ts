@@ -9,7 +9,7 @@ export default defineConfig({
 	],
 	server: {
 		host: '0.0.0.0',
-		allowedHosts: ['hometown-gauge-blonde-backup.trycloudflare.com'],
+		allowedHosts: ['power-drainage-thumbs-venice.trycloudflare.com'],
 		port: 5173,
 		watch: {
 			usePolling: true // Requis pour le hot-reload dans Docker
