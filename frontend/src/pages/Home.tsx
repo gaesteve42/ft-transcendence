@@ -25,10 +25,10 @@ function Home() {
 						{/* Texte principal */}
 						<span className="relative text-gradient-main">GameFinder</span>
 					</h1>
-					<p className="text-xl md:text-2xl text-text-secondary mb-6 max-w-2xl">
+					<p className="text-xl md:text-2xl text-text-white mb-6 max-w-2xl">
 						Trouvez le jeu parfait pour votre groupe d'amis
 					</p>
-					<p className="text-xl text-text-secondary max-w-2xl">
+					<p className="text-xl text-text-white max-w-2xl">
 						Créez une session, partagez vos envies, et laissez notre algorithme vous recommander les meilleurs jeux pour
 						votre groupe.
 					</p>
@@ -38,15 +38,15 @@ function Home() {
 			<section className="relative z-10 max-w-4xl mx-auto px-6 py-24">
 				<h2 className="text-3xl font-bold text-center mb-10">Qui sommes-nous ?</h2>
 				<div className="bg-dark-800/50 border border-dark-600/50 rounded-xl p-8 md:p-10">
-					<p className="text-text-secondary leading-relaxed mb-4">
+					<p className="text-text-white leading-relaxed mb-4">
 						On est quatre potes — Leo, Gauthier, Kevin et Pierre — et comme beaucoup de joueurs, on a perdu des heures à
 						débattre de ce qu'on allait jouer le soir même.
 					</p>
-					<p className="text-text-secondary leading-relaxed mb-4">
+					<p className="text-text-white leading-relaxed mb-4">
 						Entre les goûts différents , les jeux que tout le monde n'a pas, et les besoins de chacun, on a eu l'idée de
 						GameFinder : un outil qui met fin aux débats.
 					</p>
-					<p className="text-text-secondary leading-relaxed mb-4">
+					<p className="text-text-white leading-relaxed mb-4">
 						Le concept ? Vous créez une session, chacun indique ses préférences et ses envies du moment, et notre
 						algorithme vous propose les jeux qui vont plaire à tout le monde . Simple, rapide, efficace.
 					</p>
@@ -120,7 +120,7 @@ function FeatureCard({ step, title, description, color }: FeatureCardProps) {
 			<h3 className="text-xl font-semibold mb-3 transition-colors" style={{ color }}>
 				{title}
 			</h3>
-			<p className="text-text-secondary text-sm leading-relaxed">{description}</p>
+			<p className="text-text-white text-sm leading-relaxed">{description}</p>
 		</div>
 	)
 }

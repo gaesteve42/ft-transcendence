@@ -116,7 +116,7 @@ function Profile() {
 						<Button variant="blue" onClick={handleSave}>
 							Sauvegarder
 						</Button>
-						<Button variant="secondary" onClick={cancelEditing}>
+						<Button variant="white" onClick={cancelEditing}>
 							Annuler
 						</Button>
 					</div>
@@ -144,7 +144,7 @@ function Profile() {
 							</div>
 						</div>
 						<div className="flex justify-end">
-							<Button variant="secondary" onClick={startEditing}>
+							<Button variant="white" onClick={startEditing}>
 								Modifier le profil
 							</Button>
 						</div>
@@ -172,7 +172,7 @@ function Profile() {
 								<p className="text-text-muted text-xs">Non connecté</p>
 							</div>
 						</div>
-						<button className="px-4 py-2 rounded-full text-xs font-medium border bg-dark-600 text-text-secondary border-dark-500 hover:border-violet-500/50 hover:text-text-purple transition-all">
+						<button className="px-4 py-2 rounded-full text-xs font-medium border bg-dark-600 text-text-white border-dark-500 hover:border-violet-500/50 hover:text-text-purple transition-all">
 							Connecter
 						</button>
 					</div>

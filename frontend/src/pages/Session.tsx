@@ -73,7 +73,7 @@ function Session() {
 			<div className="flex items-center justify-center min-h-[60vh]">
 				<div className="text-center">
 					<div className="text-5xl mb-4 animate-glow-pulse">⟳</div>
-					<p className="text-text-secondary text-lg">Calcul en cours...</p>
+					<p className="text-text-white text-lg">Calcul en cours...</p>
 					<p className="text-text-muted text-sm mt-2">L'algorithme analyse les goûts de votre groupe</p>
 				</div>
 			</div>
@@ -102,7 +102,7 @@ function Session() {
 				</div>
 
 				<div className="text-center">
-					<Button variant="secondary" onClick={resetSession}>
+					<Button variant="white" onClick={resetSession}>
 						Nouvelle session
 					</Button>
 				</div>
@@ -128,7 +128,7 @@ function Session() {
 					className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 border ${
 						copied
 							? 'bg-green-500/20 text-green-400 border-green-500/30 scale-105'
-							: 'bg-dark-700 text-text-secondary border-dark-500 hover:border-violet-500/50 hover:text-text-purple'
+							: 'bg-dark-700 text-text-white border-dark-500 hover:border-violet-500/50 hover:text-text-purple'
 					}`}
 				>
 					{copied ? '✓ Copié' : '📋 Copier le lien'}
@@ -137,7 +137,7 @@ function Session() {
 			{/* Liste des utilisateurs */}
 			<div className="mb-6">
 				<div className="flex items-center justify-between mb-3">
-					<p className="text-text-secondary text-xs font-semibold uppercase tracking-wider">Users ({users.length}/4)</p>
+					<p className="text-text-white text-xs font-semibold uppercase tracking-wider">Users ({users.length}/4)</p>
 					<p className="text-text-muted text-xs">
 						{users.filter((p) => p.isReady).length}/{users.length} prêts
 					</p>

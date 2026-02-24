@@ -24,7 +24,7 @@ function Library() {
 			{/*Panneau mes jeux*/}
 			<div className="w-[18%] border-r border-dark-600 flex flex-col bg-dark-950">
 				<div className="px-4 py-3 border-b border-dark-600">
-					<p className="text-text-secondary text-xs font-semibold uppercase tracking-wider">Mes jeux</p>
+					<p className="text-text-white text-xs font-semibold uppercase tracking-wider">Mes jeux</p>
 				</div>
 				<div className="flex-1 overflow-y-auto"></div>
 			</div>
