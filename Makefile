@@ -1,9 +1,14 @@
-.PHONY: all up logs down clean fclean prune re re-nocache
+.PHONY: all up logs down clean fclean prune re re-nocache restart reset-db
 
 all: up
 
 up:
 	@echo "Starting services..."
+	@docker compose up -d --build
+
+restart:
+	@echo "Restarting services without deleting volumes (DB persists)..."
+	@docker compose down
 	@docker compose up -d --build
 
 logs:
@@ -14,6 +19,12 @@ down:
 	@docker compose down
 
 clean: down
+
+reset-db:
+	@echo "Stopping services and deleting database volume..."
+	@docker compose down -v
+	@echo "Rebuilding and restarting services..."
+	@docker compose up -d --build
 
 fclean:
 	@echo "Stopping services..."
