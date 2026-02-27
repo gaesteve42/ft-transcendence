@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable } from "@nestjs/common";
-import { ExternalGameSource} from "@prisma/client";
+import { ExternalGameSource, GameExternalId} from "@prisma/client";
 import { PrismaService } from "src/prisma/prisma.service";
 import { Game } from "./types/game";
 import { Prisma, Game as PrismaGame} from "@prisma/client";
@@ -75,5 +75,59 @@ export class GameService {
 				throw error;
 			throw new BadRequestException("Canonical Game already exists");
 		}
-	}	
+	}
+	async linkExternalId(gameId: string, source: ExternalGameSource, externalId: string, externalUrl: string | null) : Promise <void> {
+		let cleanExternalUrl : string |null = null;
+		const cleanGameId = gameId.trim();
+		const cleanExternalId = externalId.trim();
+
+		if (cleanExternalId.length === 0 ||cleanGameId.length === 0 )
+			throw new BadRequestException("Game Id and External Id can't be empty");
+		if (externalUrl !== null)
+		{
+			cleanExternalUrl = externalUrl.trim();
+			if (cleanExternalUrl.length === 0)
+				cleanExternalUrl = null;
+		}
+		try {
+			await this.prisma.gameExternalId.create({data: {gameId: cleanGameId, externalId: cleanExternalId, externalUrl: cleanExternalUrl, source: source}});
+		}
+		catch(error: unknown)
+		{
+			if (!this.isUniqueConstraintError(error))
+				throw error;
+			throw new BadRequestException("External Id is already linked.")
+		}
+	}
+	/**
+	 * Upserts a game from an external provider (Steam/IGDB).
+	 *
+	 * Concurrency note:
+	 * two requests may try to create the same external mapping at the same time.
+	 * If a unique conflict (P2002) happens, we re-read by (source, externalId)
+	 * and return the existing game.
+	 *
+	 * @param input External game payload used to resolve or create the canonical game.
+	 * @returns The canonical game.
+	 */
+	async upsertFromExternal(input:{source: ExternalGameSource, externalId: string, externalUrl: string | null, canonicalSlug: string, name: string, summary: string | null, coverUrl: string | null, firstReleaseDate: Date | null}): Promise <Game>{
+		try{
+			const existing= await this.findByExternalId(input.source, input.externalId);
+			if (existing)
+				return (existing);
+			const created = await this.createCanonicalGame(input.canonicalSlug, input.name, input.summary, input.coverUrl, input.firstReleaseDate);
+			await this.linkExternalId(created.id, input.source, input.externalId, input.externalUrl);
+			return (created);
+		}
+		catch(error: unknown)
+		{
+			if (!this.isUniqueConstraintError(error))
+				throw error ;
+			const resolved = await this.findByExternalId(input.source, input.externalId);
+			if (resolved)
+				return (resolved);
+			else 
+				throw error;
+		}
+	}
 }
