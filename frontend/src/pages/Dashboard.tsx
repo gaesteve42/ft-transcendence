@@ -22,7 +22,7 @@ function Dashboard() {
 							</p>
 						</div>
 						<Button variant="white" to="/steam-link">
-							Connecter Steam
+							Connecter à Steam
 						</Button>
 					</div>
 					{/* Library Card */}
@@ -39,7 +39,7 @@ function Dashboard() {
 						</Button>
 					</div>
 					{/* Session Card */}
-					<div className="md:col-span-2 rounded-xl p-px border border-dark-600  text-center hover:border-transparent hover:bg-linear-to-r hover:from-blue-500 hover:to-violet-500 transition-all hover:shadow-[0_0_30px_rgba(100,80,228,0.3)]">
+					<div className="md:col-span-2 rounded-xl p-px border border-dark-600 text-center hover:border-transparent hover:bg-linear-to-r hover:from-blue-500 hover:to-violet-500 transition-all hover:shadow-[0_0_30px_rgba(100,80,228,0.3)]">
 						<div className="bg-dark-800 rounded-[11px] p-8">
 							{' '}
 							{/* cette div nous permet de cacher le bloc entier de couleur afin d illuminer uniquement les contours*/}
@@ -47,11 +47,11 @@ function Dashboard() {
 								<h2 className="text-2xl font-bold text-gradient-main">Commencez maintenant</h2>
 								<p className="text-text-white leading-relaxed">
 									hébergez une session et inviter des amis, remplissez un formulaire sur vos envies et préférences, puis
-									laissez l'algorithme faire le reste ! il vous conseillera les jeux les plus adaptés selon les goûts de
-									chacun au sein de votre groupe d'amis.
+									laissez l'algorithme faire le reste ! il vous conseillera sur les jeux les plus adaptés selon les
+									goûts de chacun au sein de votre groupe d'amis.
 								</p>
 							</div>
-							<div className="grid grid-cols-2 gap-8">
+							<div className="grid md:grid-cols-2 gap-8 ">
 								<Button variant="white" to="/session">
 									Créer une session
 								</Button>
