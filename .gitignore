@@ -22,3 +22,6 @@ build/
 
 #Workspace settings
 .prettierrc
+
+#Python cache
+__pycache__/
