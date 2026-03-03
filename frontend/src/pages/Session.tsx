@@ -53,12 +53,6 @@ function Session() {
 		setTimeout(() => setCopied(false), 2000)
 	}
 
-	const resetSession = () => {
-		setPhase('setup')
-		setUsers(mockUsers)
-		setRevealedGames(0)
-	}
-
 	const launchAlgo = async () => {
 		setIsCalculating(true)
 		await new Promise((r) => setTimeout(r, 2000))
@@ -79,7 +73,6 @@ function Session() {
 			</div>
 		)
 	}
-
 	if (phase === 'results') {
 		return (
 			<div className="px-6 py-12">
@@ -100,16 +93,14 @@ function Session() {
 						</div>
 					))}
 				</div>
-
 				<div className="text-center">
-					<Button variant="white" onClick={resetSession}>
-						Nouvelle session
+					<Button variant="white" onClick={launchAlgo}>
+						Relancer
 					</Button>
 				</div>
 			</div>
 		)
 	}
-
 	const hostParticipant = users.find((p) => p.isHost)!
 	return (
 		<div className="max-w-lg mx-auto px-6 py-12">

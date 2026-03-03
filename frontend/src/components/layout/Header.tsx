@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext'
 import Button from '../ui/Button'
 import Logo from '../ui/Logo'
 
-// la barre de navigation dans la partie supérieure du site
+// la barre de nav dans la partie supérieure du site
 function Header() {
 	const { isLoggedIn, logout } = useAuth()
 	return (
