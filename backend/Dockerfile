@@ -4,7 +4,7 @@ WORKDIR /usr/src/app
 
 COPY package*.json ./
 
-RUN npm install
+RUN npm ci
 
 COPY prisma ./prisma
 RUN npx --no-install prisma generate
