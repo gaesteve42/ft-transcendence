@@ -6,6 +6,10 @@ up:
 	@echo "Starting services..."
 	@docker compose up -d --build
 
+prod:
+	@echo "Starting services... (without compose override for prod time, kudos !)"
+	@docker compose -f docker-compose.yml up -d --build
+
 restart:
 	@echo "Restarting services without deleting volumes (DB persists)..."
 	@docker compose down
