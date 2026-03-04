@@ -1,7 +1,9 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router'
+import { Link, useNavigate } from 'react-router'
+import { motion } from 'motion/react'
 import { useAuth } from '../components/context/AuthContext'
 import Input from '../components/ui/Input'
+import Button from '../components/ui/Button'
 
 type RegisterResponse = {
 	message?: string
@@ -14,15 +16,18 @@ function Register() {
 	const [password, setPassword] = useState('')
 	const [confirmPassword, setConfirmPassword] = useState('')
 	const [error, setError] = useState('')
+	const [isLoading, setIsLoading] = useState(false)
 	const navigate = useNavigate()
 	const { login } = useAuth()
+
 	const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
 		e.preventDefault()
 		setError('')
 		if (password !== confirmPassword) {
-			setError('Les mots de passe ne correspondent pas')
+			setError('Passwords do not match')
 			return
 		}
+		setIsLoading(true)
 		try {
 			const response = await fetch('/api/auth/register', {
 				method: 'POST',
@@ -31,7 +36,7 @@ function Register() {
 			})
 			const data = (await response.json()) as RegisterResponse
 			if (!response.ok) {
-				setError(data.message || "Erreur d'inscription")
+				setError(data.message || 'Registration failed')
 				return
 			}
 			if (data.accessToken) {
@@ -39,13 +44,21 @@ function Register() {
 				navigate('/dashboard')
 			}
 		} catch {
-			setError('Erreur réseau, réessayez plus tard')
+			setError('Network error, please try again')
+		} finally {
+			setIsLoading(false)
 		}
 	}
+
 	return (
 		<div className="min-h-screen text-white flex items-center justify-center">
-			<form onSubmit={handleSubmit} className="flex flex-col gap-6 w-96">
-				<h1 className="text-3xl font-bold text-center mb-4">Inscription</h1>
+			<motion.form
+				onSubmit={handleSubmit}
+				className="flex flex-col gap-6 w-96"
+				initial={{ opacity: 0, y: 20 }}
+				animate={{ opacity: 1, y: 0 }}
+			>
+				<h1 className="text-3xl font-bold text-center mb-4">Sign up</h1>
 				<Input
 					type="text"
 					label="Username"
@@ -56,7 +69,7 @@ function Register() {
 				<Input
 					type="email"
 					label="Email"
-					placeholder="exemple@email.com"
+					placeholder="example@email.com"
 					value={email}
 					onChange={(e) => setEmail(e.target.value)}
 				/>
@@ -69,19 +82,22 @@ function Register() {
 				/>
 				<Input
 					type="password"
-					label="ConfirmPassword"
+					label="Confirm Password"
 					placeholder="••••••••"
 					value={confirmPassword}
 					onChange={(e) => setConfirmPassword(e.target.value)}
 				/>
-				{error && <p className="text-red-500">{error}</p>}
-				<button
-					type="submit"
-					className="bg-blue-500 hover:bg-blue-700 px-4 py-2 rounded-lg font-semibold transition-colors"
-				>
-					S'inscrire
-				</button>
-			</form>
+				{error && <p className="text-red-500 text-sm">{error}</p>}
+				<Button type="submit" variant="blue" disabled={isLoading}>
+					{isLoading ? 'Signing up...' : 'Sign up'}
+				</Button>
+				<p className="text-center text-sm text-text-muted">
+					Already have an account?{' '}
+					<Link to="/login" className="text-blue-400 hover:text-blue-300 transition-colors">
+						Log in
+					</Link>
+				</p>
+			</motion.form>
 		</div>
 	)
 }

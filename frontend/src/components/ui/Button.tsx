@@ -6,10 +6,11 @@ type ButtonProps = {
 	type?: 'button' | 'submit'
 	variant?: 'purple' | 'white' | 'blue' | 'gradient'
 	onClick?: () => void
+	disabled?: boolean
 }
 
-function Button({ children, to, type = 'button', variant = 'purple', onClick }: ButtonProps) {
-	const base = 'px-6 py-3 rounded-lg font-semibold transition-all text-center cursor-pointer'
+function Button({ children, to, type = 'button', variant = 'purple', onClick, disabled }: ButtonProps) {
+	const base = 'px-6 py-3 rounded-lg font-semibold transition-all text-center cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed'
 	const variants = {
 		purple: 'bg-violet-500 hover:bg-violet-600 text-white hover:shadow-[0_0_25px_rgba(146,57,228,0.5)]',
 		white:
@@ -28,7 +29,7 @@ function Button({ children, to, type = 'button', variant = 'purple', onClick }: 
 	}
 
 	return (
-		<button type={type} onClick={onClick} className={className}>
+		<button type={type} onClick={onClick} disabled={disabled} className={className}>
 			{children}
 		</button>
 	)
