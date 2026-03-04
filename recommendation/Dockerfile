@@ -14,5 +14,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-# Je t'ai fait la commande pour le hot-reload Python. Décommente stv.
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8001"]
