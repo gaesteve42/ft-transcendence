@@ -11,6 +11,7 @@ import Dashboard from './pages/Dashboard'
 import Library from './pages/Library'
 import PrivacyPolicy from './pages/PrivacyPolicy'
 import TermsOfService from './pages/TermsOfService'
+import SteamCallback from './pages/SteamCallback'
 
 function App() {
 	return (
@@ -24,6 +25,7 @@ function App() {
 						<Route path="/login" element={<Login />} />
 						<Route path="/privacy" element={<PrivacyPolicy />} />
 						<Route path="/terms" element={<TermsOfService />} />
+						<Route path="/auth/steam/callback" element={<SteamCallback />} />
 
 						{/* Pages protégées */}
 						<Route

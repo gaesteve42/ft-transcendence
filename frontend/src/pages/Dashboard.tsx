@@ -1,13 +1,8 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
+import { useAuth } from '../components/context/AuthContext'
 import { motion, AnimatePresence } from 'motion/react'
 import { Link, useNavigate } from 'react-router'
 import Button from '../components/ui/Button'
-
-interface User {
-	id: string
-	email: string
-	username: string
-}
 
 type Tab = 'overview' | 'historique' | 'bibliotheque'
 
@@ -48,31 +43,11 @@ const mockSessionHistory = [
 ]
 
 function Dashboard() {
-	const [user, setUser] = useState<User | null>(null)
+	const { user, loading } = useAuth()
 	const [sessionCode, setSessionCode] = useState('')
 	const [joinError, setJoinError] = useState('')
-	const [loading, setLoading] = useState(true)
 	const [activeTab, setActiveTab] = useState<Tab>('overview')
 	const navigate = useNavigate()
-
-	useEffect(() => {
-		const token = localStorage.getItem('accessToken')
-		fetch('/api/auth/me', {
-			headers: { Authorization: `Bearer ${token}` },
-		})
-			.then((res) => {
-				if (!res.ok) throw new Error('auth')
-				return res.json()
-			})
-			.then((userData) => {
-				setUser(userData)
-				setLoading(false)
-			})
-			.catch(() => {
-				localStorage.removeItem('accessToken')
-				window.location.href = '/login'
-			})
-	}, [])
 
 	const joinLobby = async (lobbyId: string) => {
 		if (!lobbyId.trim()) return
