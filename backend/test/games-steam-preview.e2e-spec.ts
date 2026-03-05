@@ -5,14 +5,15 @@ import { AppModule } from "../src/app.module";
 import { SteamLibraryImportService } from "../src/games/steam-library-import.service";
 import { PrismaService } from "../src/prisma/prisma.service";
 
-describe("Games Steam Preview (e2e)", () => {
+describe("Games Steam Preview/Import (e2e)", () => {
 	let app: INestApplication;
-	let steamImportMock: { previewImport: jest.Mock };
+	let steamImportMock: { previewImport: jest.Mock; importLibrary: jest.Mock };
 	let prismaMock: { $connect: jest.Mock; $disconnect: jest.Mock };
 
 	beforeAll(async () => {
 		steamImportMock = {
 			previewImport: jest.fn(),
+			importLibrary: jest.fn(),
 		};
 		prismaMock = {
 			$connect: jest.fn(),
@@ -114,6 +115,50 @@ describe("Games Steam Preview (e2e)", () => {
 			.expect(400);
 
 		expect(steamImportMock.previewImport).toHaveBeenCalledWith(steamId);
+		expect(res.body.statusCode).toBe(400);
+		expect(res.body.error).toBe("Bad Request");
+	});
+
+	it("POST /api/games/steam/:steamId/import returns import summary", async () => {
+		const steamId = "76561198000000000";
+		const importedAt = new Date("2026-03-05T10:00:00.000Z");
+		steamImportMock.importLibrary.mockResolvedValue({
+			steamId,
+			userId: "user-1",
+			importedAt,
+			totalFetched: 2,
+			createdCanonicalGames: 1,
+			linkedUserGames: 2,
+			updatedUserGames: 0,
+		});
+
+		const res = await request(app.getHttpServer())
+			.post(`/api/games/steam/${steamId}/import`)
+			.expect(201);
+
+		expect(steamImportMock.importLibrary).toHaveBeenCalledWith(steamId);
+		expect(res.body).toEqual({
+			steamId,
+			userId: "user-1",
+			importedAt: importedAt.toISOString(),
+			totalFetched: 2,
+			createdCanonicalGames: 1,
+			linkedUserGames: 2,
+			updatedUserGames: 0,
+		});
+	});
+
+	it("POST /api/games/steam/:steamId/import propagates domain errors", async () => {
+		const steamId = "invalid-steam-id";
+		steamImportMock.importLibrary.mockRejectedValue(
+			new BadRequestException("Steam ID is invalid"),
+		);
+
+		const res = await request(app.getHttpServer())
+			.post(`/api/games/steam/${steamId}/import`)
+			.expect(400);
+
+		expect(steamImportMock.importLibrary).toHaveBeenCalledWith(steamId);
 		expect(res.body.statusCode).toBe(400);
 		expect(res.body.error).toBe("Bad Request");
 	});

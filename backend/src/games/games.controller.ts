@@ -27,4 +27,8 @@ export class GameController {
 	previewSteamImport(@Param("steamId") steamId: string) {
 		return this.steamImport.previewImport(steamId);
 	}
+	@Post("steam/:steamId/import")
+	importSteamLibrary(@Param("steamId") steamId: string) {
+		return this.steamImport.importLibrary(steamId);
+	}
 }
