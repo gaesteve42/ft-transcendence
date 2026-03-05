@@ -22,3 +22,6 @@ build/
 
 #Workspace settings
 .prettierrc
+
+#frontend
+frontend.md
