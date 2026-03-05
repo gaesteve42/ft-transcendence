@@ -117,7 +117,7 @@ function Dashboard() {
 						{activeTab === 'overview' && (
 							<div>
 								{/* Actions : Créer + Rejoindre */}
-								<div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+								<div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
 									{/* Create Session */}
 									<motion.div
 										initial={{ opacity: 0, y: 20 }}
@@ -126,14 +126,17 @@ function Dashboard() {
 											...hoverGradient,
 											boxShadow: '0 8px 30px rgba(146,57,228,0.3)',
 										}}
-										className="rounded-2xl p-6 cursor-pointer group bg-dark-800 border border-dark-600"
+										className="rounded-2xl p-6 cursor-pointer group bg-dark-800 border border-dark-600 flex flex-col justify-between"
 									>
-										<h3 className="text-xl font-bold mb-2 mt-1">Create a Session</h3>
-										<p className="text-sm text-text-white mb-4">Host a lobby and invite your friends with a given code</p>
-										<Link to="/session" className="text-sm font-medium text-blue-400 inline-flex items-center gap-2">
-											Start now
-											<span className="group-hover:translate-x-1 transition-transform inline-block">→</span>
-										</Link>
+										<div>
+											<h3 className="text-xl font-bold">Create a Session</h3>
+											<p className="text-sm text-text-white">Host a lobby and invite your friends with a given code</p>
+										</div>
+										<div className="flex gap-3 mt-4">
+											<Button to="/session" variant="blue" size="small">
+												Start now
+											</Button>
+										</div>
 									</motion.div>
 
 									{/* Join Session */}
@@ -145,11 +148,13 @@ function Dashboard() {
 											...hoverGradient,
 											boxShadow: '0 8px 30px rgba(0,191,255,0.3)',
 										}}
-										className="rounded-2xl p-6 group bg-dark-800 border border-dark-600"
+										className="rounded-2xl p-6 group bg-dark-800 border border-dark-600 flex flex-col justify-between"
 									>
-										<h3 className="text-xl font-bold mb-2 mt-1">Join a Session</h3>
-										<p className="text-sm text-text-white mb-4">Write here the code of the lobby your friend has given you</p>
-										<div className="flex gap-3">
+										<div>
+											<h3 className="text-xl font-bold">Join a Session</h3>
+											<p className="text-sm text-text-white">Write here the code of the lobby your friend has given you</p>
+										</div>
+										<div className="flex gap-3 mt-4">
 											<input
 												type="text"
 												value={sessionCode}
@@ -158,7 +163,7 @@ function Dashboard() {
 												placeholder="Session code"
 												className="flex-1 px-4 py-2 rounded-lg bg-dark-700 border border-dark-500 text-white placeholder-text-muted text-sm focus:outline-none focus:border-violet-500 transition-colors"
 											/>
-											<Button variant="blue" onClick={() => joinLobby(sessionCode)}>
+											<Button variant="purple" size="small" onClick={() => joinLobby(sessionCode)}>
 												Join
 											</Button>
 										</div>
