@@ -91,6 +91,12 @@ function Register() {
 				<Button type="submit" variant="blue" disabled={isLoading}>
 					{isLoading ? 'Signing up...' : 'Sign up'}
 				</Button>
+				<a
+					href="/api/auth/steam"
+					className="px-4 py-2 rounded-lg text-sm font-semibold transition-all text-center cursor-pointer bg-dark-700 hover:bg-dark-600 text-text-purple border border-dark-500 hover:border-violet-500/50 hover:shadow-[0_0_20px_rgba(146,57,228,0.2)] self-center"
+				>
+					Log in with Steam
+				</a>
 				<p className="text-center text-sm text-text-muted">
 					Already have an account?{' '}
 					<Link to="/login" className="text-blue-400 hover:text-blue-300 transition-colors">
