@@ -1,8 +1,16 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuth } from '../components/context/AuthContext'
 import { motion, AnimatePresence } from 'motion/react'
 import { Link, useNavigate } from 'react-router'
 import Button from '../components/ui/Button'
+
+type SteamGame = {
+	appId: string
+	name: string
+	playtimeMinutesForever: number
+	playtimeMinutesLast2Weeks: number
+	iconUrl: string | null
+}
 
 type Tab = 'overview' | 'historique' | 'bibliotheque'
 
@@ -47,7 +55,31 @@ function Dashboard() {
 	const [sessionCode, setSessionCode] = useState('')
 	const [joinError, setJoinError] = useState('')
 	const [activeTab, setActiveTab] = useState<Tab>('overview')
+	const [steamGames, setSteamGames] = useState<SteamGame[]>([])
+	const [steamLoading, setSteamLoading] = useState(false)
+	const [sortBy, setSortBy] = useState<'playtime' | 'recent'>('playtime')
 	const navigate = useNavigate()
+
+	const sortedGames = [...steamGames]
+		.filter((g) => sortBy !== 'recent' || g.playtimeMinutesLast2Weeks > 0)
+		.sort((a, b) =>
+			sortBy === 'recent'
+				? b.playtimeMinutesLast2Weeks - a.playtimeMinutesLast2Weeks
+				: b.playtimeMinutesForever - a.playtimeMinutesForever
+		)
+
+	const steamHeaderUrl = (appId: string) =>
+		`https://cdn.akamai.steamstatic.com/steam/apps/${appId}/header.jpg`
+
+	useEffect(() => {
+		if (activeTab !== 'bibliotheque' || !user?.steamId) return
+		setSteamLoading(true)
+		fetch(`/api/games/steam/${user.steamId}/preview`)
+			.then((res) => res.json())
+			.then((data) => setSteamGames(data.games ?? []))
+			.catch(() => setSteamGames([]))
+			.finally(() => setSteamLoading(false))
+	}, [activeTab, user?.steamId])
 
 	const joinLobby = async (lobbyId: string) => {
 		if (!lobbyId.trim()) return
@@ -126,7 +158,7 @@ function Dashboard() {
 											...hoverGradient,
 											boxShadow: '0 8px 30px rgba(146,57,228,0.3)',
 										}}
-										className="rounded-2xl p-6 cursor-pointer group bg-dark-800 border border-dark-600 flex flex-col justify-between"
+										className="rounded-2xl p-6 group bg-dark-800 border border-dark-600 flex flex-col justify-between"
 									>
 										<div>
 											<h3 className="text-xl font-bold">Create a Session</h3>
@@ -257,7 +289,9 @@ function Dashboard() {
 											<div>
 												<h3 className="text-lg font-bold">Steam Profile</h3>
 												<p className={`text-sm ${user?.steamId ? 'text-green-400' : 'text-text-muted'}`}>
-													{user?.steamId ? 'Connected' : 'Not connected'}
+													{user?.steamId
+														? `Connected · ${steamGames.length} games`
+														: 'Not connected'}
 												</p>
 											</div>
 										</div>
@@ -269,16 +303,94 @@ function Dashboard() {
 									</div>
 								</motion.div>
 
-								{/* Mes jeux likés */}
+								{/* Steam Library Preview */}
 								<motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="rounded-2xl p-6 bg-dark-800 border border-dark-600">
-									<h3 className="text-lg font-bold mb-1">My liked games</h3>
-									<p className="text-text-muted text-sm mb-6">Games you've added to your library</p>
-									<div className="flex flex-col items-center justify-center h-40 rounded-xl border border-dashed border-dark-500">
-										<p className="text-text-muted text-sm mb-3">No games in your library yet</p>
-										<Link to="/library" className="text-sm font-medium text-violet-400 hover:text-violet-300 transition-colors">
-											Browse the library →
-										</Link>
+									<div className="flex items-center justify-between mb-4">
+										<div>
+											<h3 className="text-lg font-bold">My Steam Games</h3>
+											<p className="text-text-muted text-sm">
+												{steamGames.length > 0
+													? `Showing top ${Math.min(16, steamGames.length)} of ${steamGames.length} games`
+													: 'Your Steam library'}
+											</p>
+										</div>
+										{steamGames.length > 0 && (
+											<div className="flex items-center gap-3">
+												<div className="flex gap-1 rounded-lg p-1 bg-dark-700">
+													{([['playtime', 'Most played'], ['recent', 'Recent']] as const).map(([value, label]) => (
+														<button
+															key={value}
+															onClick={() => setSortBy(value)}
+															className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
+																sortBy === value
+																	? 'bg-violet-500/30 text-violet-300'
+																	: 'text-text-muted hover:text-text-white'
+															}`}
+														>
+															{label}
+														</button>
+													))}
+												</div>
+											</div>
+										)}
 									</div>
+									{steamLoading ? (
+										<div className="flex items-center justify-center h-40">
+											<p className="text-text-muted text-sm">Loading your games...</p>
+										</div>
+									) : steamGames.length === 0 ? (
+										<div className="flex flex-col items-center justify-center h-40 rounded-xl border border-dashed border-dark-500">
+											<p className="text-text-muted text-sm mb-3">
+												{user?.steamId ? 'No games found' : 'Connect Steam to see your games'}
+											</p>
+											{!user?.steamId && (
+												<a href="/api/auth/steam" className="text-sm font-medium text-violet-400 hover:text-violet-300 transition-colors">
+													Connect Steam →
+												</a>
+											)}
+										</div>
+									) : (
+										<>
+											<div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+												{sortedGames.slice(0, 16).map((game, index) => (
+													<motion.a
+														key={game.appId}
+														href={`https://store.steampowered.com/app/${game.appId}`}
+														target="_blank"
+														rel="noopener noreferrer"
+														className="group relative rounded-xl overflow-hidden border border-dark-600 hover:border-violet-500/50 transition-colors"
+														initial={{ opacity: 0, y: 16 }}
+														animate={{ opacity: 1, y: 0 }}
+														transition={{ delay: index * 0.02 }}
+													>
+														<img
+															src={steamHeaderUrl(game.appId)}
+															alt={game.name}
+															className="w-full aspect-460/215 object-cover group-hover:scale-105 transition-transform duration-300"
+															loading="lazy"
+														/>
+														<div className="absolute inset-0 bg-linear-to-t from-black/90 via-black/40 to-transparent" />
+														<div className="absolute bottom-0 left-0 right-0 p-3" style={{ textShadow: '0 1px 4px rgba(0,0,0,0.8)' }}>
+															<p className="text-sm font-semibold truncate">{game.name}</p>
+															<p className="text-xs text-gray-300">
+																{Math.round(game.playtimeMinutesForever / 60)}h
+																{game.playtimeMinutesLast2Weeks > 0 && (
+																	<span className="text-green-400"> · {Math.round(game.playtimeMinutesLast2Weeks / 60)}h recently</span>
+																)}
+															</p>
+														</div>
+													</motion.a>
+												))}
+											</div>
+											{steamGames.length > 16 && (
+												<div className="mt-4 text-center">
+													<Link to="/library" className="text-sm font-medium text-blue-400 hover:text-violet-300 transition-colors">
+														See all {steamGames.length} games in Library →
+													</Link>
+												</div>
+											)}
+										</>
+									)}
 								</motion.div>
 							</div>
 						)}
