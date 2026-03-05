@@ -1,64 +1,120 @@
 # main.py - placeholder
-from fastapi import FastAPI
-
-app = FastAPI()
-
-@app.get("/health")
-def health():
-    return {"status": "ok"}
-
 import numpy as np
 import pandas as pd
 import sklearn
 import matplotlib.pyplot as plt
-#import seaborn as sns
 from scipy.sparse import csr_matrix
 from sklearn.neighbors import NearestNeighbors
+from fastapi import FastAPI
 
-ratings = pd.read_csv("ratings.csv")
-ratings.head()
-
-def create_matrix(df):
-    user_mapper = {uid: i for i, uid in enumerate(df['userId'].unique())}
-    movie_mapper = {mid: i for i, mid in enumerate(df['movieId'].unique())}
-    movie_inv_mapper = {i: mid for mid, i in movie_mapper.items()}
-
-    user_index = df['userId'].map(user_mapper)
-    movie_index = df['movieId'].map(movie_mapper)
-
-    X = csr_matrix((df["rating"], (movie_index, user_index)),
-                   shape=(len(movie_mapper), len(user_mapper)))
-    return X, movie_mapper, movie_inv_mapper
-
-
-X, movie_mapper, movie_inv_mapper = create_matrix(ratings)
-
-user_item_matrix = ratings.pivot_table(
-    index="title", columns="userId", values="rating")
-print(user_item_matrix.iloc[:10, :5])
-
-def recommend_similar(movie_title, df, X, movie_mapper, movie_inv_mapper, k=5):
-    movie_id = df[df['title'] == movie_title]['movieId'].iloc[0]
-    movie_idx = movie_mapper[movie_id]
-    movie_vec = X[movie_idx]
-
-    model = NearestNeighbors(metric='cosine', algorithm='brute')
-    model.fit(X)
-    distances, indices = model.kneighbors(movie_vec, n_neighbors=k + 1)
-
-    neighbor_ids = [movie_inv_mapper[i] for i in indices.flatten()[1:]]
-    recommendations = df[df['movieId'].isin(neighbor_ids)]['title'].unique()
-
-    print(f"\nBecause you liked **{movie_title}**, you might also enjoy:")
-    for rec in recommendations:
-        print(f"- {rec}")
-
-recommend_similar("The Dark Knight", ratings, X,
-           movie_mapper, movie_inv_mapper, k=5)
-
+app = FastAPI()
+@app.get("/health")
+def health():
+    return {"status": "ok"}
 
 @app.get("/recommend")
 def recommend():
-    recommend_similar("The Dark Knight", ratings, X,
-                      movie_mapper, movie_inv_mapper, k=5)
-    return {"message": "Check logs for recommendations"}
+    games = [
+        {"id": 1, "name": "Left 4 Dead 2", "tags": ["coop", "zombie", "fps", "action"]},
+        {"id": 2, "name": "Overcooked 2", "tags": ["coop", "party", "cooking"]},
+        {"id": 3, "name": "Portal 2", "tags": ["puzzle", "coop", "story"]},
+        {"id": 4, "name": "Civilization VI", "tags": ["strategy", "turn-based"]},
+        {"id": 5, "name": "Phasmophobia", "tags": ["coop", "horror"]},
+    ]
+
+    player_libraries = {
+        "player1": [1, 3],
+        "player2": [1, 5],
+        "player3": [2]
+    }
+
+    from collections import Counter
+    import math
+
+    # Base de jeux
+    games = [
+        {"id": 1, "name": "Left 4 Dead 2", "tags": ["coop", "zombie", "fps", "action"]},
+        {"id": 2, "name": "Overcooked 2", "tags": ["coop", "party", "cooking"]},
+        {"id": 3, "name": "Portal 2", "tags": ["puzzle", "coop", "story"]},
+        {"id": 4, "name": "Civilization VI", "tags": ["strategy", "turn-based"]},
+        {"id": 5, "name": "Phasmophobia", "tags": ["coop", "horror"]},
+    ]
+
+    # Bibliothèque des joueurs
+    player_libraries = {
+        "player1": [1, 3],
+        "player2": [1, 5],
+        "player3": [2]
+    }
+
+    # Tags sélectionnés par le groupe
+    group_tags = ["coop"]
+
+    # -----------------------------------------
+    # 1. Construire un index des jeux
+    # -----------------------------------------
+
+    game_dict = {game["id"]: game for game in games}
+
+    # -----------------------------------------
+    # 2. Construire le profil de préférence
+    # -----------------------------------------
+
+    all_tags = []
+
+    for library in player_libraries.values():
+        for game_id in library:
+            all_tags.extend(game_dict[game_id]["tags"])
+
+    # ajouter les tags choisis par les joueurs
+    all_tags.extend(group_tags)
+
+    profile = Counter(all_tags)
+
+    print("Profil du groupe:", profile)
+
+    # -----------------------------------------
+    # 3. Calcul du score de similarité
+    # -----------------------------------------
+
+    def cosine_similarity(profile_tags, game_tags):
+
+        score = 0
+
+        for tag in game_tags:
+            score += profile_tags.get(tag, 0)
+
+        return score / math.sqrt(len(game_tags))
+
+    # -----------------------------------------
+    # 4. Calcul des recommandations
+    # -----------------------------------------
+
+    recommendations = []
+
+    owned_games = set()
+
+    for library in player_libraries.values():
+        owned_games.update(library)
+
+    for game in games:
+
+        if game["id"] in owned_games:
+            continue
+
+        score = cosine_similarity(profile, game["tags"])
+
+        recommendations.append((game["name"], score))
+
+    # -----------------------------------------
+    # 5. Trier les résultats
+    # -----------------------------------------
+
+    recommendations.sort(key=lambda x: x[1], reverse=True)
+
+    print("\nRecommandations:", flush=True)
+
+    for game, score in recommendations:
+        print(game, score)
+
+    return {"message": "Check logs ///"}
