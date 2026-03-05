@@ -29,7 +29,6 @@ describe("Auth (e2e)", () => {
 		await app.close();
 	});
 
-	// Happy path: valid registration returns an access token.
 	it("POST /api/auth/register registers a user", async () => {
 		const stamp = Date.now();
 		const email = `u_${stamp}@test.com`;
@@ -50,7 +49,6 @@ describe("Auth (e2e)", () => {
 		expect(res.body.accessToken.length).toBeGreaterThan(10);
 	});
 
-	// DTO validation: too-short usernames must be rejected.
 	it("POST /api/auth/register rejects username too short (DTO)", async () => {
 		const stamp = Date.now();
 		const email = `u_${stamp}@test.com`;
@@ -75,7 +73,6 @@ describe("Auth (e2e)", () => {
 			expect(String(msg)).toContain("username");
 	});
 
-	// Happy path: login with valid credentials returns an access token.
 	it("POST /api/auth/login returns token when credentials are valid", async () => {
 		const stamp = Date.now();
 		const email = `u_${stamp}@test.com`;
@@ -98,7 +95,6 @@ describe("Auth (e2e)", () => {
 		expect(res.body.accessToken.length).toBeGreaterThan(10);
 	});
 
-	// Protected endpoint: valid JWT should resolve current user identity.
 	it("GET /api/auth/me returns current user when token is valid", async () => {
 		const stamp = Date.now();
 		const email = `u_${stamp}@test.com`;
@@ -129,7 +125,6 @@ describe("Auth (e2e)", () => {
 		});
 	});
 
-	// Missing Authorization header must return 401.
 	it("GET /api/auth/me returns 401 when no token", async () => {
 		const res = await request(app.getHttpServer())
 			.get("/api/auth/me")
@@ -139,7 +134,6 @@ describe("Auth (e2e)", () => {
 		expect(res.body.message).toBe("Unauthorized");
 	});
 
-	// Invalid JWT must return 401.
 	it("GET /api/auth/me returns 401 when token is invalid", async () => {
 		const res = await request(app.getHttpServer())
 			.get("/api/auth/me")
@@ -148,5 +142,25 @@ describe("Auth (e2e)", () => {
 
 		expect(res.body.statusCode).toBe(401);
 		expect(res.body.message).toBe("Unauthorized");
+	});
+
+	it("POST /api/auth/steam/exchange rejects an unknown code", async () => {
+		const res = await request(app.getHttpServer())
+			.post("/api/auth/steam/exchange")
+			.send({ code: "unknown-code" })
+			.expect(401);
+
+		expect(res.body.statusCode).toBe(401);
+		expect(res.body.error).toBe("Unauthorized");
+	});
+
+	it("POST /api/auth/steam/exchange validates DTO", async () => {
+		const res = await request(app.getHttpServer())
+			.post("/api/auth/steam/exchange")
+			.send({ code: "" })
+			.expect(400);
+
+		expect(res.body.statusCode).toBe(400);
+		expect(res.body.error).toBe("Bad Request");
 	});
 });
