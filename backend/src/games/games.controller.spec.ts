@@ -2,17 +2,25 @@ import { GameController } from "./games.controller";
 import { GameService } from "./games.service";
 import { ExternalGameSource } from "@prisma/client";
 import { UpsertExternalGameDto } from "./dto/upsert-external-game.dto";
+import { SteamLibraryImportService } from "./steam-library-import.service";
 
 describe("GameController", () => {
 	let controller: GameController;
 	let gameService: { upsertFromExternal: jest.Mock };
+	let steamImport: { previewImport: jest.Mock };
 
 	beforeEach(() => {
 		gameService = {
 			upsertFromExternal: jest.fn(),
 		};
+		steamImport = {
+			previewImport: jest.fn(),
+		};
 
-		controller = new GameController(gameService as unknown as GameService);
+		controller = new GameController(
+			gameService as unknown as GameService,
+			steamImport as unknown as SteamLibraryImportService,
+		);
 	});
 
 	it("should call upsertFromExternal with a converted Date", async () => {
@@ -140,5 +148,36 @@ describe("GameController", () => {
 		gameService.upsertFromExternal.mockRejectedValue(error);
 
 		await expect(controller.upsert(dto)).rejects.toThrow(error);
+	});
+
+	it("should call previewImport with steamId and return the preview result", async () => {
+		const preview = {
+			steamId: "76561198000000000",
+			fetchedAt: new Date("2026-03-05T10:00:00.000Z"),
+			totalGames: 2,
+			recentlyActiveGames: 1,
+			games: [
+				{
+					appId: "10",
+					name: "Counter-Strike",
+					playtimeMinutesForever: 1200,
+					playtimeMinutesLast2Weeks: 45,
+					iconUrl: null,
+				},
+			],
+		};
+		steamImport.previewImport.mockResolvedValue(preview);
+
+		const result = await controller.previewSteamImport("76561198000000000");
+
+		expect(steamImport.previewImport).toHaveBeenCalledWith("76561198000000000");
+		expect(result).toEqual(preview);
+	});
+
+	it("should propagate preview import errors", async () => {
+		const error = new Error("preview failed");
+		steamImport.previewImport.mockRejectedValue(error);
+
+		await expect(controller.previewSteamImport("76561198000000000")).rejects.toThrow(error);
 	});
 });
