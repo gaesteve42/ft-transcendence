@@ -7,6 +7,8 @@ function Profile() {
 		username: string
 		email: string
 		avatar: string
+		steamId: string | null
+		avatarUrl: string | null
 	} | null>(null)
 	const [isEditing, setIsEditing] = useState(false)
 	const [editForm, setEditForm] = useState({ username: '' })
@@ -27,6 +29,8 @@ function Profile() {
 					username: data.username,
 					email: data.email,
 					avatar: 'test',
+					steamId: data.steamId ?? null,
+					avatarUrl: data.avatarUrl ?? null,
 				})
 				setLoading(false)
 			})
@@ -167,14 +171,21 @@ function Profile() {
 					{/* Steam */}
 					<div className="bg-dark-700 rounded-xl px-5 py-4 mb-6 flex items-center justify-between">
 						<div className="flex items-center gap-3">
+							{user.avatarUrl && (
+								<img src={user.avatarUrl} alt="Steam avatar" className="w-10 h-10 rounded-full border-2 border-violet-500" />
+							)}
 							<div>
 								<p className="text-text-purple font-medium text-sm">Steam</p>
-								<p className="text-text-muted text-xs">Non connecté</p>
+								<p className={`text-xs ${user.steamId ? 'text-green-400' : 'text-text-muted'}`}>
+									{user.steamId ? 'Connecté' : 'Non connecté'}
+								</p>
 							</div>
 						</div>
-						<button className="px-4 py-2 rounded-full text-xs font-medium border bg-dark-600 text-text-white border-dark-500 hover:border-violet-500/50 hover:text-text-purple transition-all">
-							Connecter
-						</button>
+						{!user.steamId && (
+							<a href="/api/auth/steam" className="px-4 py-2 rounded-full text-xs font-medium border bg-dark-600 text-text-white border-dark-500 hover:border-violet-500/50 hover:text-text-purple transition-all">
+								Connecter
+							</a>
+						)}
 					</div>
 				</div>
 			)}

@@ -249,15 +249,23 @@ function Dashboard() {
 								<motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="rounded-2xl p-6 bg-dark-800 border border-dark-600">
 									<div className="flex items-center justify-between">
 										<div className="flex items-center gap-4">
-											<div className="w-14 h-14 rounded-full bg-dark-700 border-2 border-dark-500 flex items-center justify-center text-2xl">{user?.username?.charAt(0).toUpperCase() ?? '?'}</div>
+											{user?.avatarUrl ? (
+														<img src={user.avatarUrl} alt="Steam avatar" className="w-14 h-14 rounded-full border-2 border-violet-500" />
+													) : (
+														<div className="w-14 h-14 rounded-full bg-dark-700 border-2 border-dark-500 flex items-center justify-center text-2xl">{user?.username?.charAt(0).toUpperCase() ?? '?'}</div>
+													)}
 											<div>
 												<h3 className="text-lg font-bold">Steam Profile</h3>
-												<p className="text-text-muted text-sm">Not connected</p>
+												<p className={`text-sm ${user?.steamId ? 'text-green-400' : 'text-text-muted'}`}>
+													{user?.steamId ? 'Connected' : 'Not connected'}
+												</p>
 											</div>
 										</div>
-										<a href="/api/auth/steam" className="px-5 py-2 rounded-lg bg-violet-500 hover:bg-violet-600 text-white text-sm font-medium transition-colors">
-											Connect Steam
-										</a>
+										{!user?.steamId && (
+											<a href="/api/auth/steam" className="px-5 py-2 rounded-lg bg-violet-500 hover:bg-violet-600 text-white text-sm font-medium transition-colors">
+												Connect Steam
+											</a>
+										)}
 									</div>
 								</motion.div>
 

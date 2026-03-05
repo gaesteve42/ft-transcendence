@@ -25,7 +25,7 @@ function App() {
 						<Route path="/login" element={<Login />} />
 						<Route path="/privacy" element={<PrivacyPolicy />} />
 						<Route path="/terms" element={<TermsOfService />} />
-						<Route path="/auth/steam/callback" element={<SteamCallback />} />
+						<Route path="/auth/callback" element={<SteamCallback />} />
 
 						{/* Pages protégées */}
 						<Route

@@ -29,7 +29,7 @@ export class AuthController{
 	}
 	@UseGuards(JwtAuthGuard)
 	@Get("me")
-	me(@CurrentUser() user: {id: string, email: string, username: string}){
+	me(@CurrentUser() user: {id: string, email: string, username: string, steamId: string | null, avatarUrl: string | null}){
 		return user;
 	}
 	@UseGuards(AuthGuard("steam"))

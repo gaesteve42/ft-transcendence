@@ -33,6 +33,8 @@ export class JwtStrategy extends PassportStrategy(Strategy, "jwt")
 			id: user.id,
 			email: user.email,
 			username: user.username,
+			steamId: user.steamId,
+			avatarUrl: user.avatarUrl,
 		};
 	}
 }

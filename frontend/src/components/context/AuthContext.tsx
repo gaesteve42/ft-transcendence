@@ -9,6 +9,8 @@ type User = {
 	id: string
 	email: string
 	username: string
+	steamId: string | null
+	avatarUrl: string | null
 }
 
 type AuthContextType = {
