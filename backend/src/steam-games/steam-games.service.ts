@@ -34,21 +34,22 @@ export class SteamGamesService {
 		const steamApiKey = this.configService.get<string>("STEAM_API_KEY");
 		if (!steamApiKey)
 			throw new BadRequestException("Empty API key");
-		const getOwnedGamesUrl= new URL("https://partner.steam-api.com/IPlayerService/GetOwnedGames/v1/");
-		const getRecentlyPlayedGamesUrl=  new URL("https://partner.steam-api.com/IPlayerService/GetRecentlyPlayedGames/v1/");
+		const getOwnedGamesUrl= new URL("https://api.steampowered.com/IPlayerService/GetOwnedGames/v1/");
+		const getRecentlyPlayedGamesUrl=  new URL("https://api.steampowered.com/IPlayerService/GetRecentlyPlayedGames/v1/");
 		getOwnedGamesUrl.searchParams.set("key", steamApiKey);
 		getOwnedGamesUrl.searchParams.set("steamid",cleanSteamId);
 		getOwnedGamesUrl.searchParams.set("include_appinfo", "true");
+		getOwnedGamesUrl.searchParams.set("include_played_free_games", "true");
 		getRecentlyPlayedGamesUrl.searchParams.set("key", steamApiKey);
 		getRecentlyPlayedGamesUrl.searchParams.set("steamid", cleanSteamId);
 		const ownedGamesResponse = await fetch(getOwnedGamesUrl);
 		if (!ownedGamesResponse.ok)
-			throw new BadRequestException("Couldn't export owned games");
+			throw new BadRequestException(`Couldn't export owned games (Steam HTTP ${ownedGamesResponse.status})`);
 		const ownedGamesPayload: SteamOwnedGamesResponse = await ownedGamesResponse.json();
 		const ownedGames: SteamOwnedGameRaw[] = ownedGamesPayload.response?.games ?? [];
 		const recentlyPlayedResponse= await fetch(getRecentlyPlayedGamesUrl);
 		if (!recentlyPlayedResponse.ok)
-			throw new BadRequestException("Couldn't export recently played games");
+			throw new BadRequestException(`Couldn't export recently played games (Steam HTTP ${recentlyPlayedResponse.status})`);
 		const recentlyPlayedPayload: SteamRecentlyPlayedGamesResponse = await recentlyPlayedResponse.json();
 		const recentlyPlayedGames: SteamRecentlyPlayedGameRaw[] = recentlyPlayedPayload.response?.games ?? [];
 		const map = new Map<string, number>();
