@@ -118,11 +118,15 @@ describe("Auth (e2e)", () => {
 			.set("Authorization", `Bearer ${token}`)
 			.expect(200);
 
-		expect(meRes.body).toEqual({
-			id: expect.any(String),
-			email,
-			username,
-		});
+		expect(meRes.body).toEqual(
+			expect.objectContaining({
+				id: expect.any(String),
+				email,
+				username,
+				steamId: null,
+				avatarUrl: null,
+			}),
+		);
 	});
 
 	it("GET /api/auth/me returns 401 when no token", async () => {

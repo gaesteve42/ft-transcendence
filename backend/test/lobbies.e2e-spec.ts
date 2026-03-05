@@ -103,11 +103,15 @@ describe("Lobbies (e2e)", () => {
 			.set("Authorization", `Bearer ${account.token}`)
 			.expect(200);
 
-		expect(me.body).toEqual({
-			id: expect.any(String),
-			email: account.email,
-			username: account.username,
-		});
+		expect(me.body).toEqual(
+			expect.objectContaining({
+				id: expect.any(String),
+				email: account.email,
+				username: account.username,
+				steamId: null,
+				avatarUrl: null,
+			}),
+		);
 	});
 
 	it("LEAVE /api/lobbies/:id/leave deletes lobby when last player leaves", async () => {
