@@ -57,6 +57,7 @@ describe("SteamAuthService", () => {
 		audit = module.get(AuditLoggerService) as jest.Mocked<AuditLoggerService>;
 	});
 
+	// Existing Steam account: service must update profile, not create a new user.
 	it("updates an existing steam user and returns token", async () => {
 		const existing = makeUser("1");
 		const updated = { ...existing, avatarUrl: "https://avatar.test/new.jpg", lastSteamUpdated: new Date() };
@@ -74,6 +75,7 @@ describe("SteamAuthService", () => {
 		expect(result).toEqual({ accessToken: "token-1" });
 	});
 
+	// First Steam login: service must create a new Steam user and issue token.
 	it("creates a new steam user and returns token", async () => {
 		const created = makeUser("2");
 
@@ -93,6 +95,7 @@ describe("SteamAuthService", () => {
 		expect(result).toEqual({ accessToken: "token-2" });
 	});
 
+	// Infrastructure failures should be logged and rethrown unchanged.
 	it("logs and rethrows unexpected errors", async () => {
 		const err = new Error("db down");
 		users.findBySteamId.mockRejectedValue(err);

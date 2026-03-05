@@ -33,6 +33,7 @@ describe("AuthController", () => {
 		steamAuthService = module.get(SteamAuthService) as jest.Mocked<SteamAuthService>;
 	});
 
+	// Controller should just delegate register logic to AuthService.
 	it("delegates register to AuthService", async () => {
 		authService.register.mockResolvedValue({ accessToken: "token" });
 
@@ -46,6 +47,7 @@ describe("AuthController", () => {
 		expect(result).toEqual({ accessToken: "token" });
 	});
 
+	// Controller should just delegate login logic to AuthService.
 	it("delegates login to AuthService", async () => {
 		authService.login.mockResolvedValue({ accessToken: "token-login" });
 
@@ -58,6 +60,7 @@ describe("AuthController", () => {
 		expect(result).toEqual({ accessToken: "token-login" });
 	});
 
+	// Steam callback payload must be forwarded as-is to SteamAuthService.
 	it("delegates steam callback payload to SteamAuthService", async () => {
 		steamAuthService.loginWithSteam.mockResolvedValue({ accessToken: "steam-token" });
 

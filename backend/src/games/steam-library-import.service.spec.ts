@@ -1,5 +1,7 @@
 import { SteamLibraryImportService } from "./steam-library-import.service";
 import { SteamGamesService } from "src/steam-games/steam-games.service";
+import { GameService } from "./games.service";
+import { PrismaService } from "src/prisma/prisma.service";
 
 describe("SteamLibraryImportService", () => {
 	let service: SteamLibraryImportService;
@@ -9,7 +11,13 @@ describe("SteamLibraryImportService", () => {
 		steamGames = {
 			getOwnedGames: jest.fn(),
 		};
-		service = new SteamLibraryImportService(steamGames as unknown as SteamGamesService);
+		const gameService = {} as GameService;
+		const prisma = {} as PrismaService;
+		service = new SteamLibraryImportService(
+			steamGames as unknown as SteamGamesService,
+			gameService,
+			prisma,
+		);
 	});
 
 	afterEach(() => {
