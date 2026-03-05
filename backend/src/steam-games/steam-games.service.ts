@@ -57,15 +57,17 @@ export class SteamGamesService {
 			const appId = recentGame.appid.toString();
 			map.set(appId, recentGame.playtime_2weeks);
 		}
-		const normalizedOwnedGames = ownedGames.map((ownedGame)=>{
+		const normalizedOwnedGames: SteamOwnedGame[] = ownedGames.map((ownedGame): SteamOwnedGame=>{
 			const appId = ownedGame.appid.toString();
+			const iconHash = ownedGame.img_icon_url?.trim() ?? null;
+			const iconUrl: string | null  = iconHash && iconHash.length > 0 ? `https://media.steampowered.com/steamcommunity/public/images/apps/${appId}/${iconHash}.jpg` : null;
 			const recentPlaytime = map.get(appId) ?? 0;
 			return {
 					appId: appId,
 					name: ownedGame.name,
 					playtimeMinutesForever: ownedGame.playtime_forever,
 					playtimeMinutesLast2Weeks: recentPlaytime,
-					iconUrl: null,
+					iconUrl,
 				}
 			});
 		return normalizedOwnedGames;

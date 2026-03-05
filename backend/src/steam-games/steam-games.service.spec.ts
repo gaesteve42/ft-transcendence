@@ -102,14 +102,14 @@ describe("SteamGamesService", () => {
 				name: "Counter-Strike",
 				playtimeMinutesForever: 1200,
 				playtimeMinutesLast2Weeks: 45,
-				iconUrl: null,
+				iconUrl: "https://media.steampowered.com/steamcommunity/public/images/apps/10/icon-a.jpg",
 			},
 			{
 				appId: "20",
 				name: "Portal 2",
 				playtimeMinutesForever: 300,
 				playtimeMinutesLast2Weeks: 0,
-				iconUrl: null,
+				iconUrl: "https://media.steampowered.com/steamcommunity/public/images/apps/20/icon-b.jpg",
 			},
 		]);
 
@@ -138,5 +138,33 @@ describe("SteamGamesService", () => {
 		const result = await service.getOwnedGames("76561198000000000");
 
 		expect(result).toEqual([]);
+	});
+
+	// Icon mapping fallback: missing icon hash must produce `iconUrl: null` (never undefined).
+	it("sets iconUrl to null when Steam icon hash is missing", async () => {
+		configService.get.mockReturnValue("steam-api-key");
+		fetchMock
+			.mockResolvedValueOnce(makeResponse(true, {
+				response: {
+					games: [{ appid: 10, name: "Counter-Strike", playtime_forever: 1200 }],
+				},
+			}))
+			.mockResolvedValueOnce(makeResponse(true, {
+				response: {
+					games: [{ appid: 10, playtime_2weeks: 45 }],
+				},
+			}));
+
+		const result = await service.getOwnedGames("76561198000000000");
+
+		expect(result).toEqual([
+			{
+				appId: "10",
+				name: "Counter-Strike",
+				playtimeMinutesForever: 1200,
+				playtimeMinutesLast2Weeks: 45,
+				iconUrl: null,
+			},
+		]);
 	});
 });
