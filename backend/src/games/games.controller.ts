@@ -1,7 +1,9 @@
-import { Body, Controller, Get, Param, Post } from "@nestjs/common";
+import { Body, Controller, Get, Param, Post, UseGuards } from "@nestjs/common";
 import { GameService } from "./games.service";
 import { UpsertExternalGameDto } from "./dto/upsert-external-game.dto";
 import { SteamLibraryImportService } from "./steam-library-import.service";
+import { JwtAuthGuard } from "src/auth/jwt-auth.guard";
+import { CurrentUser } from "src/auth/current-user.decorator";
 
 @Controller("api/games")
 export class GameController {
@@ -30,5 +32,11 @@ export class GameController {
 	@Post("steam/:steamId/import")
 	importSteamLibrary(@Param("steamId") steamId: string) {
 		return this.steamImport.importLibrary(steamId);
+	}
+
+	@UseGuards(JwtAuthGuard)
+	@Post("steam/import/me")
+	importMySteamLibrary(@CurrentUser("id") userId: string) {
+		return this.steamImport.importLibraryForUser(userId);
 	}
 }

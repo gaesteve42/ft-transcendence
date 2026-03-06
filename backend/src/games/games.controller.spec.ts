@@ -7,7 +7,11 @@ import { SteamLibraryImportService } from "./steam-library-import.service";
 describe("GameController", () => {
 	let controller: GameController;
 	let gameService: { upsertFromExternal: jest.Mock };
-	let steamImport: { previewImport: jest.Mock; importLibrary: jest.Mock };
+	let steamImport: {
+		previewImport: jest.Mock;
+		importLibrary: jest.Mock;
+		importLibraryForUser: jest.Mock;
+	};
 
 	beforeEach(() => {
 		gameService = {
@@ -16,6 +20,7 @@ describe("GameController", () => {
 		steamImport = {
 			previewImport: jest.fn(),
 			importLibrary: jest.fn(),
+			importLibraryForUser: jest.fn(),
 		};
 
 		controller = new GameController(
@@ -205,5 +210,23 @@ describe("GameController", () => {
 		steamImport.importLibrary.mockRejectedValue(error);
 
 		await expect(controller.importSteamLibrary("76561198000000000")).rejects.toThrow(error);
+	});
+
+	it("should call importLibraryForUser with current user id", async () => {
+		const resultPayload = {
+			steamId: "76561198000000000",
+			userId: "user-1",
+			importedAt: new Date("2026-03-05T10:00:00.000Z"),
+			totalFetched: 2,
+			createdCanonicalGames: 1,
+			linkedUserGames: 2,
+			updatedUserGames: 0,
+		};
+		steamImport.importLibraryForUser.mockResolvedValue(resultPayload);
+
+		const result = await controller.importMySteamLibrary("user-1");
+
+		expect(steamImport.importLibraryForUser).toHaveBeenCalledWith("user-1");
+		expect(result).toEqual(resultPayload);
 	});
 });

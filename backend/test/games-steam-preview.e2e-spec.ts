@@ -7,13 +7,18 @@ import { PrismaService } from "../src/prisma/prisma.service";
 
 describe("Games Steam Preview/Import (e2e)", () => {
 	let app: INestApplication;
-	let steamImportMock: { previewImport: jest.Mock; importLibrary: jest.Mock };
+	let steamImportMock: {
+		previewImport: jest.Mock;
+		importLibrary: jest.Mock;
+		importLibraryForUser: jest.Mock;
+	};
 	let prismaMock: { $connect: jest.Mock; $disconnect: jest.Mock };
 
 	beforeAll(async () => {
 		steamImportMock = {
 			previewImport: jest.fn(),
 			importLibrary: jest.fn(),
+			importLibraryForUser: jest.fn(),
 		};
 		prismaMock = {
 			$connect: jest.fn(),
@@ -161,5 +166,13 @@ describe("Games Steam Preview/Import (e2e)", () => {
 		expect(steamImportMock.importLibrary).toHaveBeenCalledWith(steamId);
 		expect(res.body.statusCode).toBe(400);
 		expect(res.body.error).toBe("Bad Request");
+	});
+
+	it("POST /api/games/steam/import/me returns 401 without JWT", async () => {
+		await request(app.getHttpServer())
+			.post("/api/games/steam/import/me")
+			.expect(401);
+
+		expect(steamImportMock.importLibraryForUser).not.toHaveBeenCalled();
 	});
 });

@@ -134,4 +134,24 @@ export class SteamLibraryImportService {
 			updatedUserGames,
 		};
 	}
+
+	/**
+	 * Imports using an authenticated internal user id.
+	 */
+	async importLibraryForUser(userId: string): Promise<SteamLibraryImportResult> {
+		const cleanUserId = userId.trim();
+		if (cleanUserId.length === 0)
+			throw new BadRequestException("User ID is empty");
+
+		const user = await this.prisma.user.findUnique({
+			where: { id: cleanUserId },
+			select: { steamId: true },
+		});
+		if (!user)
+			throw new NotFoundException("User not found");
+		if (!user.steamId)
+			throw new BadRequestException("No Steam account linked to this user");
+
+		return this.importLibrary(user.steamId);
+	}
 }
