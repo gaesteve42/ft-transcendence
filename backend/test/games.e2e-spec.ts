@@ -11,6 +11,18 @@ describe("Games (e2e)", () => {
   let app: INestApplication;
   let prisma: PrismaClient;
   const rand = (): string => Math.random().toString(36).slice(2, 8);
+  const registerAndLogin = async (): Promise<string> => {
+    const suffix = rand();
+    const email = `g_${suffix}@test.com`;
+    const username = `g_${suffix}`;
+    const password = "Str0ngP@ssw0rd!";
+
+    const registerRes = await request(app.getHttpServer())
+      .post("/api/auth/register")
+      .send({ email, username, password })
+      .expect(201);
+    return registerRes.body.accessToken as string;
+  };
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -44,6 +56,7 @@ describe("Games (e2e)", () => {
   });
 
   it("POST /api/games/upsert-external creates a canonical game and its external mapping", async () => {
+    const token = await registerAndLogin();
     const suffix = rand();
     const payload = {
       source: ExternalGameSource.STEAM,
@@ -58,6 +71,7 @@ describe("Games (e2e)", () => {
 
     const res = await request(app.getHttpServer())
       .post("/api/games/upsert-external")
+      .set("Authorization", `Bearer ${token}`)
       .send(payload)
       .expect(201);
 
@@ -92,6 +106,7 @@ describe("Games (e2e)", () => {
   });
 
   it("POST /api/games/upsert-external is idempotent for the same source and externalId", async () => {
+    const token = await registerAndLogin();
     const suffix = rand();
     const payload = {
       source: ExternalGameSource.STEAM,
@@ -106,11 +121,13 @@ describe("Games (e2e)", () => {
 
     const first = await request(app.getHttpServer())
       .post("/api/games/upsert-external")
+      .set("Authorization", `Bearer ${token}`)
       .send(payload)
       .expect(201);
 
     const second = await request(app.getHttpServer())
       .post("/api/games/upsert-external")
+      .set("Authorization", `Bearer ${token}`)
       .send(payload)
       .expect(201);
 
@@ -124,6 +141,7 @@ describe("Games (e2e)", () => {
   });
 
   it("POST /api/games/upsert-external accepts nullable optional fields", async () => {
+    const token = await registerAndLogin();
     const suffix = rand();
     const payload = {
       source: ExternalGameSource.IGDB,
@@ -138,6 +156,7 @@ describe("Games (e2e)", () => {
 
     const res = await request(app.getHttpServer())
       .post("/api/games/upsert-external")
+      .set("Authorization", `Bearer ${token}`)
       .send(payload)
       .expect(201);
 
@@ -154,10 +173,12 @@ describe("Games (e2e)", () => {
   });
 
   it("POST /api/games/upsert-external rejects invalid enum source", async () => {
+    const token = await registerAndLogin();
     const suffix = rand();
 
     const res = await request(app.getHttpServer())
       .post("/api/games/upsert-external")
+      .set("Authorization", `Bearer ${token}`)
       .send({
         source: "XBOX",
         externalId: `bad_${suffix}`,
@@ -171,8 +192,10 @@ describe("Games (e2e)", () => {
   });
 
   it("POST /api/games/upsert-external rejects missing required fields", async () => {
+    const token = await registerAndLogin();
     const res = await request(app.getHttpServer())
       .post("/api/games/upsert-external")
+      .set("Authorization", `Bearer ${token}`)
       .send({
         source: ExternalGameSource.STEAM,
         externalId: "",
@@ -191,10 +214,12 @@ describe("Games (e2e)", () => {
   });
 
   it("POST /api/games/upsert-external rejects invalid date string", async () => {
+    const token = await registerAndLogin();
     const suffix = rand();
 
     const res = await request(app.getHttpServer())
       .post("/api/games/upsert-external")
+      .set("Authorization", `Bearer ${token}`)
       .send({
         source: ExternalGameSource.STEAM,
         externalId: `steam_${suffix}`,

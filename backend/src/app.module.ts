@@ -7,6 +7,8 @@ import { ConfigModule } from '@nestjs/config';
 import { LoggingModule } from './common/logging/logging.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { GameModule } from './games/games.module';
+import { APP_GUARD } from '@nestjs/core';
+import { JwtAuthGuard } from './auth/jwt-auth.guard';
 @Module({
   imports: [ConfigModule.forRoot({
     isGlobal: true,
@@ -17,7 +19,12 @@ import { GameModule } from './games/games.module';
     PrismaModule,
     GameModule],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_GUARD,
+      useClass: JwtAuthGuard,
+    },
+  ],
 })
 export class AppModule {}
-

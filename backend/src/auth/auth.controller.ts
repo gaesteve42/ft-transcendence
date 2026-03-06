@@ -9,6 +9,7 @@ import { SteamAuthService } from "./steam-auth.service";
 import { AuthGuard } from "@nestjs/passport";
 import type { Response } from "express";
 import { ConfigService } from "@nestjs/config";
+import { Public } from "./public.decorator";
 
 
 @Controller("api/auth")
@@ -18,11 +19,13 @@ export class AuthController{
 			private readonly config : ConfigService,
 	){}
 	@HttpCode(201)
+	@Public()
 	@Post("register")
 	register(@Body()body : RegisterDto){
 		return this.auth.register(body);
 	}
 	@HttpCode(200)
+	@Public()
 	@Post("login")
 	login(@Body() body : LoginDto){
 		return this.auth.login(body);
@@ -33,9 +36,11 @@ export class AuthController{
 		return user;
 	}
 	@UseGuards(AuthGuard("steam"))
+	@Public()
 	@Get("steam")
 	loginSteam():void{}
 	@UseGuards(AuthGuard("steam"))
+	@Public()
 	@Get("steam/return")
 	async steamReturn(@Req() req: {user: {steamId: string; username: string; avatarUrl: string;}}, @Res() res: Response){
 		const result = await this.steamAuth.loginWithSteam(req.user.steamId, req.user.username, req.user.avatarUrl);
@@ -46,6 +51,7 @@ export class AuthController{
 		res.redirect(302, `${frontendUrl}/auth/callback?code=${encodeURIComponent(code)}`);
 	};
 	@HttpCode(200)
+	@Public()
 	@Post("steam/exchange")
 	exchangeCode(@Body() body: SteamExchangeDto){
 		return this.steamAuth.exchangeCode(body.code);

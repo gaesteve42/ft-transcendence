@@ -125,7 +125,10 @@ describe("Lobbies (e2e)", () => {
 
 		const lobbyId = createRes.body.id;
 
-		await request(app.getHttpServer()).get(`/api/lobbies/${lobbyId}`).expect(200);
+		await request(app.getHttpServer())
+			.get(`/api/lobbies/${lobbyId}`)
+			.set("Authorization", `Bearer ${user1.token}`)
+			.expect(200);
 
 		const leaveRes = await request(app.getHttpServer())
 			.post(`/api/lobbies/${lobbyId}/leave`)
@@ -136,7 +139,10 @@ describe("Lobbies (e2e)", () => {
 		expect(Array.isArray(leaveRes.body.players)).toBe(true);
 		expect(leaveRes.body.players).toEqual([]);
 
-		await request(app.getHttpServer()).get(`/api/lobbies/${lobbyId}`).expect(404);
+		await request(app.getHttpServer())
+			.get(`/api/lobbies/${lobbyId}`)
+			.set("Authorization", `Bearer ${user1.token}`)
+			.expect(404);
 	});
 
 	it("LEAVE /api/lobbies/:id/leave transfers ownership if owner leaves and lobby not empty", async () => {
@@ -171,6 +177,7 @@ describe("Lobbies (e2e)", () => {
 
 		const getRes = await request(app.getHttpServer())
 			.get(`/api/lobbies/${lobbyId}`)
+			.set("Authorization", `Bearer ${user2.token}`)
 			.expect(200);
 
 		expect(getRes.body.ownerId).toBe(getRes.body.players[0]);
