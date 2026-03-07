@@ -9,6 +9,7 @@ describe("Games Steam Preview/Import (e2e)", () => {
 	let app: INestApplication;
 	let steamImportMock: {
 		previewImport: jest.Mock;
+		previewImportForUser: jest.Mock;
 		importLibrary: jest.Mock;
 		importLibraryForUser: jest.Mock;
 	};
@@ -17,6 +18,7 @@ describe("Games Steam Preview/Import (e2e)", () => {
 	beforeAll(async () => {
 		steamImportMock = {
 			previewImport: jest.fn(),
+			previewImportForUser: jest.fn(),
 			importLibrary: jest.fn(),
 			importLibraryForUser: jest.fn(),
 		};
@@ -60,6 +62,16 @@ describe("Games Steam Preview/Import (e2e)", () => {
 			.expect(401);
 
 		expect(steamImportMock.previewImport).not.toHaveBeenCalled();
+	});
+
+	it("GET /api/games/steam/preview/me returns 401 without JWT", async () => {
+		// Le nouveau flux sécurisé /preview/me doit être inaccessible sans token,
+		// comme /import/me et toutes les autres routes privées.
+		await request(app.getHttpServer())
+			.get("/api/games/steam/preview/me")
+			.expect(401);
+
+		expect(steamImportMock.previewImportForUser).not.toHaveBeenCalled();
 	});
 
 	it("POST /api/games/steam/:steamId/import returns 401 without JWT", async () => {

@@ -9,6 +9,7 @@ describe("GameController", () => {
 	let gameService: { upsertFromExternal: jest.Mock };
 	let steamImport: {
 		previewImport: jest.Mock;
+		previewImportForUser: jest.Mock;
 		importLibrary: jest.Mock;
 		importLibraryForUser: jest.Mock;
 	};
@@ -19,6 +20,7 @@ describe("GameController", () => {
 		};
 		steamImport = {
 			previewImport: jest.fn(),
+			previewImportForUser: jest.fn(),
 			importLibrary: jest.fn(),
 			importLibraryForUser: jest.fn(),
 		};
@@ -157,6 +159,8 @@ describe("GameController", () => {
 	});
 
 	it("should call previewImport with steamId and return the preview result", async () => {
+		// Cette route historique prend encore un steamId dans l'URL.
+		// Le contrôleur ne transforme rien : il délègue simplement au service.
 		const preview = {
 			steamId: "76561198000000000",
 			fetchedAt: new Date("2026-03-05T10:00:00.000Z"),
@@ -187,7 +191,34 @@ describe("GameController", () => {
 		await expect(controller.previewSteamImport("76561198000000000")).rejects.toThrow(error);
 	});
 
+	it("should call previewImportForUser with current user id", async () => {
+		// Cette route est la version sécurisée du flux preview :
+		// on part du user connecté, puis le service résout son steamId.
+		const preview = {
+			steamId: "76561198000000000",
+			fetchedAt: new Date("2026-03-06T10:00:00.000Z"),
+			totalGames: 2,
+			recentlyActiveGames: 1,
+			games: [
+				{
+					appId: "10",
+					name: "Counter-Strike",
+					playtimeMinutesForever: 1200,
+					playtimeMinutesLast2Weeks: 45,
+					iconUrl: null,
+				},
+			],
+		};
+		steamImport.previewImportForUser.mockResolvedValue(preview);
+
+		const result = await controller.previewMySteamImport("user-1");
+
+		expect(steamImport.previewImportForUser).toHaveBeenCalledWith("user-1");
+		expect(result).toEqual(preview);
+	});
+
 	it("should call importLibrary with steamId and return the import result", async () => {
+		// Même logique que pour previewSteamImport, mais appliquée à l'import.
 		const resultPayload = {
 			steamId: "76561198000000000",
 			userId: "user-1",
@@ -213,6 +244,7 @@ describe("GameController", () => {
 	});
 
 	it("should call importLibraryForUser with current user id", async () => {
+		// Cette route /import/me évite de faire confiance à un steamId fourni par le client.
 		const resultPayload = {
 			steamId: "76561198000000000",
 			userId: "user-1",

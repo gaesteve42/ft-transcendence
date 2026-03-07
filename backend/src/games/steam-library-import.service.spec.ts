@@ -39,6 +39,8 @@ describe("SteamLibraryImportService", () => {
 	});
 
 	it("builds preview stats from owned games", async () => {
+		// previewImport reste purement en lecture :
+		// il récupère les jeux Steam et construit un résumé pour le front.
 		steamGames.getOwnedGames.mockResolvedValue([
 			{
 				appId: "10",
@@ -76,6 +78,48 @@ describe("SteamLibraryImportService", () => {
 		expect(result.games).toEqual([]);
 	});
 
+	it("previewImportForUser rejects empty userId", async () => {
+		await expect(service.previewImportForUser("   ")).rejects.toThrow(BadRequestException);
+	});
+
+	it("previewImportForUser rejects unknown user", async () => {
+		prisma.user.findUnique.mockResolvedValue(null);
+
+		await expect(service.previewImportForUser("user-1")).rejects.toThrow(NotFoundException);
+	});
+
+	it("previewImportForUser rejects user without linked steam account", async () => {
+		prisma.user.findUnique.mockResolvedValue({ steamId: null });
+
+		await expect(service.previewImportForUser("user-1")).rejects.toThrow(BadRequestException);
+	});
+
+	it("previewImportForUser delegates to previewImport with linked steamId", async () => {
+		// Cette méthode joue le rôle d'adaptateur :
+		// userId interne -> steamId -> previewImport(steamId).
+		prisma.user.findUnique.mockResolvedValue({ steamId: "76561198000000000" });
+		const previewSpy = jest.spyOn(service, "previewImport").mockResolvedValue({
+			steamId: "76561198000000000",
+			fetchedAt: new Date("2026-03-06T10:00:00.000Z"),
+			totalGames: 1,
+			recentlyActiveGames: 0,
+			games: [
+				{
+					appId: "10",
+					name: "Counter-Strike",
+					playtimeMinutesForever: 1200,
+					playtimeMinutesLast2Weeks: 0,
+					iconUrl: null,
+				},
+			],
+		});
+
+		const result = await service.previewImportForUser("user-1");
+
+		expect(previewSpy).toHaveBeenCalledWith("76561198000000000");
+		expect(result.steamId).toBe("76561198000000000");
+	});
+
 	it("importLibraryForUser rejects empty userId", async () => {
 		await expect(service.importLibraryForUser("   ")).rejects.toThrow(BadRequestException);
 	});
@@ -93,6 +137,7 @@ describe("SteamLibraryImportService", () => {
 	});
 
 	it("importLibraryForUser delegates to importLibrary with linked steamId", async () => {
+		// Même principe que previewImportForUser, mais pour une opération d'écriture.
 		prisma.user.findUnique.mockResolvedValue({ steamId: "76561198000000000" });
 		const importSpy = jest.spyOn(service, "importLibrary").mockResolvedValue({
 			steamId: "76561198000000000",

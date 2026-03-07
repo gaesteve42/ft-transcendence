@@ -33,10 +33,14 @@ export class GameController {
 	importSteamLibrary(@Param("steamId") steamId: string) {
 		return this.steamImport.importLibrary(steamId);
 	}
-
 	@UseGuards(JwtAuthGuard)
 	@Post("steam/import/me")
 	importMySteamLibrary(@CurrentUser("id") userId: string) {
 		return this.steamImport.importLibraryForUser(userId);
+	}
+	@UseGuards(JwtAuthGuard)
+	@Get("steam/preview/me")
+	previewMySteamImport(@CurrentUser("id") userId: string) {
+		return this.steamImport.previewImportForUser(userId);
 	}
 }
