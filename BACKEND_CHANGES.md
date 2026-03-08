@@ -1,19 +1,16 @@
 # Modifications Backend & Infra — branche `feature/lobby`
 
-> Ces changements ont été faits par l'équipe front pour supporter les **WebSockets**
+> Ces changements ont été faits par l'équipe front ( alias guluguts le chauve de merde de merde de merde ) pour supporter les **WebSockets**
 > et améliorer la gestion du **lobby en temps réel**.
-> Merci de les review et de les intégrer côté backend.
 > Ce fichier peut être supprimé après merge.
 
 ---
 
 ## 1. Nouvelles dépendances (`backend/package.json`)
 
-```
 @nestjs/websockets        ^11.1.16
 @nestjs/platform-socket.io ^11.1.16
 socket.io                  ^4.8.3
-```
 
 **Pourquoi ?** NestJS a besoin de ces 3 packages pour exposer un serveur WebSocket via Socket.IO.
 Penser à `npm ci` après pull.
