@@ -58,6 +58,7 @@ function Dashboard() {
 	const [steamGames, setSteamGames] = useState<SteamGame[]>([])
 	const [steamLoading, setSteamLoading] = useState(false)
 	const [sortBy, setSortBy] = useState<'playtime' | 'recent'>('playtime')
+	const [activeLobby, setActiveLobby] = useState<{ id: string; name: string; players: number; maxPlayers: number } | null>(null)
 	const navigate = useNavigate()
 
 	const sortedGames = [...steamGames]
@@ -71,6 +72,18 @@ function Dashboard() {
 	const steamHeaderUrl = (appId: string) =>
 		`https://cdn.akamai.steamstatic.com/steam/apps/${appId}/header.jpg`
 
+	// Check if user is in an active lobby
+	useEffect(() => {
+		const token = localStorage.getItem('accessToken')
+		if (!token) return
+		fetch('/api/lobbies/me', { headers: { Authorization: `Bearer ${token}` } })
+			.then((res) => res.ok ? res.json() : null)
+			.then((data) => {
+				if (data?.id) setActiveLobby({ id: data.id, name: data.name, players: data.players.length, maxPlayers: data.maxPlayers })
+			})
+			.catch(() => {})
+	}, [])
+
 	useEffect(() => {
 		if (activeTab !== 'bibliotheque' || !user?.steamId) return
 		setSteamLoading(true)
@@ -80,6 +93,21 @@ function Dashboard() {
 			.catch(() => setSteamGames([]))
 			.finally(() => setSteamLoading(false))
 	}, [activeTab, user?.steamId])
+
+	const createNewLobby = async () => {
+		const token = localStorage.getItem('accessToken')
+		try {
+			const res = await fetch('/api/lobbies', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+				body: JSON.stringify({ name: `${user?.username}'s lobby`, maxPlayers: 4 }),
+			})
+			const data = await res.json()
+			if (res.ok) {
+				navigate(`/session/${data.id}`)
+			}
+		} catch { /* ignore */ }
+	}
 
 	const joinLobby = async (lobbyId: string) => {
 		if (!lobbyId.trim()) return
@@ -92,10 +120,15 @@ function Dashboard() {
 			})
 			if (!res.ok) {
 				const data = await res.json()
+				// Already in this lobby = just navigate there
+				if (data.message?.includes('already inside'))  {
+					navigate(`/session/${lobbyId}`)
+					return
+				}
 				setJoinError(data.message || 'Unable to join')
 				return
 			}
-			navigate('/session')
+			navigate(`/session/${lobbyId}`)
 		} catch {
 			setJoinError('Network error')
 		}
@@ -148,6 +181,26 @@ function Dashboard() {
 						{/* ──── Tab 1: Vue d'ensemble ──── */}
 						{activeTab === 'overview' && (
 							<div>
+								{/* Active lobby banner */}
+								{activeLobby && (
+									<motion.div
+										initial={{ opacity: 0, y: -10 }}
+										animate={{ opacity: 1, y: 0 }}
+										className="mb-6 rounded-2xl p-5 bg-violet-500/10 border border-violet-500/30 flex items-center justify-between"
+									>
+										<div>
+											<p className="font-bold text-text-white">{activeLobby.name}</p>
+											<p className="text-sm text-text-muted">{activeLobby.players}/{activeLobby.maxPlayers} players · Session in progress</p>
+										</div>
+										<button
+											onClick={() => navigate(`/session/${activeLobby.id}`)}
+											className="px-5 py-2.5 rounded-lg font-semibold text-sm bg-violet-600 hover:bg-violet-700 text-white transition-colors cursor-pointer"
+										>
+											Return to session
+										</button>
+									</motion.div>
+								)}
+
 								{/* Actions : Créer + Rejoindre */}
 								<div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
 									{/* Create Session */}
@@ -165,7 +218,7 @@ function Dashboard() {
 											<p className="text-sm text-text-white">Host a lobby and invite your friends with a given code</p>
 										</div>
 										<div className="flex gap-3 mt-4">
-											<Button to="/session" variant="blue" size="small">
+											<Button variant="blue" size="small" onClick={createNewLobby}>
 												Start now
 											</Button>
 										</div>
@@ -274,7 +327,7 @@ function Dashboard() {
 							</div>
 						)}
 
-						{/* ──── Tab 3: Bibliothèque ──── */}
+						{/* ─���── Tab 3: Bibliothèque ──── */}
 						{activeTab === 'bibliotheque' && (
 							<div className="space-y-6">
 								{/* Profil Steam */}
@@ -341,13 +394,8 @@ function Dashboard() {
 									) : steamGames.length === 0 ? (
 										<div className="flex flex-col items-center justify-center h-40 rounded-xl border border-dashed border-dark-500">
 											<p className="text-text-muted text-sm mb-3">
-												{user?.steamId ? 'No games found' : 'Connect Steam to see your games'}
+												{user?.steamId ? 'No games found' : 'Connect your account Steam to see your games'}
 											</p>
-											{!user?.steamId && (
-												<a href="/api/auth/steam" className="text-sm font-medium text-violet-400 hover:text-violet-300 transition-colors">
-													Connect Steam →
-												</a>
-											)}
 										</div>
 									) : (
 										<>

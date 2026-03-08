@@ -53,6 +53,14 @@ function App() {
 							}
 						/>
 						<Route
+							path="/session/:lobbyId"
+							element={
+								<ProtectedRoute>
+									<Session />
+								</ProtectedRoute>
+							}
+						/>
+						<Route
 							path="/library"
 							element={
 								<ProtectedRoute>

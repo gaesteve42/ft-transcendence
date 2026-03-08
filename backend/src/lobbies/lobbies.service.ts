@@ -11,7 +11,7 @@ type LobbyWithMembers = {
 	name: string;
 	maxPlayers: number;
 	ownerId: string;
-	members: Array<{ userId: string }>;
+	members: Array<{ userId: string; user: { id: string; username: string; avatarUrl: string | null } }>;
 };
 @Injectable()
 export class LobbiesService{
@@ -24,7 +24,11 @@ export class LobbiesService{
 					name : lobby.name,
 					maxPlayers: lobby.maxPlayers,
 					ownerId: lobby.ownerId,
-					players: lobby.members.map((member)=> member.userId),	
+					players: lobby.members.map((member) => ({
+						id: member.user.id,
+						username: member.user.username,
+						avatarUrl: member.user.avatarUrl,
+					})),
 		};
 	}
 	private isUniqueConstraintError(error: unknown): error is Prisma.PrismaClientKnownRequestError {
@@ -67,7 +71,7 @@ export class LobbiesService{
 				maxPlayers: true,
 				ownerId: true,
 				members: {
-					select: { userId: true },
+					select: { userId: true, user: { select: { id: true, username: true, avatarUrl: true } } },
 					orderBy: { joinedAt: "asc" },
 				},
 			},
@@ -97,16 +101,34 @@ export class LobbiesService{
 					ownerId: userId,
 				},
 			});
-			await tx.lobbyMember.create({
-				data:{
-					lobbyId: lobby.id,
-					userId: userId,
-				},
-			});
+			await this.createMembershipOrThrow(tx, lobby.id, userId);
 			this.audit.lobbyCreated(lobby.id, userId);
 			const lobbyRaw = await this.findLobbyRawOrThrow(tx, lobby.id);
 			return this.toDomain(lobbyRaw);
 		}) 
+	}
+	private static readonly LOBBY_TTL_MS = 30 * 60 * 1000; // 30 minutes
+
+	async getMyLobby(userId: string): Promise<Lobby | null> {
+		const membership = await this.prisma.lobbyMember.findUnique({
+			where: { userId },
+			select: { lobbyId: true },
+		});
+		if (!membership) return null;
+
+		// Check if lobby has expired
+		const lobbyRow = await this.prisma.lobby.findUnique({
+			where: { id: membership.lobbyId },
+			select: { id: true, updatedAt: true },
+		});
+		if (!lobbyRow) return null;
+		if (Date.now() - lobbyRow.updatedAt.getTime() > LobbiesService.LOBBY_TTL_MS) {
+			// Expired: delete lobby (cascades to members and tag preferences)
+			await this.prisma.lobby.delete({ where: { id: lobbyRow.id } });
+			return null;
+		}
+
+		return this.getLobbyById(membership.lobbyId);
 	}
 	async getLobbyById(id: string): Promise<Lobby> {
 		const lobby = await this.getLobbyRaw(id);
@@ -117,7 +139,7 @@ export class LobbiesService{
 	private assertJoinAllowed(lobby: Lobby, playerId: string): void{
 		if (!playerId || playerId.length === 0)
 			throw new BadRequestException("Player ID is empty");
-		if (lobby.players.includes(playerId))
+		if (lobby.players.some((p) => p.id === playerId))
 			throw new BadRequestException("Player is already inside the lobby");
 		if (lobby.players.length >= lobby.maxPlayers)
 			throw new BadRequestException("Too many players in this lobby");
@@ -127,18 +149,42 @@ export class LobbiesService{
 		lobbyId: string,
 		playerId: string,
 	): Promise<void>{
-		try{
-			await tx.lobbyMember.create({
-				data:{
-					lobbyId: lobbyId,
-					userId: playerId,
-				},
+		// Auto-leave previous lobby if user is already in one
+		const existing = await tx.lobbyMember.findUnique({
+			where: { userId: playerId },
+			select: { lobbyId: true },
+		});
+		if (existing) {
+			await tx.lobbyMember.delete({
+				where: { lobbyId_userId: { lobbyId: existing.lobbyId, userId: playerId } },
 			});
-		}catch (error: unknown){
-			if (!this.isUniqueConstraintError(error))
-				throw error;
-			throw new BadRequestException("Player is already inside a lobby");
+			// Clean up old lobby (transfer owner or delete if empty)
+			const oldLobby = await tx.lobby.findUnique({
+				where: { id: existing.lobbyId },
+				select: { id: true, ownerId: true },
+			});
+			if (oldLobby) {
+				const remaining = await tx.lobbyMember.findMany({
+					where: { lobbyId: existing.lobbyId },
+					select: { userId: true },
+					orderBy: { joinedAt: "asc" },
+				});
+				if (remaining.length === 0) {
+					await tx.lobby.delete({ where: { id: existing.lobbyId } });
+				} else if (oldLobby.ownerId === playerId) {
+					await tx.lobby.update({
+						where: { id: existing.lobbyId },
+						data: { ownerId: remaining[0].userId },
+					});
+				}
+			}
 		}
+		await tx.lobbyMember.create({
+			data:{
+				lobbyId: lobbyId,
+				userId: playerId,
+			},
+		});
 	}
 	private async findLobbyRawOrThrow(
 		tx: Prisma.TransactionClient,
@@ -152,7 +198,7 @@ export class LobbiesService{
 				maxPlayers: true,
 				ownerId: true,
 				members:{
-					select: {userId: true},
+					select: {userId: true, user: { select: { id: true, username: true, avatarUrl: true } }},
 					orderBy: {joinedAt: "asc"},
 				},
 			},
@@ -180,7 +226,7 @@ export class LobbiesService{
 				maxPlayers: true,
 				ownerId: true,
 				members: {
-					select: { userId: true },
+					select: { userId: true, user: { select: { id: true, username: true, avatarUrl: true } } },
 					orderBy: { joinedAt: "asc" },
 				},
 			},
@@ -191,7 +237,7 @@ export class LobbiesService{
 	private assertLeaveAllowed(lobby: Lobby, userId: string): void{
 		if (!userId || userId.length === 0)
 			throw new BadRequestException("User invalid");
-		if (!lobby.players.includes(userId))
+		if (!lobby.players.some((p) => p.id === userId))
 			throw new BadRequestException("Player is not inside the lobby");
 	}
 	private async removeMembershipOrThrow(
@@ -249,7 +295,7 @@ export class LobbiesService{
 					maxPlayers: true,
 					ownerId: true,
 					members: {
-						select: {userId: true},
+						select: {userId: true, user: { select: { id: true, username: true, avatarUrl: true } }},
 						orderBy:{ joinedAt:"asc"},
 					},
 				},
@@ -305,7 +351,7 @@ export class LobbiesService{
 			select: {userId: true},
 		});
 		const usersWithTags = new Set(tagRows.map((row) => row.userId));
-		const missingUserIds = lobby.players.filter((id) => !usersWithTags.has(id));
+		const missingUserIds = lobby.players.filter((p) => !usersWithTags.has(p.id)).map((p) => p.id);
 		return {
 			lobbyId: lobbyId,
 			totalPlayers,
