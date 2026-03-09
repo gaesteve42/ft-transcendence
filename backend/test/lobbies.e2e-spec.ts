@@ -3,16 +3,37 @@ import { Test, TestingModule } from "@nestjs/testing";
 import request from "supertest";
 import { AppModule } from "../src/app.module";
 
-describe("Auth (e2e)", () => {
+describe("Lobbies (e2e)", () => {
 	let app: INestApplication;
+
+	const shortId = (): string => Math.random().toString(36).slice(2, 10);
+	const uniqueEmail = (): string => `u_${shortId()}@test.com`;
+	const uniqueUsername = (): string => `u_${shortId()}`.slice(0, 20);
+
+	const registerAndLogin = async () => {
+		const email = uniqueEmail();
+		const username = uniqueUsername();
+		const password = "Str0ngP@ssw0rd!";
+
+		await request(app.getHttpServer())
+			.post("/api/auth/register")
+			.send({ email, username, password })
+			.expect(201);
+
+		const login = await request(app.getHttpServer())
+			.post("/api/auth/login")
+			.send({ email, password })
+			.expect(200);
+
+		return { email, username, password, token: login.body.accessToken as string };
+	};
+
 	beforeEach(async () => {
 		const moduleFixture: TestingModule = await Test.createTestingModule({
 			imports: [AppModule],
 		}).compile();
 
 		app = moduleFixture.createNestApplication();
-
-		// IMPORTANT: reproduit main.ts (DTO validation)
 		app.useGlobalPipes(
 			new ValidationPipe({
 				whitelist: true,
@@ -30,8 +51,8 @@ describe("Auth (e2e)", () => {
 		const res = await request(app.getHttpServer())
 			.post("/api/auth/register")
 			.send({
-				email: "auth1@test.com",
-				username: "auth1",
+				email: uniqueEmail(),
+				username: uniqueUsername(),
 				password: "Str0ngP@ssw0rd!",
 			})
 			.expect(201);
@@ -43,11 +64,13 @@ describe("Auth (e2e)", () => {
 	});
 
 	it("POST /api/auth/register rejects duplicate email", async () => {
+		const email = uniqueEmail();
+
 		await request(app.getHttpServer())
 			.post("/api/auth/register")
 			.send({
-				email: "dup@test.com",
-				username: "user1",
+				email,
+				username: uniqueUsername(),
 				password: "Str0ngP@ssw0rd!",
 			})
 			.expect(201);
@@ -55,8 +78,8 @@ describe("Auth (e2e)", () => {
 		const res = await request(app.getHttpServer())
 			.post("/api/auth/register")
 			.send({
-				email: "dup@test.com",
-				username: "user2",
+				email,
+				username: uniqueUsername(),
 				password: "Str0ngP@ssw0rd!",
 			})
 			.expect(400);
@@ -67,144 +90,84 @@ describe("Auth (e2e)", () => {
 	});
 
 	it("POST /api/auth/login returns accessToken", async () => {
-		await request(app.getHttpServer())
-			.post("/api/auth/register")
-			.send({
-				email: "login@test.com",
-				username: "loginuser",
-				password: "Str0ngP@ssw0rd!",
-			})
-			.expect(201);
+		const account = await registerAndLogin();
 
-		const res = await request(app.getHttpServer())
-			.post("/api/auth/login")
-			.send({
-				email: "login@test.com",
-				password: "Str0ngP@ssw0rd!",
-			})
-			.expect(200);
-
-		expect(res.body).toEqual({
-			accessToken: expect.any(String),
-		});
+		expect(account.token).toEqual(expect.any(String));
 	});
 
 	it("GET /api/auth/me returns user when token is valid", async () => {
-		const register = await request(app.getHttpServer())
-			.post("/api/auth/register")
-			.send({
-				email: "me@test.com",
-				username: "meuser",
-				password: "Str0ngP@ssw0rd!",
-			})
-			.expect(201);
-
-		const token = register.body.accessToken as string;
+		const account = await registerAndLogin();
 
 		const me = await request(app.getHttpServer())
 			.get("/api/auth/me")
-			.set("Authorization", `Bearer ${token}`)
+			.set("Authorization", `Bearer ${account.token}`)
 			.expect(200);
 
-		expect(me.body).toEqual({
-			id: expect.any(String),
-			email: "me@test.com",
-			username: "meuser",
-		});
+		expect(me.body).toEqual(
+			expect.objectContaining({
+				id: expect.any(String),
+				email: account.email,
+				username: account.username,
+				steamId: null,
+				avatarUrl: null,
+			}),
+		);
 	});
+
 	it("LEAVE /api/lobbies/:id/leave deletes lobby when last player leaves", async () => {
-	// 1) login user1
-	const login1 = await request(app.getHttpServer())
-		.post("/api/auth/login")
-		.send({
-			email: "test@test.com",
-			password: "TEst@23132_131ERweqwdcq",
-		})
-		.expect(200);
+		const user1 = await registerAndLogin();
 
-	const token1 = login1.body.accessToken;
+		const createRes = await request(app.getHttpServer())
+			.post("/api/lobbies")
+			.set("Authorization", `Bearer ${user1.token}`)
+			.send({ name: "Lobby leave last", maxPlayers: 4 })
+			.expect(201);
 
-	// 2) create lobby (auto-join owner)
-	const createRes = await request(app.getHttpServer())
-		.post("/api/lobbies")
-		.set("Authorization", `Bearer ${token1}`)
-		.send({ name: "Lobby leave last", maxPlayers: 4 })
-		.expect(201);
+		const lobbyId = createRes.body.id;
 
-	const lobbyId = createRes.body.id;
+		await request(app.getHttpServer())
+			.get(`/api/lobbies/${lobbyId}`)
+			.set("Authorization", `Bearer ${user1.token}`)
+			.expect(200);
 
-	// sanity: lobby exists
-	await request(app.getHttpServer())
-		.get(`/api/lobbies/${lobbyId}`)
-		.expect(200);
+		const leaveRes = await request(app.getHttpServer())
+			.post(`/api/lobbies/${lobbyId}/leave`)
+			.set("Authorization", `Bearer ${user1.token}`)
+			.expect(200);
 
-	// 3) leave (owner is last player -> lobby should be deleted)
-	const leaveRes = await request(app.getHttpServer())
-		.post(`/api/lobbies/${lobbyId}/leave`)
-		.set("Authorization", `Bearer ${token1}`)
-		.expect(200);
+		expect(leaveRes.body.id).toBe(lobbyId);
+		expect(Array.isArray(leaveRes.body.players)).toBe(true);
+		expect(leaveRes.body.players).toEqual([]);
 
-	expect(leaveRes.body.id).toBe(lobbyId);
-	expect(Array.isArray(leaveRes.body.players)).toBe(true);
-	expect(leaveRes.body.players).toEqual([]);
-
-	// 4) lobby deleted => GET 404
-	await request(app.getHttpServer())
-		.get(`/api/lobbies/${lobbyId}`)
-		.expect(404);
+		await request(app.getHttpServer())
+			.get(`/api/lobbies/${lobbyId}`)
+			.set("Authorization", `Bearer ${user1.token}`)
+			.expect(404);
 	});
 
 	it("LEAVE /api/lobbies/:id/leave transfers ownership if owner leaves and lobby not empty", async () => {
-		// 1) login user1 (seeded)
-		const login1 = await request(app.getHttpServer())
-			.post("/api/auth/login")
-			.send({
-				email: "test@test.com",
-				password: "TEst@23132_131ERweqwdcq",
-			})
-			.expect(200);
+		const user1 = await registerAndLogin();
+		const user2 = await registerAndLogin();
 
-		const token1 = login1.body.accessToken;
-
-		// 2) register + login user2
-		const email2 = `u2_${Date.now()}@test.com`;
-		const username2 = `user2_${Date.now()}`;
-		const password2 = "Str0ngP@ssw0rd!";
-
-		await request(app.getHttpServer())
-			.post("/api/auth/register")
-			.send({ email: email2, username: username2, password: password2 })
-			.expect(201);
-
-		const login2 = await request(app.getHttpServer())
-			.post("/api/auth/login")
-			.send({ email: email2, password: password2 })
-			.expect(200);
-
-		const token2 = login2.body.accessToken;
-
-		// 3) user1 creates lobby (owner=user1, players=[user1])
 		const createRes = await request(app.getHttpServer())
 			.post("/api/lobbies")
-			.set("Authorization", `Bearer ${token1}`)
+			.set("Authorization", `Bearer ${user1.token}`)
 			.send({ name: "Lobby owner transfer", maxPlayers: 4 })
 			.expect(201);
 
 		const lobbyId = createRes.body.id;
 		const owner1 = createRes.body.ownerId;
 
-		// 4) user2 joins (players=[user1,user2])
 		const joinRes = await request(app.getHttpServer())
 			.post(`/api/lobbies/${lobbyId}/join`)
-			.set("Authorization", `Bearer ${token2}`)
+			.set("Authorization", `Bearer ${user2.token}`)
 			.expect(200);
 
 		expect(joinRes.body.players.length).toBe(2);
 
-		// 5) user1 leaves => lobby still exists and owner should become user2
 		const leaveRes = await request(app.getHttpServer())
 			.post(`/api/lobbies/${lobbyId}/leave`)
-			.set("Authorization", `Bearer ${token1}`)
+			.set("Authorization", `Bearer ${user1.token}`)
 			.expect(200);
 
 		expect(leaveRes.body.id).toBe(lobbyId);
@@ -212,9 +175,9 @@ describe("Auth (e2e)", () => {
 		expect(leaveRes.body.players[0]).not.toBe(owner1);
 		expect(leaveRes.body.ownerId).toBe(leaveRes.body.players[0]);
 
-		// 6) GET lobby => still exists + owner is user2
 		const getRes = await request(app.getHttpServer())
 			.get(`/api/lobbies/${lobbyId}`)
+			.set("Authorization", `Bearer ${user2.token}`)
 			.expect(200);
 
 		expect(getRes.body.ownerId).toBe(getRes.body.players[0]);
@@ -222,47 +185,20 @@ describe("Auth (e2e)", () => {
 	});
 
 	it("LEAVE /api/lobbies/:id/leave returns 400 if user is not in lobby", async () => {
-		// login user1
-		const login1 = await request(app.getHttpServer())
-			.post("/api/auth/login")
-			.send({
-				email: "test@test.com",
-				password: "TEst@23132_131ERweqwdcq",
-			})
-			.expect(200);
+		const user1 = await registerAndLogin();
+		const user2 = await registerAndLogin();
 
-		const token1 = login1.body.accessToken;
-
-		// create lobby with user1
 		const createRes = await request(app.getHttpServer())
 			.post("/api/lobbies")
-			.set("Authorization", `Bearer ${token1}`)
+			.set("Authorization", `Bearer ${user1.token}`)
 			.send({ name: "Lobby leave not in", maxPlayers: 4 })
 			.expect(201);
 
 		const lobbyId = createRes.body.id;
 
-		// register+login user2
-		const email2 = `u3_${Date.now()}@test.com`;
-		const username2 = `user3_${Date.now()}`;
-		const password2 = "Str0ngP@ssw0rd!";
-
-		await request(app.getHttpServer())
-			.post("/api/auth/register")
-			.send({ email: email2, username: username2, password: password2 })
-			.expect(201);
-
-		const login2 = await request(app.getHttpServer())
-			.post("/api/auth/login")
-			.send({ email: email2, password: password2 })
-			.expect(200);
-
-		const token2 = login2.body.accessToken;
-
-		// user2 tries to leave without joining
 		const leaveRes = await request(app.getHttpServer())
 			.post(`/api/lobbies/${lobbyId}/leave`)
-			.set("Authorization", `Bearer ${token2}`)
+			.set("Authorization", `Bearer ${user2.token}`)
 			.expect(400);
 
 		expect(leaveRes.body.statusCode).toBe(400);

@@ -118,11 +118,15 @@ describe("Auth (e2e)", () => {
 			.set("Authorization", `Bearer ${token}`)
 			.expect(200);
 
-		expect(meRes.body).toEqual({
-			id: expect.any(String),
-			email,
-			username,
-		});
+		expect(meRes.body).toEqual(
+			expect.objectContaining({
+				id: expect.any(String),
+				email,
+				username,
+				steamId: null,
+				avatarUrl: null,
+			}),
+		);
 	});
 
 	it("GET /api/auth/me returns 401 when no token", async () => {
@@ -142,5 +146,25 @@ describe("Auth (e2e)", () => {
 
 		expect(res.body.statusCode).toBe(401);
 		expect(res.body.message).toBe("Unauthorized");
+	});
+
+	it("POST /api/auth/steam/exchange rejects an unknown code", async () => {
+		const res = await request(app.getHttpServer())
+			.post("/api/auth/steam/exchange")
+			.send({ code: "unknown-code" })
+			.expect(401);
+
+		expect(res.body.statusCode).toBe(401);
+		expect(res.body.error).toBe("Unauthorized");
+	});
+
+	it("POST /api/auth/steam/exchange validates DTO", async () => {
+		const res = await request(app.getHttpServer())
+			.post("/api/auth/steam/exchange")
+			.send({ code: "" })
+			.expect(400);
+
+		expect(res.body.statusCode).toBe(400);
+		expect(res.body.error).toBe("Bad Request");
 	});
 });

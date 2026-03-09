@@ -9,6 +9,9 @@ import Profile from './pages/Profile'
 import Session from './pages/Session'
 import Dashboard from './pages/Dashboard'
 import Library from './pages/Library'
+import PrivacyPolicy from './pages/PrivacyPolicy'
+import TermsOfService from './pages/TermsOfService'
+import SteamCallback from './pages/SteamCallback'
 
 function App() {
 	return (
@@ -20,6 +23,9 @@ function App() {
 						<Route path="/" element={<Home />} />
 						<Route path="/register" element={<Register />} />
 						<Route path="/login" element={<Login />} />
+						<Route path="/privacy" element={<PrivacyPolicy />} />
+						<Route path="/terms" element={<TermsOfService />} />
+						<Route path="/auth/callback" element={<SteamCallback />} />
 
 						{/* Pages protégées */}
 						<Route
@@ -47,6 +53,14 @@ function App() {
 							}
 						/>
 						<Route
+							path="/session/:lobbyId"
+							element={
+								<ProtectedRoute>
+									<Session />
+								</ProtectedRoute>
+							}
+						/>
+						<Route
 							path="/library"
 							element={
 								<ProtectedRoute>
@@ -62,15 +76,3 @@ function App() {
 }
 
 export default App
-
-/*
-
-Ce que je veux focus dans l ordre pour bien comprendre react
-
-Les composants : une fonction qui retourne du JSX/TSX (du HTML dans du JavaScript)
-Les props : passer des données d'un composant parent à un enfant
-Le state avec useState : gérer des données qui changent (ex: un compteur, un input)
-Le rendu conditionnel : afficher ou cacher des éléments selon une condition
-Les listes et keys : afficher une liste d'éléments avec .map()
-Les événements : réagir aux clics, aux saisies clavier, etc.
-*/

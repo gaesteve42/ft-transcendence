@@ -237,6 +237,7 @@ describe("Persistence (e2e)", () => {
 
 		await request(app.getHttpServer())
 			.get(`/api/lobbies/${lobbyId}`)
+			.set("Authorization", `Bearer ${token}`)
 			.expect(404);
 
 		const lobbyInDb = await prisma.lobby.findUnique({

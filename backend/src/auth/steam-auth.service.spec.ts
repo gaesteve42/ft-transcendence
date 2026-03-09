@@ -4,6 +4,7 @@ import { SteamAuthService } from "./steam-auth.service";
 import { UsersService } from "src/users/users.service";
 import { AuditLoggerService } from "src/common/logging/audit-logger.service";
 import { User } from "src/users/types/users";
+import { BadRequestException, UnauthorizedException } from "@nestjs/common";
 
 describe("SteamAuthService", () => {
 	let service: SteamAuthService;
@@ -57,29 +58,26 @@ describe("SteamAuthService", () => {
 		audit = module.get(AuditLoggerService) as jest.Mocked<AuditLoggerService>;
 	});
 
-	it("updates an existing steam user and returns token", async () => {
+	it("updates an existing steam user and returns userId", async () => {
 		const existing = makeUser("1");
 		const updated = { ...existing, avatarUrl: "https://avatar.test/new.jpg", lastSteamUpdated: new Date() };
 
 		users.findBySteamId.mockResolvedValue(existing);
 		users.updateSteamProfile.mockResolvedValue(updated);
-		jwt.sign.mockReturnValue("token-1");
 
 		const result = await service.loginWithSteam("765", "Middle", "https://avatar.test/new.jpg");
 
 		expect(users.findBySteamId).toHaveBeenCalledWith("765");
 		expect(users.updateSteamProfile).toHaveBeenCalledTimes(1);
 		expect(users.createSteamUser).not.toHaveBeenCalled();
-		expect(jwt.sign).toHaveBeenCalledWith({ sub: updated.id });
-		expect(result).toEqual({ accessToken: "token-1" });
+		expect(result).toEqual({ userId: updated.id });
 	});
 
-	it("creates a new steam user and returns token", async () => {
+	it("creates a new steam user and returns userId", async () => {
 		const created = makeUser("2");
 
 		users.findBySteamId.mockResolvedValue(undefined);
 		users.createSteamUser.mockResolvedValue(created);
-		jwt.sign.mockReturnValue("token-2");
 
 		const result = await service.loginWithSteam("999", "Middle", "https://avatar.test/a.jpg");
 
@@ -90,7 +88,7 @@ describe("SteamAuthService", () => {
 			avatarUrl: "https://avatar.test/a.jpg",
 		});
 		expect(users.updateSteamProfile).not.toHaveBeenCalled();
-		expect(result).toEqual({ accessToken: "token-2" });
+		expect(result).toEqual({ userId: created.id });
 	});
 
 	it("logs and rethrows unexpected errors", async () => {
@@ -102,5 +100,42 @@ describe("SteamAuthService", () => {
 			steamId: "123",
 			reason: "unexpected_error",
 		});
+	});
+
+	it("createCode then exchangeCode returns an access token", () => {
+		jwt.sign.mockReturnValue("jwt-1");
+
+		const code = service.createCode("user-123");
+		const result = service.exchangeCode(code);
+
+		expect(jwt.sign).toHaveBeenCalledWith({ sub: "user-123" });
+		expect(result).toEqual({ accessToken: "jwt-1" });
+	});
+
+	it("consumeCode rejects empty code", () => {
+		expect(() => service.consumeCode("   ")).toThrow(BadRequestException);
+	});
+
+	it("consumeCode rejects invalid code", () => {
+		expect(() => service.consumeCode("unknown-code")).toThrow(UnauthorizedException);
+	});
+
+	it("consumeCode rejects expired code", () => {
+		const nowSpy = jest.spyOn(Date, "now");
+		nowSpy.mockReturnValue(1_000);
+		const code = service.createCode("user-123");
+		nowSpy.mockReturnValue(1_000 + 61_000);
+
+		expect(() => service.consumeCode(code)).toThrow(UnauthorizedException);
+
+		nowSpy.mockRestore();
+	});
+
+	it("consumeCode is one-time: second use fails", () => {
+		const code = service.createCode("user-123");
+
+		const first = service.consumeCode(code);
+		expect(first).toBe("user-123");
+		expect(() => service.consumeCode(code)).toThrow(UnauthorizedException);
 	});
 });
