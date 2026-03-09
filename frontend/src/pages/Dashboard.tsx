@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../components/context/AuthContext'
 import { motion, AnimatePresence } from 'motion/react'
 import { Link, useNavigate } from 'react-router'
@@ -10,6 +10,12 @@ type SteamGame = {
 	playtimeMinutesForever: number
 	playtimeMinutesLast2Weeks: number
 	iconUrl: string | null
+}
+
+type PopularGame = {
+	appId: string
+	name: string
+	headerImage: string
 }
 
 type Tab = 'overview' | 'historique' | 'bibliotheque'
@@ -59,6 +65,8 @@ function Dashboard() {
 	const [steamLoading, setSteamLoading] = useState(false)
 	const [sortBy, setSortBy] = useState<'playtime' | 'recent'>('playtime')
 	const [activeLobby, setActiveLobby] = useState<{ id: string; name: string; players: number; maxPlayers: number } | null>(null)
+	const [popularGames, setPopularGames] = useState<PopularGame[]>([])
+	const scrollRef = useRef<HTMLDivElement>(null)
 	const navigate = useNavigate()
 
 	const sortedGames = [...steamGames]
@@ -82,6 +90,13 @@ function Dashboard() {
 				if (data?.id) setActiveLobby({ id: data.id, name: data.name, players: data.players.length, maxPlayers: data.maxPlayers })
 			})
 			.catch(() => {})
+	}, [])
+
+	useEffect(() => {
+		fetch('/api/games/popular')
+			.then((res) => res.ok ? res.json() : [])
+			.then((data) => setPopularGames(Array.isArray(data) ? data : []))
+			.catch(() => setPopularGames([]))
 	}, [])
 
 	useEffect(() => {
@@ -275,11 +290,63 @@ function Dashboard() {
 
 								{/* Jeux populaires */}
 								<motion.div className="rounded-2xl p-6 bg-dark-800 border border-dark-600" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
-									<h3 className="text-lg font-bold mb-1">Popular games</h3>
-									<p className="text-text-muted text-sm mb-6">Discover the most played games of all time on PC</p>
-									<div className="flex items-center justify-center h-32 rounded-xl border border-dashed border-dark-500">
-										<p className="text-text-muted text-sm">Coming soon</p>
+									<div className="flex items-center justify-between mb-5">
+										<div>
+											<h3 className="text-lg font-bold">Most played right now</h3>
+											<p className="text-text-muted text-sm">Top games by current players on Steam</p>
+										</div>
+										{popularGames.length > 0 && (
+											<div className="flex gap-1.5">
+												<button
+													onClick={() => scrollRef.current?.scrollBy({ left: -600, behavior: 'smooth' })}
+													className="w-8 h-8 rounded-lg bg-dark-700 border border-dark-500 flex items-center justify-center text-text-muted hover:text-text-white hover:border-dark-400 transition-colors cursor-pointer"
+												>
+													←
+												</button>
+												<button
+													onClick={() => scrollRef.current?.scrollBy({ left: 600, behavior: 'smooth' })}
+													className="w-8 h-8 rounded-lg bg-dark-700 border border-dark-500 flex items-center justify-center text-text-muted hover:text-text-white hover:border-dark-400 transition-colors cursor-pointer"
+												>
+													→
+												</button>
+											</div>
+										)}
 									</div>
+									{popularGames.length === 0 ? (
+										<div className="flex items-center justify-center h-32 rounded-xl border border-dashed border-dark-500">
+											<p className="text-text-muted text-sm">Loading...</p>
+										</div>
+									) : (
+										<div
+											ref={scrollRef}
+											className="flex gap-4 overflow-x-auto pb-2"
+											style={{ scrollbarWidth: 'none' }}
+										>
+											{popularGames.map((game, index) => (
+												<motion.a
+													key={game.appId}
+													href={`https://store.steampowered.com/app/${game.appId}`}
+													target="_blank"
+													rel="noopener noreferrer"
+													className="shrink-0 w-70 group relative rounded-xl overflow-hidden border border-dark-600 hover:border-violet-500/50 transition-colors"
+													initial={{ opacity: 0, x: 20 }}
+													animate={{ opacity: 1, x: 0 }}
+													transition={{ delay: index * 0.03 }}
+												>
+													<img
+														src={game.headerImage}
+														alt={game.name}
+														className="w-full aspect-video object-cover group-hover:scale-105 transition-transform duration-300"
+														loading="lazy"
+													/>
+													<div className="absolute inset-0 bg-linear-to-t from-black/80 via-transparent to-transparent" />
+													<p className="absolute bottom-0 left-0 right-0 px-3 py-2.5 text-sm font-semibold truncate" style={{ textShadow: '0 1px 4px rgba(0,0,0,0.8)' }}>
+														{game.name}
+													</p>
+												</motion.a>
+											))}
+										</div>
+									)}
 								</motion.div>
 							</div>
 						)}

@@ -27,6 +27,32 @@ export class SteamGamesService {
 	 * @throws BadRequestException on invalid input/config or upstream HTTP errors.
 	 */
 
+	async getMostPlayedGames(): Promise<{appId: string; name: string; headerImage: string}[]>{
+		const chartsRes = await fetch("https://api.steampowered.com/ISteamChartsService/GetMostPlayedGames/v1/");
+		if (!chartsRes.ok)
+			throw new BadRequestException(`Steam Charts API error (HTTP ${chartsRes.status})`);
+		const chartsData = await chartsRes.json();
+		const ranks: {appid: number}[] = chartsData.response?.ranks ?? [];
+		const top = ranks.slice(0, 20);
+		const details = await Promise.all(
+			top.map(async (rank) => {
+				try {
+					const res = await fetch(`https://store.steampowered.com/api/appdetails?appids=${rank.appid}&filters=basic`);
+					if (!res.ok) return null;
+					const data = await res.json();
+					const app = data[rank.appid.toString()];
+					if (!app?.success) return null;
+					return {
+						appId: rank.appid.toString(),
+						name: app.data.name as string,
+						headerImage: (app.data.header_image as string) ?? `https://cdn.akamai.steamstatic.com/steam/apps/${rank.appid}/header.jpg`,
+					};
+				} catch { return null; }
+			})
+		);
+		return details.filter((d): d is NonNullable<typeof d> => d !== null);
+	}
+
 	async getOwnedGames(steamId: string): Promise<SteamOwnedGame[]>{
 		const cleanSteamId = steamId.trim();
 		if (cleanSteamId.length === 0)
