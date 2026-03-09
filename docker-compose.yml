@@ -82,6 +82,20 @@ services:
       - frontend
     networks:
       - gamefinder_network
+  
+  recommendation:
+    build:
+      context: ./recommendation
+      dockerfile: Dockerfile
+    environment:
+        - DATABASE_URL=${DATABASE_URL}
+    depends_on:
+        - backend
+        - postgres
+    networks: 
+        - gamefinder_network
+    ports:
+        - "8001:8001"
 
 volumes:
   postgres_data:
