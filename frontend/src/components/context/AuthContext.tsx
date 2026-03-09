@@ -60,7 +60,23 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
 		fetchUser().then(() => navigate('/dashboard'))
 	}
 
-	const logout = () => {
+	const logout = async () => {
+		const token = localStorage.getItem('accessToken')
+		// Leave active lobby before logging out
+		if (token) {
+			try {
+				const res = await fetch('/api/lobbies/me', { headers: { Authorization: `Bearer ${token}` } })
+				if (res.ok) {
+					const data = await res.json()
+					if (data?.id) {
+						await fetch(`/api/lobbies/${data.id}/leave`, {
+							method: 'POST',
+							headers: { Authorization: `Bearer ${token}` },
+						})
+					}
+				}
+			} catch { /* ignore */ }
+		}
 		localStorage.removeItem('accessToken')
 		setIsLoggedIn(false)
 		setUser(null)
