@@ -68,3 +68,34 @@ groups:
           description: The DB is down. Check your container.
         labels:
           severity: critical
+
+      # Backend ping
+      - uid: gf-backend-down
+        title: Backend down
+        condition: B
+        data:
+          - refId: A
+            relativeTimeRange: { from: 300, to: 0 }
+            datasourceUid: prometheus
+            model:
+              expr: 'probe_success{job="backend-ping"}'
+              instant: true
+              refId: A
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              type: classic_conditions
+              conditions:
+                - evaluator: { type: lt, params: [1] }
+                  operator: { type: and }
+                  query: { params: [A] }
+                  reducer: { type: last }
+              refId: B
+        noDataState: NoData
+        execErrState: Error
+        for: 1m
+        annotations:
+          summary: Backend is down.
+          description: The backend endpoint "/api/lobbies/ping" endpoint has been unreachable for 1 minute.
+        labels:
+          severity: critical
