@@ -164,6 +164,29 @@ services:
       - gamefinder_network
     depends_on:
       - backend
+  
+  loki:
+    image: grafana/loki:latest
+    container_name: gamefinder_loki
+    restart: unless-stopped
+    command: -config.file=/etc/loki/loki-config.yaml
+    volumes:
+      - ./loki/loki-config.yaml:/etc/loki/loki-config.yaml:ro
+    networks:
+      - gamefinder_network
+
+  promtail:
+    image: grafana/promtail:latest
+    container_name: gamefinder_promtail
+    volumes:
+      - ./loki/promtail-config.yaml:/etc/promtail/promtail-config.yaml:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    command: -config.file=/etc/promtail/promtail-config.yaml
+    depends_on:
+      - loki
+    networks:
+      - gamefinder_network
+    restart: unless-stopped
 
 volumes:
   postgres_data:
