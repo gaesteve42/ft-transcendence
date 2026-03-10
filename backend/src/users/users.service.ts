@@ -2,6 +2,7 @@ import { Injectable, BadRequestException, NotFoundException} from "@nestjs/commo
 import { User } from "./types/users";
 import { PrismaService } from "src/prisma/prisma.service";
 import { Prisma, User as PrismaUser, AuthProvider } from "@prisma/client";
+import { availableParallelism } from "os";
 
 
 @Injectable()
@@ -114,5 +115,28 @@ export class UsersService{
 				throw new NotFoundException("User not found");
 			throw error;
 		}
+	}
+	async linkSteamToLocalUser(userId: string, steamId: string, avatarUrl: string): Promise<User>{
+		const existingUser= await this.findById(userId);
+		const now = new Date();
+		if (!existingUser)
+			throw new NotFoundException("User not found");
+		const existingSteamUser = await this.findBySteamId(steamId);
+		if (existingSteamUser && existingSteamUser.id === existingUser.id)
+			return this.updateSteamProfile(userId, avatarUrl, now);
+		if (existingSteamUser && existingSteamUser.id !== existingUser.id)
+			throw new BadRequestException("Steam account already linked to another user");
+		if (existingUser.steamId && existingUser.steamId !== steamId)
+			throw new BadRequestException("User already linked to another Steam account");
+		const updated = await this.prisma.user.update({
+			where: {id: userId},
+			data:{
+				steamId,
+				avatarUrl,
+				steamLinkedAt: now,
+				lastSteamUpdated: now,
+			}
+		})
+		return this.toDomain(updated);
 	}
 }

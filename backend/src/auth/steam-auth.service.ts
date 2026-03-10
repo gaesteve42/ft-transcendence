@@ -8,6 +8,8 @@ import { randomUUID } from "node:crypto";
 @Injectable()	
 export class SteamAuthService{
 	private readonly codes = new Map<string, { userId: string; expiresAt: number }>();
+	private readonly linkIntents = new Map<string, { userId: string; expiresAt: number }>();
+
 
 	constructor(
 		private readonly users: UsersService,
@@ -64,4 +66,39 @@ export class SteamAuthService{
 		const accessToken = this.jwt.sign({sub: userId});
 		return {accessToken};
 	}
+	createLinkIntent(userId: string): string{
+		const cleanUserId = userId.trim();
+		if (cleanUserId.length === 0)
+			throw new BadRequestException("Error user id is empty");
+		const intentId = randomUUID();
+		const expiresAt = Date.now() + 60_000;
+		this.linkIntents.set(intentId,{userId: cleanUserId, expiresAt});
+		return intentId;
+	}
+	consumeLinkIntent(intentId: string): string{
+		const cleanIntentId = intentId.trim();
+		if (cleanIntentId.length === 0)
+			throw new BadRequestException("Link intent ID is required");
+		const entry = this.linkIntents.get(cleanIntentId);
+		if (!entry)
+			throw new UnauthorizedException("Link intent ID is invalid");
+		if (Date.now() > entry.expiresAt)
+		{
+			this.linkIntents.delete(cleanIntentId);
+			throw new UnauthorizedException("Link intent has expired");
+		}
+		this.linkIntents.delete(cleanIntentId);
+		return entry.userId;
+	}
+	async linkSteamAccount(userId: string, steamId: string, avatarUrl: string): Promise<{ userId: string }>{
+		const cleanUserId = userId.trim();
+		const cleanSteamId = steamId.trim();
+		if (cleanUserId.length === 0)
+			throw new BadRequestException("User ID is required");
+		if (cleanSteamId.length === 0)
+			throw new BadRequestException("Steam ID is required");
+		const linkedUser = await this.users.linkSteamToLocalUser(cleanUserId, cleanSteamId, avatarUrl);
+		return {userId: linkedUser.id};
+	}
+
 }

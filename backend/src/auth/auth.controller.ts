@@ -42,18 +42,47 @@ export class AuthController{
 	@UseGuards(AuthGuard("steam"))
 	@Public()
 	@Get("steam/return")
-	async steamReturn(@Req() req: {user: {steamId: string; username: string; avatarUrl: string;}}, @Res() res: Response){
-		const result = await this.steamAuth.loginWithSteam(req.user.steamId, req.user.username, req.user.avatarUrl);
+	async steamReturn(@Req() req: {user: { steamId: string; username: string; avatarUrl: string };
+	cookies?: Record<string, string>;},
+	@Res() res: Response){
+		const intentId = req.cookies?.steam_link_intent;
+		let result: {userId: string};
+		if (intentId){
+			const userId = this.steamAuth.consumeLinkIntent(intentId);
+			result = await this.steamAuth.linkSteamAccount(userId, req.user.steamId, req.user.avatarUrl);
+		}
+		else {
+			result = await this.steamAuth.loginWithSteam(req.user.steamId, req.user.username, req.user.avatarUrl);
+		}
 		const code = this.steamAuth.createCode(result.userId);
 		const frontendUrl = this.config.get<string>("FRONTEND_URL");
 		if (!frontendUrl ||frontendUrl?.trim().length === 0)
-			throw new InternalServerErrorException("Frontend url isnt valid");
+			throw new InternalServerErrorException("Frontend URL is invalid");	
+		res.clearCookie("steam_link_intent", {
+			httpOnly: true,
+			secure: true,
+			sameSite: "lax",
+			path: "/",
+		});
 		res.redirect(302, `${frontendUrl}/auth/callback?code=${encodeURIComponent(code)}`);
-	};
+	}	
 	@HttpCode(200)
 	@Public()
 	@Post("steam/exchange")
 	exchangeCode(@Body() body: SteamExchangeDto){
 		return this.steamAuth.exchangeCode(body.code);
+	}
+	@UseGuards(JwtAuthGuard)
+	@Post("steam/link/start")
+	startSteamLink(@CurrentUser("id") userId: string, @Res({ passthrough: true }) res: Response){
+		const intentId = this.steamAuth.createLinkIntent(userId);
+		res.cookie("steam_link_intent", intentId, {
+			httpOnly: true,
+			secure: true,
+			sameSite: "lax",
+			path: "/",
+			maxAge: 60_000,
+		});
+		return { redirectUrl : "/api/auth/steam"}
 	}
 }
