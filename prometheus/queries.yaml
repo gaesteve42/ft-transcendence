@@ -1,0 +1,31 @@
+pg_gamefinder_users:
+  query: 'SELECT COUNT(*) AS count FROM "User"'
+  master: true
+  metrics:
+    - count:
+        usage: GAUGE
+        description: Total registered users.
+
+pg_gamefinder_games:
+  query: 'SELECT COUNT(*) AS count FROM "Game"'
+  master: true
+  metrics:
+    - count:
+        usage: GAUGE
+        description: Number of games in database.
+
+pg_gamefinder_lobbies:
+  query: 'SELECT COUNT(*) AS count FROM "Lobby"'
+  master: true
+  metrics:
+    - count:
+        usage: GAUGE
+        description: Total number of lobbies.
+
+pg_gamefinder_usergames:
+  query: 'SELECT COUNT(*) AS count FROM "UserGame"'
+  master: true
+  metrics:
+    - count:
+        usage: GAUGE
+        description: Total number of UserGame entries.
