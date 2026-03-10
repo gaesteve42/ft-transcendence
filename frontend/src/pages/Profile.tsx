@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import Button from '../components/ui/Button'
 import Input from '../components/ui/Input'
+import steamLoginImg from '../assets/steam_login.png'
 
 function Profile() {
 	const [user, setUser] = useState<{
@@ -182,8 +183,8 @@ function Profile() {
 							</div>
 						</div>
 						{!user.steamId && (
-							<a href="/api/auth/steam" className="px-4 py-2 rounded-full text-xs font-medium border bg-dark-600 text-text-white border-dark-500 hover:border-violet-500/50 hover:text-text-purple transition-all">
-								Connecter
+							<a href="/api/auth/steam" className="opacity-80 hover:opacity-100 transition-opacity">
+								<img src={steamLoginImg} alt="Sign in through Steam" className="h-8" />
 							</a>
 						)}
 					</div>

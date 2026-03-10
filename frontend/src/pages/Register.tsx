@@ -4,6 +4,7 @@ import { motion } from 'motion/react'
 import { useAuth } from '../components/context/AuthContext'
 import Input from '../components/ui/Input'
 import Button from '../components/ui/Button'
+import steamLoginImg from '../assets/steam_login.png'
 
 type RegisterResponse = {
 	message?: string
@@ -93,9 +94,9 @@ function Register() {
 				</Button>
 				<a
 					href="/api/auth/steam"
-					className="px-4 py-2 rounded-lg text-sm font-semibold transition-all text-center cursor-pointer bg-dark-700 hover:bg-dark-600 text-text-purple border border-dark-500 hover:border-violet-500/50 hover:shadow-[0_0_20px_rgba(146,57,228,0.2)] self-center"
+					className="self-center opacity-80 hover:opacity-100 transition-opacity"
 				>
-					Log in with Steam
+					<img src={steamLoginImg} alt="Sign in through Steam" className="h-9" />
 				</a>
 				<p className="text-center text-sm text-text-muted">
 					Already have an account?{' '}

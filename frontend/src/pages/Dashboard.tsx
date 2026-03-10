@@ -3,6 +3,7 @@ import { useAuth } from '../components/context/AuthContext'
 import { motion, AnimatePresence } from 'motion/react'
 import { Link, useNavigate } from 'react-router'
 import Button from '../components/ui/Button'
+import steamLoginImg from '../assets/steam_login.png'
 
 type SteamGame = {
 	appId: string
@@ -428,8 +429,8 @@ function Dashboard() {
 											</div>
 										</div>
 										{!user?.steamId && (
-											<a href="/api/auth/steam" className="px-5 py-2 rounded-lg bg-violet-500 hover:bg-violet-600 text-white text-sm font-medium transition-colors">
-												Connect Steam
+											<a href="/api/auth/steam" className="opacity-80 hover:opacity-100 transition-opacity">
+												<img src={steamLoginImg} alt="Sign in through Steam" className="h-9" />
 											</a>
 										)}
 									</div>
