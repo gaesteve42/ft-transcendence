@@ -156,6 +156,15 @@ services:
     ports: #testing purpose only, rm after -- same as postgres exporter.
       - "9113:9113"
 
+  blackbox-exporter:
+    image: prom/blackbox-exporter
+    container_name: gamefinder_blackbox_exporter
+    restart: unless-stopped
+    networks:
+      - gamefinder_network
+    depends_on:
+      - backend
+
 volumes:
   postgres_data:
   prometheus_data:
