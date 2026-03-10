@@ -101,10 +101,22 @@ function Dashboard() {
 
 	useEffect(() => {
 		if (activeTab !== 'bibliotheque' || !user?.steamId) return
+
+		const token = localStorage.getItem('accessToken');
+		if (!token) 
+			return;
 		setSteamLoading(true)
-		fetch(`/api/games/steam/${user.steamId}/preview`)
-			.then((res) => res.json())
-			.then((data) => setSteamGames(data.games ?? []))
+		fetch(`/api/games/steam/preview/me`,{
+			headers: { Authorization:`Bearer ${token}`},
+		})
+			.then (async (res) => {
+				if (!res.ok)
+					throw new Error('Failed to load Steam preview');
+				return res.json();
+			})
+			.then((data) => {
+				setSteamGames(Array.isArray(data.games) ? data.games : []);
+			})
 			.catch(() => setSteamGames([]))
 			.finally(() => setSteamLoading(false))
 	}, [activeTab, user?.steamId])
