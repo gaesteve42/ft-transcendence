@@ -1,24 +1,30 @@
-import { Body, Controller, Get, Param, Post, UseGuards } from "@nestjs/common";
+import { Body, Controller, Get, Param, Post, Query, UseGuards } from "@nestjs/common";
 import { GameService } from "./games.service";
 import { UpsertExternalGameDto } from "./dto/upsert-external-game.dto";
 import { SteamLibraryImportService } from "./steam-library-import.service";
-import { SteamGamesService } from "src/steam-games/steam-games.service";
 import { JwtAuthGuard } from "src/auth/jwt-auth.guard";
 import { CurrentUser } from "src/auth/current-user.decorator";
+import { IgdbService } from "src/igdb/igdb.service";
+import { SearchCatalogQueryDto } from "./dto/search-catalog-query.dto";
+import { SteamGamesService } from "src/steam-games/steam-games.service";
 import { Public } from "src/auth/public.decorator";
+
 
 @Controller("api/games")
 export class GameController {
 	constructor(
 		private readonly gameService: GameService,
 		private readonly steamImport: SteamLibraryImportService,
+		private readonly igdbService: IgdbService,
 		private readonly steamGames: SteamGamesService,
+
 	) {}
 	@Public()
 	@Get("popular")
-	getPopularGames(){
+	getPopularGames() {
 		return this.steamGames.getMostPlayedGames();
 	}
+
 	@Post("upsert-external")
 	upsert(@Body() body: UpsertExternalGameDto) {
 		const input = {
@@ -50,5 +56,11 @@ export class GameController {
 	@Get("steam/preview/me")
 	previewMySteamImport(@CurrentUser("id") userId: string) {
 		return this.steamImport.previewImportForUser(userId);
+	}
+	@UseGuards(JwtAuthGuard)
+	@Get("catalog")
+	searchCatalog(@Query() query: SearchCatalogQueryDto) {
+		const limit = query.limit ?? 10;
+		return this.igdbService.searchCatalog(query.query, limit);
 	}
 }
