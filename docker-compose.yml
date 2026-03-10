@@ -132,8 +132,11 @@ services:
     image: prometheuscommunity/postgres-exporter
     container_name: gamefinder_postgres_exporter
     restart: unless-stopped
+    volumes:
+      - ./prometheus/queries.yaml:/queries.yaml:ro
     environment:
       DATA_SOURCE_NAME: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable
+      PG_EXPORTER_EXTEND_QUERY_PATH: /queries.yaml
     depends_on:
       - postgres
     ports: #for testing purpose, rm after -- no need to expose this, accessible from within
