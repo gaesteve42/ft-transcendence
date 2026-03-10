@@ -104,7 +104,7 @@ function Dashboard() {
 		if (activeTab !== 'bibliotheque' || !user?.steamId) return
 
 		const token = localStorage.getItem('accessToken');
-		if (!token) 
+		if (!token)
 			return;
 		setSteamLoading(true)
 		fetch(`/api/games/steam/preview/me`,{
@@ -513,7 +513,7 @@ function Dashboard() {
 											{steamGames.length > 16 && (
 												<div className="mt-4 text-center">
 													<Link to="/library" className="text-sm font-medium text-blue-400 hover:text-violet-300 transition-colors">
-														See all {steamGames.length} games in Library →
+														Add games you played to your library →
 													</Link>
 												</div>
 											)}
