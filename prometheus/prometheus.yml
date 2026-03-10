@@ -13,3 +13,15 @@ scrape_configs:
   - job_name: nginx
     static_configs:
      - targets: ['nginx-exporter:9113']
+  - job_name: backend-ping
+    metrics_path: /probe                                                                                                         
+    params:
+      module: [http_2xx]                                                                 
+    static_configs:                                                                                                              
+      - targets:
+          - http://backend:3001/api/lobbies/ping
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - target_label: __address__
+        replacement: blackbox-exporter:9115
