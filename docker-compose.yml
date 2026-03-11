@@ -160,6 +160,9 @@ services:
     image: prom/blackbox-exporter
     container_name: gamefinder_blackbox_exporter
     restart: unless-stopped
+    command: --config.file=/etc/blackbox/blackbox.yml
+    volumes:
+      - ./prometheus/blackbox.yml:/etc/blackbox/blackbox.yml:ro
     networks:
       - gamefinder_network
     depends_on:
