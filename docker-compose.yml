@@ -97,8 +97,101 @@ services:
     ports:
         - "8001:8001"
 
+  prometheus:
+    image: prom/prometheus
+    container_name: gamefinder_prometheus
+    restart: unless-stopped
+    ports: 
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    networks:
+      - gamefinder_network
+
+  grafana:
+    image: grafana/grafana
+    container_name: gamefinder_grafana
+    restart: unless-stopped
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+    networks:
+      - gamefinder_network
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD}
+      GF_SECURITY_DISABLE_INITIAL_ADMIN_CREATION: false
+      DISCORD_WEBHOOK_URL: ${DISCORD_WEBHOOK_URL}
+  
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter
+    container_name: gamefinder_postgres_exporter
+    restart: unless-stopped
+    volumes:
+      - ./prometheus/queries.yaml:/queries.yaml:ro
+    environment:
+      DATA_SOURCE_NAME: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable
+      PG_EXPORTER_EXTEND_QUERY_PATH: /queries.yaml
+    depends_on:
+      - postgres
+    ports: #for testing purpose, rm after -- no need to expose this, accessible from within
+      - "9187:9187"
+    networks:
+      - gamefinder_network
+  
+  nginx-exporter:
+    image: nginx/nginx-prometheus-exporter
+    container_name: gamefinder_nginx_exporter
+    restart: unless-stopped
+    networks:
+      - gamefinder_network
+    depends_on:
+      - nginx
+    command: --nginx.scrape-uri=http://nginx:80/stub_status
+    ports: #testing purpose only, rm after -- same as postgres exporter.
+      - "9113:9113"
+
+  blackbox-exporter:
+    image: prom/blackbox-exporter
+    container_name: gamefinder_blackbox_exporter
+    restart: unless-stopped
+    networks:
+      - gamefinder_network
+    depends_on:
+      - backend
+  
+  loki:
+    image: grafana/loki:latest
+    container_name: gamefinder_loki
+    restart: unless-stopped
+    command: -config.file=/etc/loki/loki-config.yaml
+    volumes:
+      - ./loki/loki-config.yaml:/etc/loki/loki-config.yaml:ro
+    networks:
+      - gamefinder_network
+
+  promtail:
+    image: grafana/promtail:latest
+    container_name: gamefinder_promtail
+    volumes:
+      - ./loki/promtail-config.yaml:/etc/promtail/promtail-config.yaml:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    command: -config.file=/etc/promtail/promtail-config.yaml
+    depends_on:
+      - loki
+    networks:
+      - gamefinder_network
+    restart: unless-stopped
+
 volumes:
   postgres_data:
+  prometheus_data:
+  grafana_data:
 
 networks:
   gamefinder_network:
