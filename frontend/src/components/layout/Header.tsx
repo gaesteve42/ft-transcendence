@@ -9,6 +9,7 @@ function Header() {
 	const { isLoggedIn, user, logout } = useAuth()
 	const [menuOpen, setMenuOpen] = useState(false)
 	const menuRef = useRef<HTMLDivElement>(null)
+	const [search, setSearch] = useState('')
 
 	useEffect(() => {
 		const handleClickOutside = (e: MouseEvent) => {
@@ -22,12 +23,36 @@ function Header() {
 
 	return (
 		<header className="bg-dark-800 border-b border-dark-600 relative z-20">
-			<nav className="px-10 py-5 flex items-center justify-between">
-				<Link to={isLoggedIn ? '/dashboard' : '/'} className="flex items-center gap-3">
-					<Logo width={60} height={60} className="translate-y-1" />
-					<span className="text-2xl font-bold text-gradient-main">GameFinder</span>
-				</Link>
-				<div className="flex items-center gap-4">
+			<nav className="px-10 py-5 flex items-center">
+				<div className="flex-1 flex items-center gap-3">
+					<Link to={isLoggedIn ? '/dashboard' : '/'} className="flex items-center gap-3 shrink-0">
+						<Logo width={60} height={60} className="translate-y-1" />
+						<span className="text-2xl font-bold text-gradient-main">GameFinder</span>
+					</Link>
+				</div>
+				{isLoggedIn && (
+					<div className="flex-1 flex justify-center">
+						<div className="relative w-full max-w-ml group">
+							<svg
+								className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted group-focus-within:text-violet-400 transition-colors"
+								fill="none"
+								viewBox="0 0 24 24"
+								stroke="currentColor"
+								strokeWidth={2}
+							>
+								<path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z" />
+							</svg>
+							<input
+								type="text"
+								placeholder="Search for users..."
+								value={search}
+								onChange={(e) => setSearch(e.target.value)}
+								className="w-full bg-dark-900/50 border border-dark-600 rounded-full pl-10 pr-4 py-3 text-sm text-text-purple placeholder:text-text-muted outline-none focus:border-violet-500/50 focus:bg-dark-900/80 transition-all"
+							/>
+						</div>
+					</div>
+				)}
+				<div className="flex-1 flex items-center justify-end gap-4">
 					{isLoggedIn ? (
 						<div className="relative" ref={menuRef}>
 							<button

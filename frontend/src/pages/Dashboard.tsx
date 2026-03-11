@@ -19,11 +19,10 @@ type PopularGame = {
 	headerImage: string
 }
 
-type Tab = 'overview' | 'historique' | 'bibliotheque'
+type Tab = 'overview' | 'bibliotheque'
 
 const TABS: { id: Tab; label: string }[] = [
 	{ id: 'overview', label: 'Overview' },
-	{ id: 'historique', label: 'History' },
 	{ id: 'bibliotheque', label: 'Library' },
 ]
 
@@ -32,30 +31,6 @@ const hoverGradient = {
 	scale: 1.02,
 	transition: { delay: 0, duration: 0.2 },
 }
-
-const mockSessionHistory = [
-	{
-		id: '1',
-		name: 'Session de HOTE',
-		date: '28 fév. 2026',
-		players: ['Guluguts', 'middle', 'Alouwest', 'Muestrano'],
-		gamesFound: 3,
-	},
-	{
-		id: '2',
-		name: 'Session de HOTE',
-		date: '21 fév. 2026',
-		players: ['Middle', 'Guluguts'],
-		gamesFound: 5,
-	},
-	{
-		id: '3',
-		name: 'Session de HOTE',
-		date: '14 fév. 2026',
-		players: ['Alouwest', 'Muestrano', 'Middle'],
-		gamesFound: 2,
-	},
-]
 
 function Dashboard() {
 	const { user, loading } = useAuth()
@@ -363,51 +338,7 @@ function Dashboard() {
 								</motion.div>
 							</div>
 						)}
-
-						{/* ──── Tab 2: Sessions (Historique) ──── */}
-						{activeTab === 'historique' && (
-							<div>
-								<motion.div className="mb-6" initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }}>
-									<h2 className="text-2xl font-bold mb-2">Lobby history</h2>
-									<p className="text-text-white">Browse your past sessions and their results</p>
-								</motion.div>
-
-								<div className="space-y-3">
-									{mockSessionHistory.map((session, index) => (
-										<motion.div
-											key={session.id}
-											className="rounded-xl p-4 bg-dark-800 border border-dark-600"
-											initial={{ opacity: 0, y: 16 }}
-											animate={{ opacity: 1, y: 0 }}
-											transition={{ delay: index * 0.05 }}
-											whileHover={{
-												background: 'linear-gradient(135deg, rgba(59,130,246,0.08), rgba(146,57,228,0.08))',
-												borderColor: 'rgba(146,57,228,0.4)',
-												transition: { delay: 0, duration: 0.2 },
-											}}
-										>
-											<div className="flex items-center justify-between">
-												<div className="flex-1">
-													<h4 className="font-bold">{session.name}</h4>
-													<p className="text-sm text-text-muted mt-0.5">
-														{session.date} · {session.gamesFound} games found
-													</p>
-												</div>
-												<div className="flex items-center gap-2 mr-4">
-													{session.players.map((initial) => (
-														<div key={initial} className="w-8 h-8 rounded-full bg-dark-700 border border-dark-500 flex items-center justify-center text-xs font-medium text-text-white">
-															{initial}
-														</div>
-													))}
-												</div>
-											</div>
-										</motion.div>
-									))}
-								</div>
-							</div>
-						)}
-
-						{/* ─���── Tab 3: Bibliothèque ──── */}
+						{/* Tab 3: Bibliothèque */}
 						{activeTab === 'bibliotheque' && (
 							<div className="space-y-6">
 								{/* Profil Steam */}
