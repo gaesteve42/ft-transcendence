@@ -571,7 +571,7 @@
       "targets": [
         {
           "datasource": { "type": "loki", "uid": "loki" },
-          "expr": "{container=~\".+\"}",
+          "expr": "{container=~\".+\"} |~ \"level.{0,5}$level\"",
           "legendFormat": "",
           "refId": "A"
         }
@@ -583,7 +583,21 @@
   "refresh": "30s",
   "schemaVersion": 39,
   "tags": ["gamefinder"],
-  "templating": { "list": [] },
+  "templating": {
+    "list": [
+      {
+        "name": "level",
+        "type": "custom",
+        "label": "Log Level",
+        "query": "error,warn,info,debug",
+        "current": { "text": "All", "value": ".*" },
+        "includeAll": true,
+        "allValue": ".*",
+        "multi": false,
+        "hide": 0
+      }
+    ]
+  },
   "time": { "from": "now-1h", "to": "now" },
   "timepicker": {},
   "timezone": "browser",
