@@ -3,7 +3,6 @@ import { useAuth } from '../components/context/AuthContext'
 import { motion, AnimatePresence } from 'motion/react'
 import { Link, useNavigate } from 'react-router'
 import Button from '../components/ui/Button'
-import steamLoginImg from '../assets/steam_login.png'
 
 type SteamGame = {
 	appId: string
@@ -338,34 +337,34 @@ function Dashboard() {
 								</motion.div>
 							</div>
 						)}
-						{/* Tab 3: Bibliothèque */}
 						{activeTab === 'bibliotheque' && (
 							<div className="space-y-6">
-								{/* Profil Steam */}
-								<motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="rounded-2xl p-6 bg-dark-800 border border-dark-600">
-									<div className="flex items-center justify-between">
-										<div className="flex items-center gap-4">
-											{user?.avatarUrl ? (
-														<img src={user.avatarUrl} alt="Steam avatar" className="w-14 h-14 rounded-full border-2 border-violet-500" />
-													) : (
-														<div className="w-14 h-14 rounded-full bg-dark-700 border-2 border-dark-500 flex items-center justify-center text-2xl">{user?.username?.charAt(0).toUpperCase() ?? '?'}</div>
-													)}
+								{/* My Library */}
+								<motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="rounded-2xl p-6 bg-dark-800 border border-dark-600 flex items-center justify-between">
+									<div>
+										<h3 className="text-lg font-bold">My Library</h3>
+										<p className="text-text-muted text-sm">Browse and add games you've played to your personal library</p>
+									</div>
+									<Link
+										to="/library"
+										className="px-5 py-2.5 rounded-lg font-semibold text-sm bg-blue-500 hover:bg-blue-600 text-white transition-colors shrink-0"
+									>
+										Open library
+									</Link>
+								</motion.div>
+
+								{/* Steam connection prompt if not linked */}
+								{!user?.steamId && (
+									<motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="rounded-2xl p-5 bg-dark-800 border border-dark-600 flex items-center justify-between">
+										<div className="flex items-center gap-3">
+											<div className="w-10 h-10 rounded-full bg-dark-700 border border-dark-500 flex items-center justify-center text-lg">🎮</div>
 											<div>
-												<h3 className="text-lg font-bold">Steam Profile</h3>
-												<p className={`text-sm ${user?.steamId ? 'text-green-400' : 'text-text-muted'}`}>
-													{user?.steamId
-														? `Connected · ${steamGames.length} games`
-														: 'Not connected'}
-												</p>
+												<p className="text-sm font-medium text-text-white">Connect your Steam account</p>
+												<p className="text-xs text-text-muted">Import your game library automatically from your <Link to="/profile" className="text-violet-400 hover:text-violet-300 transition-colors">profile settings</Link></p>
 											</div>
 										</div>
-										{!user?.steamId && (
-											<a href="/api/auth/steam" className="opacity-80 hover:opacity-100 transition-opacity">
-												<img src={steamLoginImg} alt="Sign in through Steam" className="h-9" />
-											</a>
-										)}
-									</div>
-								</motion.div>
+									</motion.div>
+								)}
 
 								{/* Steam Library Preview */}
 								<motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="rounded-2xl p-6 bg-dark-800 border border-dark-600">
@@ -441,14 +440,7 @@ function Dashboard() {
 													</motion.a>
 												))}
 											</div>
-											{steamGames.length > 16 && (
-												<div className="mt-4 text-center">
-													<Link to="/library" className="text-sm font-medium text-blue-400 hover:text-violet-300 transition-colors">
-														Add games you played to your library →
-													</Link>
-												</div>
-											)}
-										</>
+											</>
 									)}
 								</motion.div>
 							</div>

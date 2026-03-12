@@ -6,8 +6,8 @@ import steamLoginImg from '../assets/steam_login.png'
 function Profile() {
 	const [user, setUser] = useState<{
 		username: string
-		email: string
-		avatar: string
+		email: string | null
+		avatar: string | null
 		steamId: string | null
 		avatarUrl: string | null
 	} | null>(null)
@@ -19,6 +19,7 @@ function Profile() {
 		confirm: '',
 	})
 	const [loading, setLoading] = useState(true)
+	const [unlinking, setUnlinking] = useState(false)
 	useEffect(() => {
 		const token = localStorage.getItem('accessToken')
 		fetch('/api/auth/me', {
@@ -29,7 +30,7 @@ function Profile() {
 				setUser({
 					username: data.username,
 					email: data.email,
-					avatar: 'test',
+					avatar: data.avatarUrl ?? null,
 					steamId: data.steamId ?? null,
 					avatarUrl: data.avatarUrl ?? null,
 				})
@@ -44,7 +45,32 @@ function Profile() {
 		setIsEditing(false)
 		setPasswordForm({ current: '', newPass: '', confirm: '' })
 	}
-	// TODO: implémenter validation
+	const handleUnlinkSteam = async () => {
+		if (!confirm('Are you sure you want to unlink your Steam account?')) return
+		const token = localStorage.getItem('accessToken')
+		setUnlinking(true)
+		try {
+			const res = await fetch('/api/auth/steam/unlink', {
+				method: 'DELETE',
+				headers: { Authorization: `Bearer ${token}` },
+			})
+			if (res.ok) {
+				setUser({ ...user!, steamId: null, avatarUrl: null, avatar: null })
+			}
+		} catch { /* ignore */ }
+		setUnlinking(false)
+	}
+	const handleLinkSteam = async () => {
+		const token = localStorage.getItem('accessToken')
+		const res = await fetch('/api/auth/steam/link/start', {
+			method: 'POST',
+			headers: { Authorization: `Bearer ${token}` },
+		})
+		if (res.ok) {
+			const { redirectUrl } = await res.json()
+			window.location.href = redirectUrl
+		}
+	}
 	const handleSave = () => {
 		setUser({ ...user!, username: editForm.username })
 		setIsEditing(false)
@@ -58,13 +84,16 @@ function Profile() {
 	}
 	return (
 		<div className="max-w-6xl mx-auto px-6 py-12">
-			<h1 className="text-3xl font-bold text-center mb-10">Mon Profil</h1>
 			{isEditing ? (
 				<div className="bg-dark-800 border border-dark-600 rounded-2xl p-12">
 					<div className="flex items-center gap-12">
-						<div className="w-40 h-40 rounded-full bg-dark-700 border-2 border-dark-500 flex items-center justify-center text-6xl shrink-0">
-							{user.avatar}
-						</div>
+						{user.avatar ? (
+							<img src={user.avatar} alt={user.username} className="w-40 h-40 rounded-full border-2 border-dark-500 object-cover shrink-0" />
+						) : (
+							<div className="w-40 h-40 rounded-full bg-dark-700 border-2 border-dark-500 flex items-center justify-center text-6xl shrink-0 text-text-muted">
+								{user.username.charAt(0).toUpperCase()}
+							</div>
+						)}
 						<div className="flex-1 space-y-4">
 							<Input
 								label="Username"
@@ -127,65 +156,67 @@ function Profile() {
 					</div>
 				</div>
 			) : (
-				<div className="bg-dark-800 border border-dark-600 rounded-2xl overflow-hidden">
-					{/* Banner */}
-					<div className="h-32 bg-linear-to-r from-violet-500/20 to-cyan-500/20" />
-					{/* Avatar chevauchant le banner */}
-					<div className="px-8 -mt-12">
-						<div className="w-24 h-24 rounded-full bg-dark-700 border-4 border-dark-800 flex items-center justify-center text-4xl">
-							{user.avatar}
-						</div>
-					</div>
-					{/* Infos */}
-					<div className="px-8 py-6">
-						<div className="grid grid-cols-2 gap-4 mb-6">
-							<div className="border-dark-500 rounded-xl px-5 py-4">
-								<p className="text-text-muted text-xs mb-1">Username</p>
-								<p className="text-text-purple font-semibold text-xl">{user.username}</p>
+				<div className="space-y-6">
+					{/* Profile card */}
+					<div className="bg-dark-800 border border-dark-600 rounded-2xl p-8">
+						{/* Avatar + info + edit button */}
+						<div className="flex items-center gap-6">
+							{user.avatar ? (
+								<img src={user.avatar} alt={user.username} className="w-24 h-24 rounded-full border-3 border-violet-500/40 object-cover shrink-0 shadow-[0_0_20px_rgba(146,57,228,0.2)]" />
+							) : (
+								<div className="w-24 h-24 rounded-full bg-dark-700 border-3 border-violet-500/40 flex items-center justify-center text-4xl text-text-muted shrink-0 shadow-[0_0_20px_rgba(146,57,228,0.2)]">
+									{user.username.charAt(0).toUpperCase()}
+								</div>
+							)}
+							<div className="min-w-0 flex-1">
+								<h2 className="text-2xl font-bold truncate">{user.username}</h2>
+								<p className="text-text-white text-sm mt-1">{user.email || 'Steam account'}</p>
 							</div>
-							<div className="border-dark-500 rounded-xl px-5 py-4">
-								<p className="text-text-muted text-xs mb-1">Email</p>
-								<p className="text-text-purple font-semibold text-xl">{user.email}</p>
-							</div>
-						</div>
-						<div className="flex justify-end">
 							<Button variant="white" onClick={startEditing}>
-								Modifier le profil
+								Edit profile
 							</Button>
 						</div>
-					</div>
-					{/* Stats */}
-					<div className="grid grid-cols-3 gap-4 mb-6">
-						<div className="bg-dark-700 rounded-xl px-4 py-4 text-center">
-							<p className="text-2xl font-bold text-text-purple">0</p>
-							<p className="text-text-muted text-xs mt-1">Jeux likés</p>
-						</div>
-						<div className="bg-dark-700 rounded-xl px-4 py-4 text-center">
-							<p className="text-2xl font-bold text-text-purple">0</p>
-							<p className="text-text-muted text-xs mt-1">Sessions jouées</p>
-						</div>
-						<div className="bg-dark-700 rounded-xl px-4 py-4 text-center">
-							<p className="text-2xl font-bold text-text-purple">0</p>
-							<p className="text-text-muted text-xs mt-1">Amis</p>
+
+						{/* Stats row */}
+						<div className="grid grid-cols-2 gap-4 mt-8 pt-6 border-t border-dark-600">
+							<div className="text-center">
+								<p className="text-2xl font-bold text-gradient-main">0</p>
+								<p className="text-text-muted text-xs mt-1">Games in your personal library</p>
+							</div>
+							<div className="text-center">
+								<p className="text-2xl font-bold text-gradient-main">0</p>
+								<p className="text-text-muted text-xs mt-1">Sessions you participated in</p>
+							</div>
 						</div>
 					</div>
-					{/* Steam */}
-					<div className="bg-dark-700 rounded-xl px-5 py-4 mb-6 flex items-center justify-between">
-						<div className="flex items-center gap-3">
-							{user.avatarUrl && (
-								<img src={user.avatarUrl} alt="Steam avatar" className="w-10 h-10 rounded-full border-2 border-violet-500" />
+
+					{/* Steam connection card */}
+					<div className="bg-dark-800 border border-dark-600 rounded-2xl px-6 py-5 flex items-center justify-between">
+						<div className="flex items-center gap-4">
+							{user.avatarUrl ? (
+								<img src={user.avatarUrl} alt="Steam avatar" className="w-11 h-11 rounded-full border-2 border-violet-500" />
+							) : (
+								<div className="w-11 h-11 rounded-full bg-dark-700 border border-dark-500 flex items-center justify-center text-lg">🎮</div>
 							)}
 							<div>
-								<p className="text-text-purple font-medium text-sm">Steam</p>
+								<p className="font-medium text-sm">Steam</p>
 								<p className={`text-xs ${user.steamId ? 'text-green-400' : 'text-text-muted'}`}>
-									{user.steamId ? 'Connecté' : 'Non connecté'}
+									{user.steamId ? 'Connected' : 'Not connected'}
 								</p>
 							</div>
 						</div>
-						{!user.steamId && (
-							<a href="/api/auth/steam" className="opacity-80 hover:opacity-100 transition-opacity">
+						{user.steamId ? (
+							<button
+								onClick={handleUnlinkSteam}
+								disabled={unlinking}
+								className="px-4 py-2 rounded-lg text-xs font-medium border border-dark-500 text-text-muted hover:text-red-400 hover:border-red-500/30 transition-all cursor-pointer disabled:opacity-50"
+							>
+								{unlinking ? 'Unlinking...' : 'Unlink'}
+							</button>
+						) : (
+							<button onClick={handleLinkSteam} className="opacity-80 hover:opacity-100 transition-opacity cursor-pointer">
 								<img src={steamLoginImg} alt="Sign in through Steam" className="h-8" />
-							</a>
+							</button>
 						)}
 					</div>
 				</div>

@@ -10,12 +10,6 @@ const AVAILABLE_TAGS = [
 	'Racing', 'Sports', 'Fighting', 'Sandbox', 'MMO', 'Roguelike', 'Indie',
 ]
 
-const PLAY_MODES = [
-	{ id: 'coop', label: 'Co-op', desc: 'Play together' },
-	{ id: 'versus', label: 'Versus', desc: 'Compete against each other' },
-	{ id: 'both', label: 'Both', desc: 'Co-op or Versus' },
-] as const
-
 const BUDGETS = [
 	{ id: 'free', label: 'Free to play' },
 	{ id: 'under20', label: 'Under 20€' },
@@ -45,7 +39,6 @@ function Session() {
 
 	const [prefsOpen, setPrefsOpen] = useState(true)
 	const [selectedTags, setSelectedTags] = useState<string[]>([])
-	const [playMode, setPlayMode] = useState<string | null>(null)
 	const [budget, setBudget] = useState<string | null>(null)
 
 	const playerColorMap = new Map(
@@ -296,11 +289,6 @@ function Session() {
 													{tag}
 												</span>
 											))}
-											{playMode && (
-												<span className="px-2 py-0.5 rounded-md text-[11px] bg-blue-500/15 text-blue-300 border border-blue-500/25">
-													{PLAY_MODES.find((m) => m.id === playMode)?.label}
-												</span>
-											)}
 											{budget && (
 												<span className="px-2 py-0.5 rounded-md text-[11px] bg-cyan-500/15 text-cyan-300 border border-cyan-500/25">
 													{BUDGETS.find((b) => b.id === budget)?.label}
@@ -346,8 +334,8 @@ function Session() {
 										<span className="text-xs text-text-muted bg-dark-700 px-3 py-1.5 rounded-lg">
 											{selectedTags.length}/5 genres
 										</span>
-										<span className={`text-xs px-3 py-1.5 rounded-lg ${playMode ? 'bg-blue-500/15 text-blue-300' : 'bg-dark-700 text-text-muted'}`}>
-											{playMode ? PLAY_MODES.find((m) => m.id === playMode)?.label : 'No mode'}
+										<span className={`text-xs px-3 py-1.5 rounded-lg ${budget ? 'bg-cyan-500/15 text-cyan-300' : 'bg-dark-700 text-text-muted'}`}>
+											{budget ? BUDGETS.find((b) => b.id === budget)?.label : 'No budget'}
 										</span>
 									</div>
 								</div>
@@ -374,30 +362,6 @@ function Session() {
 										)
 									})}
 								</div>
-
-								{/* Play mode */}
-								<div className="mt-7">
-									<p className="text-[11px] font-semibold uppercase tracking-wider text-text-muted mb-3">
-										Play mode <span className="text-red-400">*</span>
-									</p>
-									<div className="flex gap-3">
-										{PLAY_MODES.map((mode) => (
-											<button
-												key={mode.id}
-												onClick={() => setPlayMode(mode.id)}
-												className={`flex-1 px-4 py-3 rounded-xl text-center transition-all cursor-pointer border ${
-													playMode === mode.id
-														? 'bg-blue-500/15 border-blue-500/40 text-blue-300'
-														: 'bg-dark-700 border-dark-500 text-text-muted hover:border-dark-400 hover:text-text-white'
-												}`}
-											>
-												<p className="text-sm font-medium">{mode.label}</p>
-												<p className="text-[11px] text-text-muted mt-0.5">{mode.desc}</p>
-											</button>
-										))}
-									</div>
-								</div>
-
 								{/* Budget */}
 								<div className="mt-7">
 									<p className="text-[11px] font-semibold uppercase tracking-wider text-text-muted mb-3">
@@ -423,9 +387,9 @@ function Session() {
 								<div className="flex justify-end mt-auto pt-5 border-t border-dark-600">
 									<button
 										onClick={handlePrefsDone}
-										disabled={selectedTags.length === 0 || !playMode}
+										disabled={selectedTags.length === 0}
 										className={`px-10 py-3 rounded-lg font-semibold text-sm transition-all cursor-pointer ${
-											selectedTags.length > 0 && playMode
+											selectedTags.length > 0
 												? 'bg-violet-600 hover:bg-violet-700 text-white shadow-[0_0_20px_rgba(146,57,228,0.3)] hover:shadow-[0_0_30px_rgba(146,57,228,0.5)]'
 												: 'bg-dark-700 text-text-muted cursor-not-allowed'
 										}`}

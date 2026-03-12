@@ -139,4 +139,23 @@ export class UsersService{
 		})
 		return this.toDomain(updated);
 	}
+	async unlinkSteam(userId: string): Promise<User>{
+		const user = await this.findById(userId);
+		if (!user)
+			throw new NotFoundException("User not found");
+		if (!user.steamId)
+			throw new BadRequestException("No Steam account linked");
+		if (user.authProvider === "STEAM")
+			throw new BadRequestException("Cannot unlink Steam from a Steam-only account");
+		const updated = await this.prisma.user.update({
+			where: {id: userId},
+			data: {
+				steamId: null,
+				avatarUrl: null,
+				steamLinkedAt: null,
+				lastSteamUpdated: null,
+			}
+		});
+		return this.toDomain(updated);
+	}
 }

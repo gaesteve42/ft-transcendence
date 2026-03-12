@@ -1,4 +1,4 @@
-import { Body, Controller, HttpCode, Post, UseGuards, Get, Req, Res, InternalServerErrorException } from "@nestjs/common";
+import { Body, Controller, HttpCode, Post, Delete, UseGuards, Get, Req, Res, InternalServerErrorException } from "@nestjs/common";
 import { AuthService } from "./auth.service";
 import { RegisterDto } from "./dto/register.dto";
 import { LoginDto } from "./dto/login.dto";
@@ -84,5 +84,12 @@ export class AuthController{
 			maxAge: 60_000,
 		});
 		return { redirectUrl : "/api/auth/steam"}
+	}
+	@UseGuards(JwtAuthGuard)
+	@Delete("steam/unlink")
+	@HttpCode(200)
+	async unlinkSteam(@CurrentUser("id") userId: string){
+		await this.steamAuth.unlinkSteamAccount(userId);
+		return { message: "Steam account unlinked" };
 	}
 }
