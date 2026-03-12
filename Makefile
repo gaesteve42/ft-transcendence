@@ -1,4 +1,4 @@
-.PHONY: all up pydev restart logs down clean reset-db fclean prune re re-nocache
+.PHONY: all up pydev restart logs down clean reset-db fclean prune re re-nocache backup
 
 all: up
 
@@ -47,3 +47,6 @@ re: fclean all
 
 re-nocache: prune
 	@docker compose up -d --build --no-cache
+
+backup:
+	@bash scripts/backup.sh
