@@ -107,7 +107,7 @@ function Header() {
 				</div>
 				{isLoggedIn && (
 					<div className="flex-1 flex justify-center" ref={searchRef}>
-						<div className="relative w-full max-w-ml group">
+						<div className="relative w-full max-w-lg group">
 							<svg
 								className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted group-focus-within:text-violet-400 transition-colors"
 								fill="none"
