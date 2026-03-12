@@ -13,6 +13,7 @@ build/
 
 # DevOps
 .env
+backups/
 
 # Miscellanous
 .idea/
