@@ -34,6 +34,7 @@ describe("SteamAuthService", () => {
 						findBySteamId: jest.fn(),
 						updateSteamProfile: jest.fn(),
 						createSteamUser: jest.fn(),
+						linkSteamToLocalUser: jest.fn(),
 					},
 				},
 				{
@@ -137,5 +138,76 @@ describe("SteamAuthService", () => {
 		const first = service.consumeCode(code);
 		expect(first).toBe("user-123");
 		expect(() => service.consumeCode(code)).toThrow(UnauthorizedException);
+	});
+
+	it("createLinkIntent then consumeLinkIntent returns the local userId once", () => {
+		// L'intent sert de pont temporaire entre la session locale et le callback OAuth Steam.
+		const intentId = service.createLinkIntent("local-user-1");
+
+		expect(service.consumeLinkIntent(intentId)).toBe("local-user-1");
+		expect(() => service.consumeLinkIntent(intentId)).toThrow(UnauthorizedException);
+	});
+
+	it("consumeLinkIntent rejects expired intent", () => {
+		const nowSpy = jest.spyOn(Date, "now");
+		nowSpy.mockReturnValue(5_000);
+		const intentId = service.createLinkIntent("local-user-1");
+		nowSpy.mockReturnValue(5_000 + 61_000);
+
+		expect(() => service.consumeLinkIntent(intentId)).toThrow(UnauthorizedException);
+
+		nowSpy.mockRestore();
+	});
+
+	it("createLinkIntent rejects a blank local userId", () => {
+		expect(() => service.createLinkIntent("   ")).toThrow(BadRequestException);
+	});
+
+	it("consumeLinkIntent rejects an empty intent id", () => {
+		expect(() => service.consumeLinkIntent("   ")).toThrow(BadRequestException);
+	});
+
+	it("consumeLinkIntent rejects an unknown intent id", () => {
+		expect(() => service.consumeLinkIntent("unknown-intent")).toThrow(UnauthorizedException);
+	});
+
+	it("linkSteamAccount trims ids and delegates to UsersService", async () => {
+		users.linkSteamToLocalUser.mockResolvedValue(makeUser("local-user-1"));
+
+		const result = await service.linkSteamAccount(
+			"  local-user-1  ",
+			"  76561198193621067  ",
+			"https://avatar.test/link.jpg",
+		);
+
+		expect(users.linkSteamToLocalUser).toHaveBeenCalledWith(
+			"local-user-1",
+			"76561198193621067",
+			"https://avatar.test/link.jpg",
+		);
+		expect(result).toEqual({ userId: "local-user-1" });
+	});
+
+	it("linkSteamAccount rejects a blank local userId", async () => {
+		await expect(
+			service.linkSteamAccount("   ", "76561198193621067", "https://avatar.test/link.jpg"),
+		).rejects.toThrow(BadRequestException);
+		expect(users.linkSteamToLocalUser).not.toHaveBeenCalled();
+	});
+
+	it("linkSteamAccount rejects a blank Steam ID", async () => {
+		await expect(
+			service.linkSteamAccount("local-user-1", "   ", "https://avatar.test/link.jpg"),
+		).rejects.toThrow(BadRequestException);
+		expect(users.linkSteamToLocalUser).not.toHaveBeenCalled();
+	});
+
+	it("linkSteamAccount propagates user linking errors", async () => {
+		const err = new BadRequestException("Steam account already linked to another user");
+		users.linkSteamToLocalUser.mockRejectedValue(err);
+
+		await expect(
+			service.linkSteamAccount("local-user-1", "76561198193621067", "https://avatar.test/link.jpg"),
+		).rejects.toBe(err);
 	});
 });

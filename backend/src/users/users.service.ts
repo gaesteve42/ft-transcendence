@@ -2,7 +2,6 @@ import { Injectable, BadRequestException, NotFoundException} from "@nestjs/commo
 import { User } from "./types/users";
 import { PrismaService } from "src/prisma/prisma.service";
 import { Prisma, User as PrismaUser, AuthProvider } from "@prisma/client";
-import { availableParallelism } from "os";
 
 
 @Injectable()
@@ -122,12 +121,14 @@ export class UsersService{
 		if (!existingUser)
 			throw new NotFoundException("User not found");
 		const existingSteamUser = await this.findBySteamId(steamId);
+		// Re-linking the same Steam identity should stay idempotent and only refresh Steam metadata.
 		if (existingSteamUser && existingSteamUser.id === existingUser.id)
 			return this.updateSteamProfile(userId, avatarUrl, now);
 		if (existingSteamUser && existingSteamUser.id !== existingUser.id)
 			throw new BadRequestException("Steam account already linked to another user");
 		if (existingUser.steamId && existingUser.steamId !== steamId)
 			throw new BadRequestException("User already linked to another Steam account");
+		// First link attaches the Steam identity to the already authenticated local account.
 		const updated = await this.prisma.user.update({
 			where: {id: userId},
 			data:{

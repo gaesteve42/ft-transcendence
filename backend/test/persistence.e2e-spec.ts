@@ -246,7 +246,7 @@ describe("Persistence (e2e)", () => {
 		expect(lobbyInDb).toBeNull();
 	});
 
-	it("rejects joining a second lobby when user is already in another lobby", async () => {
+	it("moves the player to the new lobby when joining a second lobby", async () => {
 		const suffix = rand();
 		const owner1 = {
 			email: `o1_${suffix}@test.com`,
@@ -298,18 +298,25 @@ describe("Persistence (e2e)", () => {
 		const secondJoin = await request(app.getHttpServer())
 			.post(`/api/lobbies/${lobby2Id}/join`)
 			.set("Authorization", `Bearer ${guestToken}`)
-			.expect(400);
+			.expect(200);
 
-		expect(secondJoin.body.message).toBe("Player is already inside a lobby");
+		expect(secondJoin.body.id).toBe(lobby2Id);
 
 		const guestInDb = await prisma.user.findUnique({ where: { email: guest.email } });
 		expect(guestInDb).toBeTruthy();
+		expect(secondJoin.body.players.map((player: { id: string }) => player.id)).toContain(guestInDb!.id);
 
 		const memberships = await prisma.lobbyMember.findMany({
 			where: { userId: guestInDb!.id },
 		});
 		expect(memberships.length).toBe(1);
-		expect(memberships[0].lobbyId).toBe(lobby1Id);
+		expect(memberships[0].lobbyId).toBe(lobby2Id);
+
+		const lobby1Members = await prisma.lobbyMember.findMany({
+			where: { lobbyId: lobby1Id },
+			orderBy: { joinedAt: "asc" },
+		});
+		expect(lobby1Members.map((member) => member.userId)).not.toContain(guestInDb!.id);
 	});
 
 	it("returns 404 when trying to join a lobby that was just deleted", async () => {

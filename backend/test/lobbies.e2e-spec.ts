@@ -172,15 +172,15 @@ describe("Lobbies (e2e)", () => {
 
 		expect(leaveRes.body.id).toBe(lobbyId);
 		expect(leaveRes.body.players.length).toBe(1);
-		expect(leaveRes.body.players[0]).not.toBe(owner1);
-		expect(leaveRes.body.ownerId).toBe(leaveRes.body.players[0]);
+		expect(leaveRes.body.players[0].id).not.toBe(owner1);
+		expect(leaveRes.body.ownerId).toBe(leaveRes.body.players[0].id);
 
 		const getRes = await request(app.getHttpServer())
 			.get(`/api/lobbies/${lobbyId}`)
 			.set("Authorization", `Bearer ${user2.token}`)
 			.expect(200);
 
-		expect(getRes.body.ownerId).toBe(getRes.body.players[0]);
+		expect(getRes.body.ownerId).toBe(getRes.body.players[0].id);
 		expect(getRes.body.players.length).toBe(1);
 	});
 

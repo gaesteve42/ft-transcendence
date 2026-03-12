@@ -47,6 +47,7 @@ export class AuthController{
 	@Res() res: Response){
 		const intentId = req.cookies?.steam_link_intent;
 		let result: {userId: string};
+		// Si le cookie d'intention existe, on rattache le compte Steam au compte local déjà authentifié.
 		if (intentId){
 			const userId = this.steamAuth.consumeLinkIntent(intentId);
 			result = await this.steamAuth.linkSteamAccount(userId, req.user.steamId, req.user.avatarUrl);
@@ -75,6 +76,7 @@ export class AuthController{
 	@UseGuards(JwtAuthGuard)
 	@Post("steam/link/start")
 	startSteamLink(@CurrentUser("id") userId: string, @Res({ passthrough: true }) res: Response){
+		// Ce cookie court-circuité au callback évite de faire confiance au client pour fournir le userId à lier.
 		const intentId = this.steamAuth.createLinkIntent(userId);
 		res.cookie("steam_link_intent", intentId, {
 			httpOnly: true,
