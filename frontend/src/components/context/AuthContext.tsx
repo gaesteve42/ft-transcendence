@@ -1,7 +1,3 @@
-// ce fichier me permet de partager le state de l'auth
-// entre tous mes composants, pour qu on ait une
-// single page application.
-
 import { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router'
 

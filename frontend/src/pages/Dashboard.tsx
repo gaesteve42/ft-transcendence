@@ -150,7 +150,7 @@ function Dashboard() {
 				{/* Header */}
 				<motion.div className="mb-6" initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
 					<h1 className="text-3xl font-bold text-center mb-1">Welcome to your Dashboard {user && ( <> , <span className="text-gradient-main">{user.username}</span> </> )}</h1>
-					<p className="text-text-white text-center">Create or join a lobby, explore your previous sessions or look through your favorite games </p>
+					<p className="text-text-white text-center">Create / join a lobby or look through your personal library </p>
 				</motion.div>
 
 				{/* Tab bar */}
@@ -279,7 +279,7 @@ function Dashboard() {
 								<motion.div className="rounded-2xl p-6 bg-dark-800 border border-dark-600" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
 									<div className="flex items-center justify-between mb-5">
 										<div>
-											<h3 className="text-lg font-bold">Most played right now</h3>
+											<h3 className="text-lg font-bold">Most played games</h3>
 											<p className="text-text-muted text-sm">Top games by current players on Steam</p>
 										</div>
 										{popularGames.length > 0 && (

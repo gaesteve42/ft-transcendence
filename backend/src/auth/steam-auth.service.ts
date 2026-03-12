@@ -90,13 +90,6 @@ export class SteamAuthService{
 		this.linkIntents.delete(cleanIntentId);
 		return entry.userId;
 	}
-	async unlinkSteamAccount(userId: string): Promise<void>{
-		const cleanUserId = userId.trim();
-		if (cleanUserId.length === 0)
-			throw new BadRequestException("User ID is required");
-		await this.users.unlinkSteam(cleanUserId);
-		this.audit.log("auth.steam.unlink.success", { userId: cleanUserId });
-	}
 	async linkSteamAccount(userId: string, steamId: string, avatarUrl: string): Promise<{ userId: string }>{
 		const cleanUserId = userId.trim();
 		const cleanSteamId = steamId.trim();

@@ -50,6 +50,14 @@ export class UsersService{
     			throw new BadRequestException("User already exists"); 
 		}
 	}
+	async searchByUsername(query: string, limit = 10): Promise<User[]>{
+		const users = await this.prisma.user.findMany({
+			where: { username: { contains: query, mode: "insensitive" } },
+			take: limit,
+			orderBy: { username: "asc" },
+		});
+		return users.map((u) => this.toDomain(u));
+	}
 	async findByUsername(username: string): Promise<User | undefined>{
 		const user = await this.prisma.user.findUnique({where: {username}})
 		if (!user)
@@ -138,25 +146,6 @@ export class UsersService{
 				lastSteamUpdated: now,
 			}
 		})
-		return this.toDomain(updated);
-	}
-	async unlinkSteam(userId: string): Promise<User>{
-		const user = await this.findById(userId);
-		if (!user)
-			throw new NotFoundException("User not found");
-		if (!user.steamId)
-			throw new BadRequestException("No Steam account linked");
-		if (user.authProvider === "STEAM")
-			throw new BadRequestException("Cannot unlink Steam from a Steam-only account");
-		const updated = await this.prisma.user.update({
-			where: {id: userId},
-			data: {
-				steamId: null,
-				avatarUrl: null,
-				steamLinkedAt: null,
-				lastSteamUpdated: null,
-			}
-		});
 		return this.toDomain(updated);
 	}
 }
