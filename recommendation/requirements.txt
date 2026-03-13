@@ -6,3 +6,6 @@ scipy
 scikit-surprise
 fastapi
 uvicorn
+sqlalchemy
+psycopg2-binary
+implicit
