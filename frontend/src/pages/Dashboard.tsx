@@ -96,6 +96,30 @@ function Dashboard() {
 			.finally(() => setSteamLoading(false))
 	}, [activeTab, user?.steamId])
 
+	// Auto-scroll: avance de 0.5px/frame, pause au hover sur le conteneur
+	useEffect(() => {
+		const el = scrollRef.current
+		if (!el || popularGames.length === 0) return
+		let paused = false
+		const step = () => {
+			if (!paused) {
+				if (el.scrollLeft >= el.scrollWidth - el.clientWidth) el.scrollLeft = 0
+				else el.scrollLeft += 0.5
+			}
+			id = requestAnimationFrame(step)
+		}
+		let id = requestAnimationFrame(step)
+		const stop = () => { paused = true }
+		const go = () => { paused = false }
+		el.closest('[data-marquee]')?.addEventListener('mouseenter', stop)
+		el.closest('[data-marquee]')?.addEventListener('mouseleave', go)
+		return () => {
+			cancelAnimationFrame(id)
+			el.closest('[data-marquee]')?.removeEventListener('mouseenter', stop)
+			el.closest('[data-marquee]')?.removeEventListener('mouseleave', go)
+		}
+	}, [popularGames])
+
 	const createNewLobby = async () => {
 		const token = localStorage.getItem('accessToken')
 		try {
@@ -152,7 +176,6 @@ function Dashboard() {
 					<h1 className="text-3xl font-bold text-center mb-1">Welcome to your Dashboard {user && ( <> , <span className="text-gradient-main">{user.username}</span> </> )}</h1>
 					<p className="text-text-white text-center">Create / join a lobby or look through your personal library </p>
 				</motion.div>
-
 				{/* Tab bar */}
 				<motion.div
 					className="flex gap-1 rounded-xl p-2 mb-8 w-fit mx-auto"
@@ -176,7 +199,6 @@ function Dashboard() {
 						</button>
 					))}
 				</motion.div>
-
 				{/* Tab content */}
 				<AnimatePresence mode="wait">
 					<motion.div key={activeTab} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.18 }}>
@@ -202,9 +224,8 @@ function Dashboard() {
 										</button>
 									</motion.div>
 								)}
-
 								{/* Actions : Créer + Rejoindre */}
-								<div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+								<div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8 mt-25">
 									{/* Create Session */}
 									<motion.div
 										initial={{ opacity: 0, y: 20 }}
@@ -225,7 +246,6 @@ function Dashboard() {
 											</Button>
 										</div>
 									</motion.div>
-
 									{/* Join Session */}
 									<motion.div
 										initial={{ opacity: 0, y: 20 }}
@@ -241,7 +261,7 @@ function Dashboard() {
 											<h3 className="text-xl font-bold">Join a Session</h3>
 											<p className="text-sm text-text-white">Write here the code of the lobby your friend has given you</p>
 										</div>
-										<div className="flex gap-3 mt-4">
+										<div className="flex gap-3 mt-15">
 											<input
 												type="text"
 												value={sessionCode}
@@ -257,26 +277,14 @@ function Dashboard() {
 										{joinError && <p className="text-red-500 text-sm mt-2">{joinError}</p>}
 									</motion.div>
 								</div>
-
-								{/* Stats */}
-								<motion.div className="grid grid-cols-3 gap-4 mb-8" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-									{/* ICI faudra implementer une .map sur tableau de stats. on chopera les stats d un hook useUserStats ou un truc du genre */}
-									<div className="bg-dark-700 rounded-xl px-4 py-4 text-center">
-										<p className="text-2xl font-bold text-text-purple">0</p>
-										<p className="text-text-muted text-xs mt-1">Friends online</p>
-									</div>
-									<div className="bg-dark-700 rounded-xl px-4 py-4 text-center">
-										<p className="text-2xl font-bold text-text-purple">0</p>
-										<p className="text-text-muted text-xs mt-1">Liked games</p>
-									</div>
-									<div className="bg-dark-700 rounded-xl px-4 py-4 text-center">
-										<p className="text-2xl font-bold text-text-purple">0</p>
-										<p className="text-text-muted text-xs mt-1">Lobbies participation</p>
-									</div>
-								</motion.div>
-
 								{/* Jeux populaires */}
-								<motion.div className="rounded-2xl p-6 bg-dark-800 border border-dark-600" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
+								<motion.div
+									data-marquee
+									className="rounded-2xl p-6 bg-dark-800 border border-dark-600 mt-35"
+									initial={{ opacity: 0, y: 20 }}
+									animate={{ opacity: 1, y: 0 }}
+									transition={{ delay: 0.15 }}
+								>
 									<div className="flex items-center justify-between mb-5">
 										<div>
 											<h3 className="text-lg font-bold">Most played games</h3>
@@ -285,13 +293,13 @@ function Dashboard() {
 										{popularGames.length > 0 && (
 											<div className="flex gap-1.5">
 												<button
-													onClick={() => scrollRef.current?.scrollBy({ left: -600, behavior: 'smooth' })}
+													onClick={() => scrollRef.current?.scrollBy({ left: -400, behavior: 'smooth' })}
 													className="w-8 h-8 rounded-lg bg-dark-700 border border-dark-500 flex items-center justify-center text-text-muted hover:text-text-white hover:border-dark-400 transition-colors cursor-pointer"
 												>
 													←
 												</button>
 												<button
-													onClick={() => scrollRef.current?.scrollBy({ left: 600, behavior: 'smooth' })}
+													onClick={() => scrollRef.current?.scrollBy({ left: 400, behavior: 'smooth' })}
 													className="w-8 h-8 rounded-lg bg-dark-700 border border-dark-500 flex items-center justify-center text-text-muted hover:text-text-white hover:border-dark-400 transition-colors cursor-pointer"
 												>
 													→
@@ -307,30 +315,31 @@ function Dashboard() {
 										<div
 											ref={scrollRef}
 											className="flex gap-4 overflow-x-auto pb-2"
-											style={{ scrollbarWidth: 'none' }}
+											style={{
+												scrollbarWidth: 'none',
+												maskImage: 'linear-gradient(to right, transparent, black 3%, black 97%, transparent)',
+												WebkitMaskImage: 'linear-gradient(to right, transparent, black 3%, black 97%, transparent)',
+											}}
 										>
-											{popularGames.map((game, index) => (
-												<motion.a
+											{popularGames.map((game) => (
+												<a
 													key={game.appId}
 													href={`https://store.steampowered.com/app/${game.appId}`}
 													target="_blank"
 													rel="noopener noreferrer"
-													className="shrink-0 w-70 group relative rounded-xl overflow-hidden border border-dark-600 hover:border-violet-500/50 transition-colors"
-													initial={{ opacity: 0, x: 20 }}
-													animate={{ opacity: 1, x: 0 }}
-													transition={{ delay: index * 0.03 }}
+													className="shrink-0 w-72 group/card relative rounded-xl overflow-hidden border border-dark-600 hover:border-violet-500/50 transition-colors"
 												>
 													<img
 														src={game.headerImage}
 														alt={game.name}
-														className="w-full aspect-video object-cover group-hover:scale-105 transition-transform duration-300"
+														className="w-full aspect-video object-cover group-hover/card:scale-105 transition-transform duration-300"
 														loading="lazy"
 													/>
 													<div className="absolute inset-0 bg-linear-to-t from-black/80 via-transparent to-transparent" />
 													<p className="absolute bottom-0 left-0 right-0 px-3 py-2.5 text-sm font-semibold truncate" style={{ textShadow: '0 1px 4px rgba(0,0,0,0.8)' }}>
 														{game.name}
 													</p>
-												</motion.a>
+												</a>
 											))}
 										</div>
 									)}
@@ -352,7 +361,6 @@ function Dashboard() {
 										Open library
 									</Link>
 								</motion.div>
-
 								{/* Steam connection prompt if not linked */}
 								{!user?.steamId && (
 									<motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="rounded-2xl p-5 bg-dark-800 border border-dark-600 flex items-center justify-between">
@@ -365,7 +373,6 @@ function Dashboard() {
 										</div>
 									</motion.div>
 								)}
-
 								{/* Steam Library Preview */}
 								<motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="rounded-2xl p-6 bg-dark-800 border border-dark-600">
 									<div className="flex items-center justify-between mb-4">

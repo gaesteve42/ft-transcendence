@@ -135,7 +135,6 @@ function Profile() {
 									})
 								}
 							/>
-
 							<div className="border-t border-dark-500 pt-4 mt-4">
 								<p className="text-text-muted text-sm mb-3">Changer le mot de passe</p>
 								<div className="space-y-3">
@@ -210,7 +209,6 @@ function Profile() {
 								</Button>
 							)}
 						</div>
-
 						{/* Stats row */}
 						<div className="grid grid-cols-2 gap-4 mt-8 pt-6 border-t border-dark-600">
 							<div className="text-center">
@@ -223,21 +221,16 @@ function Profile() {
 							</div>
 						</div>
 					</div>
-
 					{/* Steam connection card — own profile only */}
 					{isOwnProfile && (
 						<div className="bg-dark-800 border border-dark-600 rounded-2xl px-6 py-5 flex items-center justify-between">
 							<div className="flex items-center gap-4">
-								{user.avatarUrl ? (
-									<img src={user.avatarUrl} alt="Steam avatar" className="w-11 h-11 rounded-full border-2 border-violet-500" />
-								) : (
-									<div>
+								<div>
 									<p className="font-medium text-sm">Steam</p>
 									<p className={`text-xs ${user.steamId ? 'text-green-400' : 'text-text-muted'}`}>
 										{user.steamId ? 'Connected' : 'Not connected'}
 									</p>
 								</div>
-								)}
 							</div>
 							{!user.steamId && (
 								<button onClick={handleLinkSteam} className="opacity-80 hover:opacity-100 transition-opacity cursor-pointer">
