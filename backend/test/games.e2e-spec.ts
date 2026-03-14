@@ -3,6 +3,7 @@ import { Test, TestingModule } from "@nestjs/testing";
 import { ExternalGameSource, PrismaClient } from "@prisma/client";
 import request from "supertest";
 import { AppModule } from "../src/app.module";
+import { IgdbService } from "../src/igdb/igdb.service";
 
 process.env.JWT_SECRET = process.env.JWT_SECRET ?? "test-secret";
 process.env.JWT_EXPIRES_IN_SECONDES = process.env.JWT_EXPIRES_IN_SECONDES ?? "900";
@@ -10,6 +11,10 @@ process.env.JWT_EXPIRES_IN_SECONDES = process.env.JWT_EXPIRES_IN_SECONDES ?? "90
 describe("Games (e2e)", () => {
   let app: INestApplication;
   let prisma: PrismaClient;
+  let igdbMock: {
+    searchCatalog: jest.Mock;
+    getGameDetails: jest.Mock;
+  };
   const rand = (): string => Math.random().toString(36).slice(2, 8);
   const registerAndLogin = async (): Promise<string> => {
     const suffix = rand();
@@ -25,9 +30,17 @@ describe("Games (e2e)", () => {
   };
 
   beforeAll(async () => {
+    igdbMock = {
+      searchCatalog: jest.fn(),
+      getGameDetails: jest.fn(),
+    };
+
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
-    }).compile();
+    })
+      .overrideProvider(IgdbService)
+      .useValue(igdbMock)
+      .compile();
 
     app = moduleFixture.createNestApplication();
     app.useGlobalPipes(
@@ -48,6 +61,7 @@ describe("Games (e2e)", () => {
     await prisma.gameSourceTag.deleteMany();
     await prisma.gameExternalId.deleteMany();
     await prisma.game.deleteMany();
+    jest.clearAllMocks();
   });
 
   afterAll(async () => {
@@ -233,5 +247,161 @@ describe("Games (e2e)", () => {
     expect(res.body.error).toBe("Bad Request");
     const message = Array.isArray(res.body.message) ? res.body.message.join(" ") : String(res.body.message);
     expect(message).toContain("firstReleaseDate");
+  });
+
+  it("GET /api/games/me/library returns an empty array when the authenticated user has no owned games", async () => {
+    const token = await registerAndLogin();
+
+    const res = await request(app.getHttpServer())
+      .get("/api/games/me/library")
+      .set("Authorization", `Bearer ${token}`)
+      .expect(200);
+
+    expect(res.body).toEqual([]);
+  });
+
+  it("POST /api/games/me/library creates the owned relation and GET /api/games/me/library returns it", async () => {
+    const token = await registerAndLogin();
+    const suffix = rand();
+    const igdbId = `igdb_${suffix}`;
+    igdbMock.getGameDetails.mockResolvedValue({
+      igdbId,
+      name: `Hades ${suffix}`,
+      summary: "roguelike",
+      coverUrl: "https://images.igdb.test/hades.jpg",
+      firstReleaseDate: new Date("2020-09-17T00:00:00.000Z"),
+      genres: [],
+      themes: [],
+      keywords: [],
+    });
+
+    const addRes = await request(app.getHttpServer())
+      .post("/api/games/me/library")
+      .set("Authorization", `Bearer ${token}`)
+      .send({ igdbId })
+      .expect(201);
+
+    expect(addRes.body).toEqual({
+      gameId: expect.any(String),
+      igdbId,
+      name: `Hades ${suffix}`,
+      owned: true,
+    });
+
+    const listRes = await request(app.getHttpServer())
+      .get("/api/games/me/library")
+      .set("Authorization", `Bearer ${token}`)
+      .expect(200);
+
+    expect(listRes.body).toEqual([
+      {
+        gameId: addRes.body.gameId,
+        igdbId,
+        name: `Hades ${suffix}`,
+        summary: "roguelike",
+        coverUrl: "https://images.igdb.test/hades.jpg",
+        firstReleaseDate: "2020-09-17T00:00:00.000Z",
+        owned: true,
+        playtimeMinutes: null,
+        lastSyncedAt: null,
+      },
+    ]);
+  });
+
+  it("POST /api/games/me/library is idempotent for the same user and IGDB id", async () => {
+    const token = await registerAndLogin();
+    const suffix = rand();
+    const igdbId = `igdb_${suffix}`;
+    igdbMock.getGameDetails.mockResolvedValue({
+      igdbId,
+      name: `Hades ${suffix}`,
+      summary: "roguelike",
+      coverUrl: "https://images.igdb.test/hades.jpg",
+      firstReleaseDate: new Date("2020-09-17T00:00:00.000Z"),
+      genres: [],
+      themes: [],
+      keywords: [],
+    });
+
+    const first = await request(app.getHttpServer())
+      .post("/api/games/me/library")
+      .set("Authorization", `Bearer ${token}`)
+      .send({ igdbId })
+      .expect(201);
+
+    const second = await request(app.getHttpServer())
+      .post("/api/games/me/library")
+      .set("Authorization", `Bearer ${token}`)
+      .send({ igdbId })
+      .expect(201);
+
+    expect(second.body.gameId).toBe(first.body.gameId);
+
+    const userGameCount = await prisma.userGame.count();
+    const gameCount = await prisma.game.count();
+    const mappingCount = await prisma.gameExternalId.count({
+      where: {
+        source: ExternalGameSource.IGDB,
+        externalId: igdbId,
+      },
+    });
+
+    expect(userGameCount).toBe(1);
+    expect(gameCount).toBe(1);
+    expect(mappingCount).toBe(1);
+  });
+
+  it("DELETE /api/games/me/library/:gameId removes the owned relation but keeps the canonical game", async () => {
+    const token = await registerAndLogin();
+    const suffix = rand();
+    const igdbId = `igdb_${suffix}`;
+    igdbMock.getGameDetails.mockResolvedValue({
+      igdbId,
+      name: `Hades ${suffix}`,
+      summary: "roguelike",
+      coverUrl: "https://images.igdb.test/hades.jpg",
+      firstReleaseDate: new Date("2020-09-17T00:00:00.000Z"),
+      genres: [],
+      themes: [],
+      keywords: [],
+    });
+
+    const addRes = await request(app.getHttpServer())
+      .post("/api/games/me/library")
+      .set("Authorization", `Bearer ${token}`)
+      .send({ igdbId })
+      .expect(201);
+
+    const deleteRes = await request(app.getHttpServer())
+      .delete(`/api/games/me/library/${addRes.body.gameId}`)
+      .set("Authorization", `Bearer ${token}`)
+      .expect(200);
+
+    expect(deleteRes.body).toEqual({
+      gameId: addRes.body.gameId,
+      removed: true,
+    });
+
+    const listRes = await request(app.getHttpServer())
+      .get("/api/games/me/library")
+      .set("Authorization", `Bearer ${token}`)
+      .expect(200);
+
+    expect(listRes.body).toEqual([]);
+    expect(await prisma.game.count()).toBe(1);
+    expect(await prisma.gameExternalId.count()).toBe(1);
+    expect(await prisma.userGame.count()).toBe(0);
+  });
+
+  it("DELETE /api/games/me/library/:gameId returns 404 when the game is not in the user's library", async () => {
+    const token = await registerAndLogin();
+
+    const res = await request(app.getHttpServer())
+      .delete("/api/games/me/library/non-existent-game")
+      .set("Authorization", `Bearer ${token}`)
+      .expect(404);
+
+    expect(res.body.statusCode).toBe(404);
+    expect(res.body.message).toBe("Game not found in user library");
   });
 });

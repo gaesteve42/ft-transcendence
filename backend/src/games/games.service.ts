@@ -1,14 +1,17 @@
-import { BadRequestException, Injectable } from "@nestjs/common";
-import { ExternalGameSource, GameExternalId} from "@prisma/client";
+import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
+import { ExternalGameSource } from "@prisma/client";
 import { PrismaService } from "src/prisma/prisma.service";
-import { Game } from "./types/game";
+import { Game, UserLibraryGame } from "./types/game";
 import { Prisma, Game as PrismaGame} from "@prisma/client";
+import { IgdbService } from "src/igdb/igdb.service";
+import { NotFoundError } from "rxjs";
 
 
 @Injectable()
 export class GameService {
 	constructor(
 		private readonly prisma : PrismaService,
+		private readonly igdbService: IgdbService,
 	){}
 	private toDomain(game: PrismaGame): Game{
 		return {
@@ -22,6 +25,7 @@ export class GameService {
 			updatedAt: game.updatedAt,
 		}
 	}
+	
 	private isUniqueConstraintError(error: unknown): error is Prisma.PrismaClientKnownRequestError {
 				return (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002");
 	}
@@ -29,6 +33,7 @@ export class GameService {
 		const mapping= await this.prisma.gameExternalId.findUnique({
 			where: {source_externalId: {source, externalId}},
 			select: {game: true},
+			
 		});
 		if (!mapping)
 			return null;
@@ -114,7 +119,20 @@ export class GameService {
 		try{
 			const existing= await this.findByExternalId(input.source, input.externalId);
 			if (existing)
-				return (existing);
+				return this.enrichCanonicalGameIfMissing(existing.id, {
+					summary: input.summary,
+					coverUrl: input.coverUrl,
+					firstReleaseDate: input.firstReleaseDate
+				});
+			const canonical = await this.findByCanonicalSlug(input.canonicalSlug);
+			if (canonical) {
+				await this.linkExternalId(canonical.id, input.source, input.externalId, input.externalUrl);
+				return this.enrichCanonicalGameIfMissing(canonical.id, {
+					summary: input.summary,
+					coverUrl: input.coverUrl,
+					firstReleaseDate: input.firstReleaseDate,
+				});
+			}
 			const created = await this.createCanonicalGame(input.canonicalSlug, input.name, input.summary, input.coverUrl, input.firstReleaseDate);
 			await this.linkExternalId(created.id, input.source, input.externalId, input.externalUrl);
 			return (created);
@@ -124,10 +142,179 @@ export class GameService {
 			if (!this.isUniqueConstraintError(error))
 				throw error ;
 			const resolved = await this.findByExternalId(input.source, input.externalId);
-			if (resolved)
-				return (resolved);
+			if (resolved){
+				return this.enrichCanonicalGameIfMissing(resolved.id, {
+						summary: input.summary,
+						coverUrl: input.coverUrl,
+						firstReleaseDate: input.firstReleaseDate,
+					});
+			}	
+			const canonical = await this.findByCanonicalSlug(input.canonicalSlug);
+			if (canonical) {
+				await this.linkExternalId(canonical.id, input.source, input.externalId, input.externalUrl);
+				return this.enrichCanonicalGameIfMissing(canonical.id, {
+					summary: input.summary,
+					coverUrl: input.coverUrl,
+					firstReleaseDate: input.firstReleaseDate,
+				});
+			}
 			else 
 				throw error;
 		}
+	}
+
+	async listOwnedGamesForUser(userId:string) : Promise<UserLibraryGame[]> {
+		const cleanUserId = userId.trim();
+		if (cleanUserId.length === 0)
+			throw new BadRequestException("User ID is required");
+		const ownedList = await this.prisma.userGame.findMany({
+			where:{
+				userId:cleanUserId,
+				owned: true,
+			},
+			orderBy:{
+				updatedAt:"desc",
+			},
+			include:{
+				game:{
+					include: {
+						externalIds:true,
+					},
+				},
+			},
+		});
+		return ownedList.map((item) => {
+			const igdbMapping = item.game.externalIds.find(
+			(externalId) => externalId.source === ExternalGameSource.IGDB,);
+			return {
+				gameId: item.gameId,
+				igdbId: igdbMapping?.externalId ?? null,
+				name: item.game.name,
+				summary: item.game.summary,
+				coverUrl: item.game.coverUrl,
+				firstReleaseDate: item.game.firstReleaseDate,
+				owned: true,
+				playtimeMinutes: item.playtimeMinutes,
+				lastSyncedAt: item.lastSyncedAt,
+			}
+		});
+	}
+	async addOwnedGameForUser(userId: string, igdbId: string) : Promise<{
+		gameId: string; 
+		igdbId: string;
+		name: string;
+		owned: true;
+	}> {
+		const cleanUserId = userId.trim();
+		const cleanIgdbId = igdbId.trim();
+		if (cleanIgdbId.length === 0) 
+			throw new BadRequestException("IGDB Game ID is required");
+		if (cleanUserId.length === 0)
+			throw new BadRequestException("User ID is required");
+		const details = await this.igdbService.getGameDetails(cleanIgdbId);
+		const game = await this.upsertFromExternal({
+			source : ExternalGameSource.IGDB,
+			externalId: cleanIgdbId,
+			externalUrl: null,
+			canonicalSlug: details.name,
+			name: details.name,
+			summary: details.summary,
+			coverUrl: details.coverUrl,
+			firstReleaseDate: details.firstReleaseDate
+		})
+		await this.prisma.userGame.upsert({
+			where: {
+				userId_gameId: {
+					userId: cleanUserId,
+					gameId: game.id,
+				},
+				},
+				update:{
+					owned:true,
+				},
+				create:{
+					userId: cleanUserId,
+					gameId: game.id,
+					owned: true,
+				},
+		});
+		return {
+			gameId: game.id,
+			igdbId: cleanIgdbId,
+			name: game.name,
+			owned: true,
+		};
+	}
+	async findByCanonicalSlug(canonicalSlug: string) : Promise<Game | null> {
+		const slug = this.normalizeSlug(canonicalSlug);
+		const game= await this.prisma.game.findUnique({
+			where: {canonicalSlug: slug},
+		})
+		if (!game)
+			return null;
+		return this.toDomain(game);
+	}
+	async enrichCanonicalGameIfMissing(
+		gameId:string,
+		input: {
+			summary: string | null,
+			coverUrl: string | null,
+			firstReleaseDate: Date | null,
+		},
+	): Promise<Game> {
+		const cleanGameId = gameId.trim();
+		if (cleanGameId.length === 0)
+			throw new BadRequestException("Game ID is required");
+		const existing = await this.prisma.game.findUnique({where: {id: cleanGameId}});
+		if (!existing)
+			throw new NotFoundException("Game not found");
+		const data : {
+			summary?: string;
+			coverUrl?: string;
+			firstReleaseDate?: Date;
+		}={}
+		if (existing.summary === null && input.summary !== null)
+			data.summary = input.summary;
+		if (existing.coverUrl === null && input.coverUrl !== null)
+			data.coverUrl = input.coverUrl;
+		if (existing.firstReleaseDate === null && input.firstReleaseDate !== null)
+			data.firstReleaseDate = input.firstReleaseDate;
+		if (Object.keys(data).length === 0)
+			return this.toDomain(existing);
+		const updated = await this.prisma.game.update({
+			where: {id: cleanGameId},
+			data,
+		});
+		return this.toDomain(updated);
+	}
+	async removeOwnedGameForUser(userId: string, gameId: string): Promise<{
+		gameId: string;
+		removed: true;
+	}> {
+		const cleanUserId = userId.trim();
+		const cleanGameId = gameId.trim();
+		if (cleanUserId.length === 0)
+			throw new BadRequestException("User ID is required");
+		if (cleanGameId.length === 0)
+			throw new BadRequestException("Game ID is required");
+		const existing = await this.prisma.userGame.findUnique({
+			where:{
+				userId_gameId : {
+					userId:cleanUserId,
+					gameId:cleanGameId,
+				},
+			},
+		});
+		if (!existing)
+			throw new NotFoundException("Game not found in user library");
+		await this.prisma.userGame.delete({
+			where:{
+				userId_gameId : {
+					userId:cleanUserId,
+					gameId:cleanGameId,
+				},
+			},
+		})
+		return {gameId: cleanGameId, removed :true};
 	}
 }

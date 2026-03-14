@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Query, UseGuards } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Param, Post, Query, UseGuards } from "@nestjs/common";
 import { GameService } from "./games.service";
 import { UpsertExternalGameDto } from "./dto/upsert-external-game.dto";
 import { SteamLibraryImportService } from "./steam-library-import.service";
@@ -8,6 +8,7 @@ import { IgdbService } from "src/igdb/igdb.service";
 import { SearchCatalogQueryDto } from "./dto/search-catalog-query.dto";
 import { SteamGamesService } from "src/steam-games/steam-games.service";
 import { Public } from "src/auth/public.decorator";
+import { AddOwnedGameDto } from "./dto/add-owned-game.dto";
 
 
 @Controller("api/games")
@@ -17,7 +18,6 @@ export class GameController {
 		private readonly steamImport: SteamLibraryImportService,
 		private readonly igdbService: IgdbService,
 		private readonly steamGames: SteamGamesService,
-
 	) {}
 	@Public()
 	@Get("popular")
@@ -62,5 +62,23 @@ export class GameController {
 	searchCatalog(@Query() query: SearchCatalogQueryDto) {
 		const limit = query.limit ?? 10;
 		return this.igdbService.searchCatalog(query.query, limit);
+	}
+	@UseGuards(JwtAuthGuard)
+	@Get("me/library")
+	listMyLibrary(@CurrentUser("id") userId: string) {
+		return this.gameService.listOwnedGamesForUser(userId);
+	}
+	@UseGuards(JwtAuthGuard)
+	@Post("me/library")
+	addOwnedGame(@CurrentUser("id") userId: string,
+	@Body() body: AddOwnedGameDto) {
+		return this.gameService.addOwnedGameForUser(userId, body.igdbId);
+	}
+	@UseGuards(JwtAuthGuard)
+	@Delete("me/library/:gameId")
+	removeOwnedGame(@CurrentUser("id") userId: string,
+	@Param("gameId") gameId: string,
+	){
+		return this.gameService.removeOwnedGameForUser(userId, gameId);
 	}
 }

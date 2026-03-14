@@ -3,20 +3,36 @@ import { GameService } from "./games.service";
 import { ExternalGameSource } from "@prisma/client";
 import { UpsertExternalGameDto } from "./dto/upsert-external-game.dto";
 import { SteamLibraryImportService } from "./steam-library-import.service";
+import { IgdbService } from "src/igdb/igdb.service";
+import { SteamGamesService } from "src/steam-games/steam-games.service";
 
 describe("GameController", () => {
 	let controller: GameController;
-	let gameService: { upsertFromExternal: jest.Mock };
+	let gameService: {
+		upsertFromExternal: jest.Mock;
+		listOwnedGamesForUser: jest.Mock;
+		addOwnedGameForUser: jest.Mock;
+		removeOwnedGameForUser: jest.Mock;
+	};
 	let steamImport: {
 		previewImport: jest.Mock;
 		previewImportForUser: jest.Mock;
 		importLibrary: jest.Mock;
 		importLibraryForUser: jest.Mock;
 	};
+	let igdbService: {
+		searchCatalog: jest.Mock;
+	};
+	let steamGames: {
+		getMostPlayedGames: jest.Mock;
+	};
 
 	beforeEach(() => {
 		gameService = {
 			upsertFromExternal: jest.fn(),
+			listOwnedGamesForUser: jest.fn(),
+			addOwnedGameForUser: jest.fn(),
+			removeOwnedGameForUser: jest.fn(),
 		};
 		steamImport = {
 			previewImport: jest.fn(),
@@ -24,11 +40,35 @@ describe("GameController", () => {
 			importLibrary: jest.fn(),
 			importLibraryForUser: jest.fn(),
 		};
+		igdbService = {
+			searchCatalog: jest.fn(),
+		};
+		steamGames = {
+			getMostPlayedGames: jest.fn(),
+		};
 
 		controller = new GameController(
 			gameService as unknown as GameService,
 			steamImport as unknown as SteamLibraryImportService,
+			igdbService as unknown as IgdbService,
+			steamGames as unknown as SteamGamesService,
 		);
+	});
+
+	it("should call getMostPlayedGames and return popular games", async () => {
+		const popular = [
+			{
+				appId: "730",
+				name: "Counter-Strike 2",
+				headerImage: "https://cdn.example.test/730.jpg",
+			},
+		];
+		steamGames.getMostPlayedGames.mockResolvedValue(popular);
+
+		const result = await controller.getPopularGames();
+
+		expect(steamGames.getMostPlayedGames).toHaveBeenCalled();
+		expect(result).toEqual(popular);
 	});
 
 	it("should call upsertFromExternal with a converted Date", async () => {
@@ -260,5 +300,81 @@ describe("GameController", () => {
 
 		expect(steamImport.importLibraryForUser).toHaveBeenCalledWith("user-1");
 		expect(result).toEqual(resultPayload);
+	});
+
+	it("should call searchCatalog with default limit when no limit is provided", async () => {
+		const catalog = [
+			{
+				igdbId: "113112",
+				name: "Hades",
+				summary: "rogue-like",
+				coverUrl: "https://images.igdb.com/igdb/image/upload/t_cover_big/cob9kr.jpg",
+				firstReleaseDate: new Date("2020-09-17T00:00:00.000Z"),
+			},
+		];
+		igdbService.searchCatalog.mockResolvedValue(catalog);
+
+		const result = await controller.searchCatalog({ query: "hades" });
+
+		expect(igdbService.searchCatalog).toHaveBeenCalledWith("hades", 10);
+		expect(result).toEqual(catalog);
+	});
+
+	it("should call searchCatalog with the provided limit", async () => {
+		igdbService.searchCatalog.mockResolvedValue([]);
+
+		await controller.searchCatalog({ query: "hades", limit: 5 });
+
+		expect(igdbService.searchCatalog).toHaveBeenCalledWith("hades", 5);
+	});
+
+	it("should call listOwnedGamesForUser with the authenticated user id", async () => {
+		const library = [
+			{
+				gameId: "game-1",
+				igdbId: "113112",
+				name: "Hades",
+				summary: "rogue-like",
+				coverUrl: "https://images.igdb.com/igdb/image/upload/t_cover_big/cob9kr.jpg",
+				firstReleaseDate: new Date("2020-09-17T00:00:00.000Z"),
+				owned: true as const,
+				playtimeMinutes: null,
+				lastSyncedAt: null,
+			},
+		];
+		gameService.listOwnedGamesForUser.mockResolvedValue(library);
+
+		const result = await controller.listMyLibrary("user-1");
+
+		expect(gameService.listOwnedGamesForUser).toHaveBeenCalledWith("user-1");
+		expect(result).toEqual(library);
+	});
+
+	it("should call addOwnedGameForUser with the authenticated user id and igdb id", async () => {
+		const payload = {
+			gameId: "game-1",
+			igdbId: "113112",
+			name: "Hades",
+			owned: true as const,
+		};
+		gameService.addOwnedGameForUser.mockResolvedValue(payload);
+
+		const result = await controller.addOwnedGame("user-1", { igdbId: "113112" });
+
+		expect(gameService.addOwnedGameForUser).toHaveBeenCalledWith("user-1", "113112");
+		expect(result).toEqual(payload);
+	});
+
+	it("should call removeOwnedGameForUser with the authenticated user id and game id", async () => {
+		const payload = {
+			gameId: "game-1",
+			removed: true as const,
+		};
+		gameService.removeOwnedGameForUser.mockResolvedValue(payload);
+
+		const result = await controller.removeOwnedGame("user-1", "game-1");
+
+		expect(gameService.removeOwnedGameForUser).toHaveBeenCalledWith("user-1", "game-1");
+		expect(result).toEqual(payload);
 	});
 });
