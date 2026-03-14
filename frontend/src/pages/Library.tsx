@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 
 type CatalogGame = {
@@ -9,12 +9,72 @@ type CatalogGame = {
 	firstReleaseDate: string | null
 }
 
+type LibraryGame = {
+	gameId: string
+	igdbId: string | null
+	name: string
+	coverUrl: string | null
+	firstReleaseDate: string | null
+	playtimeMinutes: number | null
+}
+
 function Library() {
 	const [search, setSearch] = useState('')
 	const [catalogGames, setCatalogGames] = useState<CatalogGame[]>([])
 	const [catalogLoading, setCatalogLoading] = useState(false)
 	const [hasSearched, setHasSearched] = useState(false)
 	const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+	const [myGames, setMyGames] = useState<LibraryGame[]>([])
+	const [libraryLoading, setLibraryLoading] = useState(true)
+	const [pendingIds, setPendingIds] = useState<Set<string>>(new Set())
+
+	const getToken = () => localStorage.getItem('accessToken') || ''
+
+	const fetchLibrary = useCallback(() => {
+		const token = getToken()
+		if (!token) return
+		setLibraryLoading(true)
+		fetch('/api/games/me/library', {
+			headers: { Authorization: `Bearer ${token}` },
+		})
+			.then((res) => (res.ok ? res.json() : []))
+			.then((data) => setMyGames(Array.isArray(data) ? data : []))
+			.catch(() => setMyGames([]))
+			.finally(() => setLibraryLoading(false))
+	}, [])
+
+	useEffect(() => { fetchLibrary() }, [fetchLibrary])
+
+	// Set of igdbIds the user owns, for quick lookup
+	const ownedIgdbIds = new Set(myGames.map((g) => g.igdbId).filter(Boolean))
+
+	const addGame = async (igdbId: string) => {
+		setPendingIds(prev => new Set([...prev, igdbId]))
+		try {
+			const res = await fetch('/api/games/me/library', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getToken()}` },
+				body: JSON.stringify({ igdbId }),
+			})
+			if (res.ok) fetchLibrary()
+		} finally {
+			setPendingIds(prev => { const next = new Set(prev); next.delete(igdbId); return next })
+		}
+	}
+
+	const removeGame = async (gameId: string) => {
+		setPendingIds(prev => new Set([...prev, gameId]))
+		try {
+			const res = await fetch(`/api/games/me/library/${gameId}`, {
+				method: 'DELETE',
+				headers: { Authorization: `Bearer ${getToken()}` },
+			})
+			if (res.ok) fetchLibrary()
+		} finally {
+			setPendingIds(prev => { const next = new Set(prev); next.delete(gameId); return next })
+		}
+	}
 
 	// Debounced IGDB search
 	useEffect(() => {
@@ -49,17 +109,46 @@ function Library() {
 		<div className="flex h-[calc(100vh-64px)]">
 			{/* Panneau mes jeux déjà joués */}
 			<div className="w-65 border-r border-dark-600 flex flex-col bg-dark-950 shrink-0">
-				<div className="px-4 py-3 border-b border-dark-600">
+				<div className="px-4 py-3 border-b border-dark-600 flex items-center justify-between">
 					<p className="text-text-white text-xs font-semibold uppercase tracking-wider">
 						Your games
 					</p>
+					<span className="text-text-muted text-xs">{myGames.length}</span>
 				</div>
 				<div className="flex-1 overflow-y-auto" style={{ scrollbarWidth: 'thin' }}>
-					<div className="flex flex-col items-center justify-center h-32 px-4">
-						<p className="text-text-muted text-xs text-center">
-							Add games from the catalog
-						</p>
-					</div>
+					{libraryLoading ? (
+						<div className="space-y-2 p-3">
+							{Array.from({ length: 4 }).map((_, i) => (
+								<div key={i} className="animate-pulse px-3 py-1.5">
+									<div className="h-3 bg-dark-700 rounded w-3/4" />
+								</div>
+							))}
+						</div>
+					) : myGames.length === 0 ? (
+						<div className="flex flex-col items-center justify-center h-32 px-4">
+							<p className="text-text-muted text-xs text-center">
+								Add games from the catalog
+							</p>
+						</div>
+					) : (
+						<div className="p-2 space-y-0.5">
+							{myGames.map((game) => (
+								<div
+									key={game.gameId}
+									className="flex items-center justify-between px-3 py-1.5 rounded-lg hover:bg-dark-800 transition-colors group"
+								>
+									<p className="text-sm text-text-white truncate">{game.name}</p>
+									<button
+										onClick={() => removeGame(game.gameId)}
+										className="opacity-0 group-hover:opacity-100 text-text-muted hover:text-red-400 transition-all text-xs p-1 shrink-0"
+										title="Remove"
+									>
+										✕
+									</button>
+								</div>
+							))}
+						</div>
+					)}
 				</div>
 			</div>
 
@@ -129,7 +218,8 @@ function Library() {
 												<p className="text-text-muted text-xs">No cover</p>
 											</div>
 										)}
-										<div className="p-3">
+										<div className="p-3 flex items-start justify-between gap-2">
+										<div className="min-w-0">
 											<p className="text-sm font-semibold text-text-purple truncate group-hover:text-violet-400 transition-colors">
 												{game.name}
 											</p>
@@ -139,6 +229,18 @@ function Library() {
 												</p>
 											)}
 										</div>
+										{ownedIgdbIds.has(game.igdbId) ? (
+											<span className="text-green-400 text-xs shrink-0 mt-0.5">✓ Added</span>
+										) : (
+											<button
+												onClick={() => addGame(game.igdbId)}
+												disabled={pendingIds.has(game.igdbId)}
+												className="text-xs px-2 py-1 rounded border border-dark-500 hover:border-dark-400 disabled:opacity-50 text-text-muted hover:text-text-white shrink-0 transition-colors cursor-pointer"
+											>
+												{pendingIds.has(game.igdbId) ? '...' : '+ Add'}
+											</button>
+										)}
+									</div>
 									</motion.div>
 								))}
 							</motion.div>
