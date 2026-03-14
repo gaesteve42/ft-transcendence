@@ -123,6 +123,19 @@ export class UsersService{
 			throw error;
 		}
 	}
+	async updatePassword(userId: string, passwordHash: string): Promise<User> {
+		try {
+			const updated = await this.prisma.user.update({
+				where: { id: userId },
+				data: { passwordHash },
+			});
+			return this.toDomain(updated);
+		} catch (error: unknown) {
+			if (this.isNotFoundError(error))
+				throw new NotFoundException("User not found");
+			throw error;
+		}
+	}
 	async linkSteamToLocalUser(userId: string, steamId: string, avatarUrl: string): Promise<User>{
 		const existingUser= await this.findById(userId);
 		const now = new Date();

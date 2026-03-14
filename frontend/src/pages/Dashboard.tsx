@@ -18,11 +18,11 @@ type PopularGame = {
 	headerImage: string
 }
 
-type Tab = 'overview' | 'bibliotheque'
+type Tab = 'overview' | 'library'
 
 const TABS: { id: Tab; label: string }[] = [
 	{ id: 'overview', label: 'Overview' },
-	{ id: 'bibliotheque', label: 'Library' },
+	{ id: 'library', label: 'Library' },
 ]
 
 const hoverGradient = {
@@ -75,7 +75,7 @@ function Dashboard() {
 	}, [])
 
 	useEffect(() => {
-		if (activeTab !== 'bibliotheque' || !user?.steamId) return
+		if (activeTab !== 'library' || !user?.steamId) return
 
 		const token = localStorage.getItem('accessToken');
 		if (!token)
@@ -96,7 +96,7 @@ function Dashboard() {
 			.finally(() => setSteamLoading(false))
 	}, [activeTab, user?.steamId])
 
-	// Auto-scroll: avance de 0.5px/frame, pause au hover sur le conteneur
+	// Auto-scroll: 0.5px/frame, pauses on hover
 	useEffect(() => {
 		const el = scrollRef.current
 		if (!el || popularGames.length === 0) return
@@ -191,7 +191,7 @@ function Dashboard() {
 						<button
 							key={tab.id}
 							onClick={() => setActiveTab(tab.id)}
-							className="relative px-30 py-2 rounded-lg text-sm font-medium transition-colors"
+							className="relative px-8 py-2 rounded-lg text-sm font-medium transition-colors"
 							style={{ color: activeTab === tab.id ? '#069fd2' : '#64748b' }}
 						>
 							{activeTab === tab.id && <motion.div layoutId="activeTab" className="absolute inset-0 rounded-lg" style={{ background: 'rgba(146, 57, 228, 0.2)' }} transition={{ duration: 0.2 }} />}
@@ -202,7 +202,7 @@ function Dashboard() {
 				{/* Tab content */}
 				<AnimatePresence mode="wait">
 					<motion.div key={activeTab} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.18 }}>
-						{/* ──── Tab 1: Vue d'ensemble ──── */}
+						{/* Overview */}
 						{activeTab === 'overview' && (
 							<div>
 								{/* Active lobby banner */}
@@ -224,7 +224,7 @@ function Dashboard() {
 										</button>
 									</motion.div>
 								)}
-								{/* Actions : Créer + Rejoindre */}
+								{/* Actions: Create + Join */}
 								<div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8 mt-25">
 									{/* Create Session */}
 									<motion.div
@@ -277,7 +277,7 @@ function Dashboard() {
 										{joinError && <p className="text-red-500 text-sm mt-2">{joinError}</p>}
 									</motion.div>
 								</div>
-								{/* Jeux populaires */}
+								{/* Popular games */}
 								<motion.div
 									data-marquee
 									className="rounded-2xl p-6 bg-dark-800 border border-dark-600 mt-35"
@@ -346,7 +346,7 @@ function Dashboard() {
 								</motion.div>
 							</div>
 						)}
-						{activeTab === 'bibliotheque' && (
+						{activeTab === 'library' && (
 							<div className="space-y-6">
 								{/* My Library */}
 								<motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="rounded-2xl p-6 bg-dark-800 border border-dark-600 flex items-center justify-between">

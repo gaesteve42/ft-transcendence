@@ -4,6 +4,7 @@ import * as bcrypt from "bcryptjs";
 import { UsersService } from "src/users/users.service";
 import { RegisterDto } from "./dto/register.dto";
 import { LoginDto } from "./dto/login.dto";
+import { ChangePasswordDto } from "./dto/change-password.dto";
 import { AuditLoggerService } from "src/common/logging/audit-logger.service";
 
 
@@ -36,5 +37,16 @@ export class AuthService{
 	}
 	this.audit.log("auth.login.success", { userId: user.id, email: dto.email });
 	return { accessToken: this.jwt.sign({ sub: user.id }) };
+	}
+	async changePassword(userId: string, dto: ChangePasswordDto): Promise<void> {
+		const user = await this.users.findById(userId);
+		if (!user || !user.passwordHash)
+			throw new BadRequestException("Password change not available for this account");
+		const valid = await bcrypt.compare(dto.currentPassword, user.passwordHash);
+		if (!valid)
+			throw new UnauthorizedException("Current password is incorrect");
+		const newHash = await bcrypt.hash(dto.newPassword, 10);
+		await this.users.updatePassword(userId, newHash);
+		this.audit.log("auth.password.changed", { userId });
 	}
 }

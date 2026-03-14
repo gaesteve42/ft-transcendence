@@ -27,6 +27,9 @@ function Profile() {
 		confirm: '',
 	})
 	const [loading, setLoading] = useState(true)
+	const [passwordError, setPasswordError] = useState('')
+	const [passwordSuccess, setPasswordSuccess] = useState('')
+	const [saveStatus, setSaveStatus] = useState<'saved' | 'error' | ''>('')
 
 	useEffect(() => {
 		const token = localStorage.getItem('accessToken')
@@ -77,11 +80,7 @@ function Profile() {
 		setEditForm({ username: user!.username })
 		setIsEditing(true)
 	}
-	const cancelEditing = () => {
-		setIsEditing(false)
-		setPasswordForm({ current: '', newPass: '', confirm: '' })
-	}
-	const handleLinkSteam = async () => {
+const handleLinkSteam = async () => {
 		const token = localStorage.getItem('accessToken')
 		const res = await fetch('/api/auth/steam/link/start', {
 			method: 'POST',
@@ -92,15 +91,47 @@ function Profile() {
 			window.location.href = redirectUrl
 		}
 	}
-	const handleSave = () => {
+	const handleSave = async () => {
+		const token = localStorage.getItem('accessToken')
+		setPasswordError('')
+		setPasswordSuccess('')
+		setSaveStatus('')
+		// Save password if fields are filled
+		if (passwordForm.current || passwordForm.newPass || passwordForm.confirm) {
+			if (passwordForm.newPass !== passwordForm.confirm) {
+				setPasswordError('Passwords do not match')
+				setSaveStatus('error')
+				return
+			}
+			try {
+				const res = await fetch('/api/auth/password', {
+					method: 'PATCH',
+					headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+					body: JSON.stringify({ currentPassword: passwordForm.current, newPassword: passwordForm.newPass }),
+				})
+				if (!res.ok) {
+					const data = await res.json()
+					setPasswordError(data.message || 'Failed to change password')
+					setSaveStatus('error')
+					return
+				}
+				setPasswordSuccess('Password updated')
+				setPasswordForm({ current: '', newPass: '', confirm: '' })
+			} catch {
+				setPasswordError('Network error')
+				setSaveStatus('error')
+				return
+			}
+		}
 		setUser({ ...user!, username: editForm.username })
-		setIsEditing(false)
+		setSaveStatus('saved')
+		setTimeout(() => setSaveStatus(''), 3000)
 	}
 
 	if (loading) {
 		return (
 			<div className="flex items-center justify-center min-h-[60vh]">
-				<p className="text-text-muted">Chargement...</p>
+				<p className="text-text-muted">Loading...</p>
 			</div>
 		)
 	}
@@ -136,10 +167,10 @@ function Profile() {
 								}
 							/>
 							<div className="border-t border-dark-500 pt-4 mt-4">
-								<p className="text-text-muted text-sm mb-3">Changer le mot de passe</p>
+								<p className="text-text-muted text-sm mb-3">Change password</p>
 								<div className="space-y-3">
 									<Input
-										label="Mot de passe actuel"
+										label="Current password"
 										type="password"
 										value={passwordForm.current}
 										onChange={(e) =>
@@ -150,7 +181,7 @@ function Profile() {
 										}
 									/>
 									<Input
-										label="Nouveau mot de passe"
+										label="New password"
 										type="password"
 										value={passwordForm.newPass}
 										onChange={(e) =>
@@ -161,7 +192,7 @@ function Profile() {
 										}
 									/>
 									<Input
-										label="Confirmer"
+										label="Confirm"
 										type="password"
 										value={passwordForm.confirm}
 										onChange={(e) =>
@@ -172,15 +203,19 @@ function Profile() {
 										}
 									/>
 								</div>
+							{passwordError && <p className="text-red-500 text-sm mt-2">{passwordError}</p>}
+							{passwordSuccess && <p className="text-green-400 text-sm mt-2">{passwordSuccess}</p>}
 							</div>
 						</div>
 					</div>
-					<div className="flex gap-4 justify-end mt-8">
+					<div className="flex items-center gap-4 justify-end mt-8">
+						{saveStatus === 'saved' && <span className="text-green-400 text-sm">Saved</span>}
+						{saveStatus === 'error' && <span className="text-red-500 text-sm">Error</span>}
 						<Button variant="blue" onClick={handleSave}>
-							Sauvegarder
+							Save
 						</Button>
-						<Button variant="white" onClick={cancelEditing}>
-							Annuler
+						<Button variant="white" onClick={() => setIsEditing(false)}>
+							Back to profile
 						</Button>
 					</div>
 				</div>

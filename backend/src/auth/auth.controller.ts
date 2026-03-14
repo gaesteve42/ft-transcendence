@@ -1,8 +1,9 @@
-import { Body, Controller, HttpCode, Post, UseGuards, Get, Req, Res, InternalServerErrorException } from "@nestjs/common";
+import { Body, Controller, HttpCode, Patch, Post, UseGuards, Get, Req, Res, InternalServerErrorException } from "@nestjs/common";
 import { AuthService } from "./auth.service";
 import { RegisterDto } from "./dto/register.dto";
 import { LoginDto } from "./dto/login.dto";
 import { SteamExchangeDto } from "./dto/steam-exchange.dto";
+import { ChangePasswordDto } from "./dto/change-password.dto";
 import { JwtAuthGuard } from "./jwt-auth.guard";
 import { CurrentUser } from "./current-user.decorator";
 import { SteamAuthService } from "./steam-auth.service";
@@ -86,5 +87,12 @@ export class AuthController{
 			maxAge: 60_000,
 		});
 		return { redirectUrl : "/api/auth/steam"}
+	}
+	@UseGuards(JwtAuthGuard)
+	@HttpCode(200)
+	@Patch("password")
+	async changePassword(@CurrentUser("id") userId: string, @Body() body: ChangePasswordDto) {
+		await this.auth.changePassword(userId, body);
+		return { message: "Password updated" };
 	}
 }

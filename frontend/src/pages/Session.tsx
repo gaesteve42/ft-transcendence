@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router'
 import { motion, AnimatePresence } from 'motion/react'
 import { useAuth } from '../components/context/AuthContext'
@@ -41,9 +41,9 @@ function Session() {
 	const [selectedTags, setSelectedTags] = useState<string[]>([])
 	const [budget, setBudget] = useState<string | null>(null)
 
-	const playerColorMap = new Map(
+	const playerColorMap = useMemo(() => new Map(
 		(lobby?.players ?? []).map((p, i) => [p.username, PLAYER_COLORS[i % PLAYER_COLORS.length]])
-	)
+	), [lobby?.players])
 	const isHost = lobby?.ownerId === user?.id
 	const getToken = () => localStorage.getItem('accessToken') || ''
 
@@ -453,7 +453,7 @@ function Session() {
 								</div>
 							) : (
 								messages.map((msg, i) => (
-									<div key={i} className="text-sm px-3 py-1 rounded-lg hover:bg-dark-700/50 transition-colors">
+									<div key={`${msg.username}-${i}`} className="text-sm px-3 py-1 rounded-lg hover:bg-dark-700/50 transition-colors">
 										<span className={`font-semibold ${playerColorMap.get(msg.username) ?? 'text-text-white'}`}>{msg.username}</span>
 										<span className="text-text-muted mx-1.5 text-xs">·</span>
 										<span className="text-text-white">{msg.message}</span>
