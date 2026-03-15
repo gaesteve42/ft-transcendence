@@ -67,7 +67,7 @@ function Session() {
 				const res = await fetch('/api/lobbies', {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getToken()}` },
-					body: JSON.stringify({ name: `${user?.username}'s lobby`, maxPlayers: 4 }),
+					body: JSON.stringify({ name: `${user?.username}'s session`, maxPlayers: 4 }),
 				})
 				const data = await res.json()
 				if (res.ok) {
@@ -113,7 +113,7 @@ function Session() {
 
 	const toggleTag = (tag: string) => {
 		setSelectedTags((prev) =>
-			prev.includes(tag) ? prev.filter((t) => t !== tag) : prev.length < 5 ? [...prev, tag] : prev
+			prev.includes(tag) ? prev.filter((t) => t !== tag) : prev.length < 3 ? [...prev, tag] : prev
 		)
 	}
 
@@ -121,7 +121,7 @@ function Session() {
 		setPrefsOpen(false)
 	}
 
-	// ─── Loading ───
+	// Loading
 	if (loading) {
 		return (
 			<div className="flex items-center justify-center py-32">
@@ -130,7 +130,7 @@ function Session() {
 		)
 	}
 
-	// ─── Error ───
+	// Error
 	if (!lobbyId) {
 		return (
 			<div className="max-w-md mx-auto px-6 py-32 text-center">
@@ -154,7 +154,7 @@ function Session() {
 		)
 	}
 
-	// ─── Skeleton ───
+	// Skeleton
 	if (!lobby) {
 		return (
 			<div className="max-w-6xl mx-auto px-6 py-12">
@@ -173,10 +173,9 @@ function Session() {
 		)
 	}
 
-	// ─── Main lobby screen ───
+	// Main lobby screen
 	return (
 		<div className="px-10 py-8 min-h-[calc(100vh-180px)] flex flex-col">
-
 			{/* Header */}
 			<motion.div
 				initial={{ opacity: 0, y: -16 }}
@@ -184,32 +183,31 @@ function Session() {
 				className="mb-6"
 			>
 				<div className="flex items-center justify-between">
-					<div className="flex items-center gap-4">
+					<div className="flex items-center gap-28">
 						<h1 className="text-3xl font-bold">{lobby.name}</h1>
-						<button
-							onClick={copyCode}
-							className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-sm font-medium transition-all cursor-pointer border ${
-								copied
+						<div className="flex items-center gap-3">
+							<button
+								onClick={copyCode}
+								className={`px-4 py-2 rounded-lg font-mono tracking-wider text-base font-medium transition-all cursor-pointer border ${copied
 									? 'bg-green-500/10 border-green-500/30 text-green-400'
-									: 'bg-dark-700 border-dark-500 text-text-muted hover:border-dark-400 hover:text-text-purple hover:shadow-[0_0_16px_rgba(255,255,255,0.08)]'
-							}`}
-						>
-							<span className="font-mono tracking-wider">{lobby.id.slice(0, 8)}</span>
-							<span className="text-[11px]">{copied ? 'Copied!' : 'Copy'}</span>
-						</button>
+									: 'bg-dark-700 border-dark-500 text-white hover:border-dark-400 hover:text-text-purple hover:shadow-[0_0_16px_rgba(255,255,255,0.08)]'
+									}`}
+							>
+								{copied ? '✓ Copied!' : lobby.id.slice(0, 8)}
+							</button>
+							<span className="text-sm text-text-muted">Copy the code and share it with your friends to join!</span>
+						</div>
 					</div>
 					<button
 						onClick={leaveLobby}
 						className="px-5 py-2.5 rounded-lg text-sm font-medium border border-dark-600 text-text-muted hover:text-red-400 hover:border-red-500/30 transition-all cursor-pointer"
 					>
-						Leave lobby
+						Leave session
 					</button>
 				</div>
 			</motion.div>
-
 			{/* 3-column layout — stretches to fill available height */}
 			<div className="flex gap-6 flex-1 items-stretch">
-
 				{/* ── Left: Players ── */}
 				<motion.div
 					initial={{ opacity: 0, x: -16 }}
@@ -224,42 +222,40 @@ function Session() {
 						<div className="space-y-3 flex-1">
 							<AnimatePresence mode="popLayout">
 								{lobby.players.map((p, i) => {
-								const color = PLAYER_COLORS[i % PLAYER_COLORS.length]
-								return (
-									<motion.div
-										key={p.id}
-										layout
-										initial={{ opacity: 0, x: -12 }}
-										animate={{ opacity: 1, x: 0 }}
-										exit={{ opacity: 0, x: -12 }}
-										transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-										className={`rounded-xl px-4 py-3.5 flex items-center gap-3 transition-colors ${
-											p.id === user?.id
+									const color = PLAYER_COLORS[i % PLAYER_COLORS.length]
+									return (
+										<motion.div
+											key={p.id}
+											layout
+											initial={{ opacity: 0, x: -12 }}
+											animate={{ opacity: 1, x: 0 }}
+											exit={{ opacity: 0, x: -12 }}
+											transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+											className={`rounded-xl px-4 py-3.5 flex items-center gap-3 transition-colors ${p.id === user?.id
 												? 'bg-violet-500/10 border border-violet-500/30'
 												: 'bg-dark-700/50 border border-dark-600'
-										}`}
-									>
-										{p.avatarUrl ? (
-											<img src={p.avatarUrl} alt={p.username} className="w-10 h-10 rounded-full border border-dark-500 shrink-0" />
-										) : (
-											<div className={`w-10 h-10 rounded-full bg-dark-700 border border-dark-600 flex items-center justify-center text-sm font-bold shrink-0 ${color}`}>
-												{p.username.charAt(0).toUpperCase()}
-											</div>
-										)}
-										<div className="min-w-0 flex-1">
-											<p className={`text-sm font-medium truncate ${color}`}>
-												{p.username}
-												{p.id === user?.id && <span className="text-text-muted ml-1.5 text-[11px]">(you)</span>}
-											</p>
-											{p.id === lobby.ownerId && (
-												<p className="text-[11px] text-text-muted font-medium">Host</p>
+												}`}
+										>
+											{p.avatarUrl ? (
+												<img src={p.avatarUrl} alt={p.username} className="w-10 h-10 rounded-full border border-dark-500 shrink-0" />
+											) : (
+												<div className={`w-10 h-10 rounded-full bg-dark-700 border border-dark-600 flex items-center justify-center text-sm font-bold shrink-0 ${color}`}>
+													{p.username.charAt(0).toUpperCase()}
+												</div>
 											)}
-										</div>
-									</motion.div>
-								)
+											<div className="min-w-0 flex-1">
+												<p className={`text-sm font-medium truncate ${color}`}>
+													{p.username}
+													{p.id === user?.id && <span className="text-text-muted ml-1.5 text-[11px]">(you)</span>}
+												</p>
+												{p.id === lobby.ownerId && (
+													<p className="text-[11px] text-text-muted font-medium">Host</p>
+												)}
+											</div>
+										</motion.div>
+									)
 								})}
 							</AnimatePresence>
-
 							{/* Empty slots */}
 							{Array.from({ length: lobby.maxPlayers - lobby.players.length }).map((_, i) => (
 								<div
@@ -271,7 +267,6 @@ function Session() {
 								</div>
 							))}
 						</div>
-
 						{/* Collapsed prefs summary */}
 						<AnimatePresence>
 							{!prefsOpen && selectedTags.length > 0 && (
@@ -307,8 +302,7 @@ function Session() {
 						</AnimatePresence>
 					</div>
 				</motion.div>
-
-				{/* ── Center: Preferences or ready state ── */}
+				{/* Preferences or ready state */}
 				<motion.div
 					initial={{ opacity: 0, y: 12 }}
 					animate={{ opacity: 1, y: 0 }}
@@ -328,18 +322,17 @@ function Session() {
 								<div className="flex items-start justify-between mb-6">
 									<div>
 										<h2 className="text-xl font-bold">Your preferences</h2>
-										<p className="text-text-muted text-sm mt-1">Select the genres you enjoy. The more details, the better the match.</p>
+										<p className="text-text-muted text-sm mt-1">Select the genres that you enjoy</p>
 									</div>
 									<div className="flex items-center gap-2 shrink-0 ml-4">
 										<span className="text-xs text-text-muted bg-dark-700 px-3 py-1.5 rounded-lg">
-											{selectedTags.length}/5 genres
+											{selectedTags.length}/3 genres
 										</span>
 										<span className={`text-xs px-3 py-1.5 rounded-lg ${budget ? 'bg-cyan-500/15 text-cyan-300' : 'bg-dark-700 text-text-muted'}`}>
 											{budget ? BUDGETS.find((b) => b.id === budget)?.label : 'No budget'}
 										</span>
 									</div>
 								</div>
-
 								{/* Genres */}
 								<p className="text-[11px] font-semibold uppercase tracking-wider text-text-muted mb-3">
 									Game genres <span className="text-red-400">*</span>
@@ -351,11 +344,10 @@ function Session() {
 											<button
 												key={tag}
 												onClick={() => toggleTag(tag)}
-												className={`px-4 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer h-fit ${
-													selected
-														? 'bg-violet-500/20 text-violet-300 border border-violet-500/40 shadow-[0_0_12px_rgba(146,57,228,0.15)]'
-														: 'bg-dark-700 text-text-muted border border-dark-500 hover:border-dark-400 hover:text-text-white'
-												}`}
+												className={`px-4 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer h-fit ${selected
+													? 'bg-violet-500/20 text-violet-300 border border-violet-500/40 shadow-[0_0_12px_rgba(146,57,228,0.15)]'
+													: 'bg-dark-700 text-text-muted border border-dark-500 hover:border-dark-400 hover:text-text-white'
+													}`}
 											>
 												{tag}
 											</button>
@@ -372,27 +364,24 @@ function Session() {
 											<button
 												key={b.id}
 												onClick={() => setBudget(b.id)}
-												className={`px-4 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer border ${
-													budget === b.id
-														? 'bg-cyan-500/15 text-cyan-300 border-cyan-500/40'
-														: 'bg-dark-700 text-text-muted border-dark-500 hover:border-dark-400 hover:text-text-white'
-												}`}
+												className={`px-4 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer border ${budget === b.id
+													? 'bg-cyan-500/15 text-cyan-300 border-cyan-500/40'
+													: 'bg-dark-700 text-text-muted border-dark-500 hover:border-dark-400 hover:text-text-white'
+													}`}
 											>
 												{b.label}
 											</button>
 										))}
 									</div>
 								</div>
-
 								<div className="flex justify-end mt-auto pt-5 border-t border-dark-600">
 									<button
 										onClick={handlePrefsDone}
 										disabled={selectedTags.length === 0}
-										className={`px-10 py-3 rounded-lg font-semibold text-sm transition-all cursor-pointer ${
-											selectedTags.length > 0
-												? 'bg-violet-600 hover:bg-violet-700 text-white shadow-[0_0_20px_rgba(146,57,228,0.3)] hover:shadow-[0_0_30px_rgba(146,57,228,0.5)]'
-												: 'bg-dark-700 text-text-muted cursor-not-allowed'
-										}`}
+										className={`px-10 py-3 rounded-lg font-semibold text-sm transition-all cursor-pointer ${selectedTags.length > 0
+											? 'bg-violet-600 hover:bg-violet-700 text-white shadow-[0_0_20px_rgba(146,57,228,0.3)] hover:shadow-[0_0_30px_rgba(146,57,228,0.5)]'
+											: 'bg-dark-700 text-text-muted cursor-not-allowed'
+											}`}
 									>
 										Confirm preferences
 									</button>
@@ -417,7 +406,6 @@ function Session() {
 											? 'Waiting for all players to set their preferences before launching.'
 											: 'Waiting for the host to launch the algorithm.'}
 									</p>
-
 									{isHost && (
 										<button
 											disabled
@@ -431,8 +419,7 @@ function Session() {
 						)}
 					</AnimatePresence>
 				</motion.div>
-
-				{/* ── Right: Chat ── */}
+				{/* Chat */}
 				<motion.div
 					initial={{ opacity: 0, x: 16 }}
 					animate={{ opacity: 1, x: 0 }}
@@ -443,7 +430,6 @@ function Session() {
 						<p className="text-[11px] font-semibold uppercase tracking-wider text-text-muted mb-4">
 							Chat
 						</p>
-
 						{/* Messages */}
 						<div className="flex-1 overflow-y-auto mb-4 pr-1">
 							{messages.length === 0 ? (
@@ -462,7 +448,6 @@ function Session() {
 							)}
 							<div ref={chatEndRef} />
 						</div>
-
 						{/* Input */}
 						<div className="flex gap-2">
 							<input
@@ -476,11 +461,10 @@ function Session() {
 							<button
 								onClick={handleSendChat}
 								disabled={!chatInput.trim()}
-								className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-all cursor-pointer ${
-									chatInput.trim()
-										? 'bg-violet-600 hover:bg-violet-700 text-white'
-										: 'bg-dark-700 text-text-muted cursor-not-allowed'
-								}`}
+								className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-all cursor-pointer ${chatInput.trim()
+									? 'bg-violet-600 hover:bg-violet-700 text-white'
+									: 'bg-dark-700 text-text-muted cursor-not-allowed'
+									}`}
 							>
 								Send
 							</button>

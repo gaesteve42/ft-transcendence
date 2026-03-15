@@ -64,7 +64,7 @@ function Dashboard() {
 			.then((data) => {
 				if (data?.id) setActiveLobby({ id: data.id, name: data.name, players: data.players.length, maxPlayers: data.maxPlayers })
 			})
-			.catch(() => {})
+			.catch(() => { })
 	}, [])
 
 	useEffect(() => {
@@ -81,10 +81,10 @@ function Dashboard() {
 		if (!token)
 			return;
 		setSteamLoading(true)
-		fetch(`/api/games/steam/preview/me`,{
-			headers: { Authorization:`Bearer ${token}`},
+		fetch(`/api/games/steam/preview/me`, {
+			headers: { Authorization: `Bearer ${token}` },
 		})
-			.then (async (res) => {
+			.then(async (res) => {
 				if (!res.ok)
 					throw new Error('Failed to load Steam preview');
 				return res.json();
@@ -147,7 +147,7 @@ function Dashboard() {
 			if (!res.ok) {
 				const data = await res.json()
 				// Already in this lobby = just navigate there
-				if (data.message?.includes('already inside'))  {
+				if (data.message?.includes('already inside')) {
 					navigate(`/session/${lobbyId}`)
 					return
 				}
@@ -173,8 +173,8 @@ function Dashboard() {
 			<div className="max-w-5xl mx-auto">
 				{/* Header */}
 				<motion.div className="mb-6" initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
-					<h1 className="text-3xl font-bold text-center mb-1">Welcome to your Dashboard {user && ( <> , <span className="text-gradient-main">{user.username}</span> </> )}</h1>
-					<p className="text-text-white text-center">Create / join a lobby or look through your personal library </p>
+					<h1 className="text-3xl font-bold text-center mb-1">Welcome to your Dashboard {user && (<> <span className="text-gradient-main">{user.username}</span> </>)}</h1>
+					<p className="text-text-white text-center">Create a session, join a friend's session or look through your personal library </p>
 				</motion.div>
 				{/* Tab bar */}
 				<motion.div
@@ -225,7 +225,7 @@ function Dashboard() {
 									</motion.div>
 								)}
 								{/* Actions: Create + Join */}
-								<div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8 mt-25">
+								<div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8 mt-12">
 									{/* Create Session */}
 									<motion.div
 										initial={{ opacity: 0, y: 20 }}
@@ -280,7 +280,7 @@ function Dashboard() {
 								{/* Popular games */}
 								<motion.div
 									data-marquee
-									className="rounded-2xl p-6 bg-dark-800 border border-dark-600 mt-35"
+									className="rounded-2xl p-6 bg-dark-800 border border-dark-600 mt-12"
 									initial={{ opacity: 0, y: 20 }}
 									animate={{ opacity: 1, y: 0 }}
 									transition={{ delay: 0.15 }}
@@ -391,11 +391,10 @@ function Dashboard() {
 														<button
 															key={value}
 															onClick={() => setSortBy(value)}
-															className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
-																sortBy === value
-																	? 'bg-violet-500/30 text-violet-300'
-																	: 'text-text-muted hover:text-text-white'
-															}`}
+															className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${sortBy === value
+																? 'bg-violet-500/30 text-violet-300'
+																: 'text-text-muted hover:text-text-white'
+																}`}
 														>
 															{label}
 														</button>
@@ -447,7 +446,7 @@ function Dashboard() {
 													</motion.a>
 												))}
 											</div>
-											</>
+										</>
 									)}
 								</motion.div>
 							</div>
