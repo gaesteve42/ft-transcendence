@@ -96,7 +96,7 @@ function Dashboard() {
 			.finally(() => setSteamLoading(false))
 	}, [activeTab, user?.steamId])
 
-	// Auto-scroll: 0.5px/frame, pauses on hover
+	// Auto-scroll is 0.5pixel per frame
 	useEffect(() => {
 		const el = scrollRef.current
 		if (!el || popularGames.length === 0) return
@@ -146,7 +146,7 @@ function Dashboard() {
 			})
 			if (!res.ok) {
 				const data = await res.json()
-				// Already in this lobby = just navigate there
+				// Already in this lobby = just navigate here
 				if (data.message?.includes('already inside')) {
 					navigate(`/session/${lobbyId}`)
 					return
@@ -365,7 +365,6 @@ function Dashboard() {
 								{!user?.steamId && (
 									<motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="rounded-2xl p-5 bg-dark-800 border border-dark-600 flex items-center justify-between">
 										<div className="flex items-center gap-3">
-											<div className="w-10 h-10 rounded-full bg-dark-700 border border-dark-500 flex items-center justify-center text-lg">🎮</div>
 											<div>
 												<p className="text-sm font-medium text-text-white">Connect your Steam account</p>
 												<p className="text-xs text-text-muted">Import your game library automatically from your <Link to="/profile" className="text-violet-400 hover:text-violet-300 transition-colors">profile settings</Link></p>
