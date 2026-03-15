@@ -4,7 +4,7 @@ import reactHooks from 'eslint-plugin-react-hooks'
 import reactRefresh from 'eslint-plugin-react-refresh'
 import tseslint from 'typescript-eslint'
 import { defineConfig, globalIgnores } from 'eslint/config'
-
+// native file from the installation of Vite, analyzes the code in order to detect errors and reinforce code conventions.
 export default defineConfig([
   globalIgnores(['dist']),
   {
