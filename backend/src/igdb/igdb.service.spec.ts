@@ -358,4 +358,89 @@ describe("IgdbService", () => {
 			]);
 		});
 	});
+
+	describe("getGameIdBySteamAppId", () => {
+		it("rejects a blank Steam app id after trim", async () => {
+			await expect(service.getGameIdBySteamAppId("   ")).rejects.toThrow(BadRequestException);
+			expect(configService.get).not.toHaveBeenCalled();
+			expect(fetchMock).not.toHaveBeenCalled();
+		});
+
+		it("returns null when IGDB external_games has no Steam match", async () => {
+			configService.get.mockImplementation((key: string) => {
+				if (key === "TWITCH_CLIENT_ID")
+					return "twitch-client-id";
+				if (key === "TWITCH_CLIENT_SECRET")
+					return "twitch-client-secret";
+				return undefined;
+			});
+
+			fetchMock
+				.mockResolvedValueOnce(makeResponse(true, {
+					access_token: "igdb-token",
+					expires_in: 3600,
+					token_type: "bearer",
+				}))
+				.mockResolvedValueOnce(makeResponse(true, []));
+
+			const result = await service.getGameIdBySteamAppId("1145360");
+
+			expect(result).toBeNull();
+			expect(fetchMock).toHaveBeenCalledTimes(2);
+			expect(fetchMock.mock.calls[1][0]).toBe("https://api.igdb.com/v4/external_games");
+			expect((fetchMock.mock.calls[1][1] as { body: string }).body).toContain('uid = "1145360"');
+		});
+
+		it("returns the IGDB game id as a string when a Steam mapping exists", async () => {
+			configService.get.mockImplementation((key: string) => {
+				if (key === "TWITCH_CLIENT_ID")
+					return "twitch-client-id";
+				if (key === "TWITCH_CLIENT_SECRET")
+					return "twitch-client-secret";
+				return undefined;
+			});
+
+			fetchMock
+				.mockResolvedValueOnce(makeResponse(true, {
+					access_token: "igdb-token",
+					expires_in: 3600,
+					token_type: "bearer",
+				}))
+				.mockResolvedValueOnce(makeResponse(true, [
+					{
+						game: 113112,
+						uid: "1145360",
+						external_game_source: 1,
+					},
+				]));
+
+			const result = await service.getGameIdBySteamAppId("1145360");
+
+			expect(result).toBe("113112");
+		});
+
+		it("rejects an invalid external_games payload shape", async () => {
+			configService.get.mockImplementation((key: string) => {
+				if (key === "TWITCH_CLIENT_ID")
+					return "twitch-client-id";
+				if (key === "TWITCH_CLIENT_SECRET")
+					return "twitch-client-secret";
+				return undefined;
+			});
+
+			fetchMock
+				.mockResolvedValueOnce(makeResponse(true, {
+					access_token: "igdb-token",
+					expires_in: 3600,
+					token_type: "bearer",
+				}))
+				.mockResolvedValueOnce(makeResponse(true, [
+					{
+						game: "113112",
+					},
+				]));
+
+			await expect(service.getGameIdBySteamAppId("1145360")).rejects.toThrow(InternalServerErrorException);
+		});
+	});
 });

@@ -232,4 +232,34 @@ export class IgdbService {
 		const coverUrl = `https://images.igdb.com/igdb/image/upload/t_cover_big/${cleanImageId}.jpg`;
 		return coverUrl;
 	}
+
+	/**
+	 * Resolves a Steam app id to an IGDB game id through the `external_games` endpoint.
+	 * This is the bridge that lets Steam imports later reuse IGDB metadata and tags.
+	 */
+	async getGameIdBySteamAppId(appId: string): Promise<string | null> {
+		const cleanAppId = appId.trim();
+		if (cleanAppId.length === 0)
+			throw new BadRequestException("App ID is required");
+		const body = [
+				"fields game, uid, external_game_source;",
+				`where external_game_source = 1 & uid = "${cleanAppId}";`,
+				"limit 1;",
+			].join("\n");
+		const data = await this.fetchFromIgdb("external_games", body);
+		if (!(Array.isArray(data)))
+			throw new InternalServerErrorException("Data must be an array");
+		if (data.length === 0)
+			return null;
+		const item = data[0];
+		if (item === null || typeof item !== "object"){
+			throw new InternalServerErrorException("Item must be an non-null object")
+		}
+		if (!("game" in item))
+			throw new InternalServerErrorException("Game is required");
+		const gameId = item.game;
+		if (typeof gameId !== "number")
+			throw new InternalServerErrorException("Game ID must be a number");
+		return gameId.toString();
+	}
 }

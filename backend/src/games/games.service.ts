@@ -4,7 +4,6 @@ import { PrismaService } from "src/prisma/prisma.service";
 import { Game, UserLibraryGame } from "./types/game";
 import { Prisma, Game as PrismaGame} from "@prisma/client";
 import { IgdbService } from "src/igdb/igdb.service";
-import { NotFoundError } from "rxjs";
 
 
 @Injectable()
@@ -118,6 +117,7 @@ export class GameService {
 	async upsertFromExternal(input:{source: ExternalGameSource, externalId: string, externalUrl: string | null, canonicalSlug: string, name: string, summary: string | null, coverUrl: string | null, firstReleaseDate: Date | null}): Promise <Game>{
 		try{
 			const existing= await this.findByExternalId(input.source, input.externalId);
+			// If the external mapping already exists, keep the same canonical game and only fill missing metadata.
 			if (existing)
 				return this.enrichCanonicalGameIfMissing(existing.id, {
 					summary: input.summary,
@@ -126,6 +126,7 @@ export class GameService {
 				});
 			const canonical = await this.findByCanonicalSlug(input.canonicalSlug);
 			if (canonical) {
+				// The game already exists in our catalog but this source was not linked yet.
 				await this.linkExternalId(canonical.id, input.source, input.externalId, input.externalUrl);
 				return this.enrichCanonicalGameIfMissing(canonical.id, {
 					summary: input.summary,
@@ -163,6 +164,10 @@ export class GameService {
 		}
 	}
 
+	/**
+	 * Returns the current owned library for one user, sorted by the most recently touched entries.
+	 * The IGDB external id is resolved from the game's mappings when available.
+	 */
 	async listOwnedGamesForUser(userId:string) : Promise<UserLibraryGame[]> {
 		const cleanUserId = userId.trim();
 		if (cleanUserId.length === 0)
@@ -199,6 +204,11 @@ export class GameService {
 			}
 		});
 	}
+
+	/**
+	 * Adds a game selected from the IGDB catalog to the user's owned library.
+	 * The method resolves or creates the canonical game first, then upserts the UserGame relation.
+	 */
 	async addOwnedGameForUser(userId: string, igdbId: string) : Promise<{
 		gameId: string; 
 		igdbId: string;
@@ -245,6 +255,11 @@ export class GameService {
 			owned: true,
 		};
 	}
+
+	/**
+	 * Looks up an already-known canonical game by its normalized internal slug.
+	 * This is used when a new external mapping arrives for a game that already exists in our catalog.
+	 */
 	async findByCanonicalSlug(canonicalSlug: string) : Promise<Game | null> {
 		const slug = this.normalizeSlug(canonicalSlug);
 		const game= await this.prisma.game.findUnique({
@@ -254,6 +269,11 @@ export class GameService {
 			return null;
 		return this.toDomain(game);
 	}
+
+	/**
+	 * Fills only missing metadata on an existing canonical game.
+	 * Current rule: never overwrite existing values, and keep an existing Steam cover when present.
+	 */
 	async enrichCanonicalGameIfMissing(
 		gameId:string,
 		input: {
@@ -287,6 +307,11 @@ export class GameService {
 		});
 		return this.toDomain(updated);
 	}
+
+	/**
+	 * Removes only the user-game relation from the personal library.
+	 * The canonical game and its external mappings stay in the shared catalog.
+	 */
 	async removeOwnedGameForUser(userId: string, gameId: string): Promise<{
 		gameId: string;
 		removed: true;
@@ -316,5 +341,38 @@ export class GameService {
 			},
 		})
 		return {gameId: cleanGameId, removed :true};
+	}
+
+	/**
+	 * Replaces all tags of a given source for one canonical game.
+	 * The incoming tag list is deduplicated before insertion to satisfy the composite key.
+	 */
+	async upsertSourceTagsForGame(gameId: string, source: ExternalGameSource, tags: Array<{ externalTagId: string; label: string }>,): Promise<void> {
+		const cleanGameId = gameId.trim();
+		if (cleanGameId.length === 0)
+			throw new BadRequestException("Game ID is required");
+		await this.prisma.gameSourceTag.deleteMany({
+			where: {
+				gameId: cleanGameId,
+				source,
+				},
+			});
+		if (tags.length === 0)
+			return;
+		const uniqueTags = new Map<string, {externalTagId: string; label: string}>();
+		for (const tag of tags){
+			uniqueTags.set(tag.externalTagId, tag);
+		}
+		const deduplicatedTags= Array.from(uniqueTags.values());
+		await this.prisma.gameSourceTag.createMany({
+			data: deduplicatedTags.map((tag) => ({
+				gameId: cleanGameId,
+				source,
+				externalTagId: tag.externalTagId,
+				label: tag.label,
+				weight: null,
+				normalizedTagId: null,
+			})),
+		});
 	}
 }

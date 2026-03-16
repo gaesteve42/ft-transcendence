@@ -9,6 +9,7 @@ import { SearchCatalogQueryDto } from "./dto/search-catalog-query.dto";
 import { SteamGamesService } from "src/steam-games/steam-games.service";
 import { Public } from "src/auth/public.decorator";
 import { AddOwnedGameDto } from "./dto/add-owned-game.dto";
+import { SteamIgdbEnrichmentService } from "./steam-igdb-enrichment.service";
 
 
 @Controller("api/games")
@@ -18,6 +19,7 @@ export class GameController {
 		private readonly steamImport: SteamLibraryImportService,
 		private readonly igdbService: IgdbService,
 		private readonly steamGames: SteamGamesService,
+		private readonly steamIgdbEnrichment: SteamIgdbEnrichmentService,
 	) {}
 	@Public()
 	@Get("popular")
@@ -80,5 +82,11 @@ export class GameController {
 	@Param("gameId") gameId: string,
 	){
 		return this.gameService.removeOwnedGameForUser(userId, gameId);
+	}
+	@UseGuards(JwtAuthGuard)
+	@Post("steam/enrich-igdb/me")
+	async enrichMySteamGamesWithIgdb(@CurrentUser("id") userId: string){
+		const processed = await this.steamIgdbEnrichment.enrichOwnedSteamGamesMissingIgdbData(userId);
+		return {processed};
 	}
 }

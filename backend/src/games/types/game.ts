@@ -21,3 +21,8 @@ export type UserLibraryGame = {
 	playtimeMinutes: number | null;
 	lastSyncedAt: Date | null;
 };
+
+export type SteamGameNeedingIgdbEnrichment = {
+	gameId: string;
+	steamAppId: string;
+};

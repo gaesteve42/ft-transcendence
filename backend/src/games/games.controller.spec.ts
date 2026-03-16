@@ -5,6 +5,7 @@ import { UpsertExternalGameDto } from "./dto/upsert-external-game.dto";
 import { SteamLibraryImportService } from "./steam-library-import.service";
 import { IgdbService } from "src/igdb/igdb.service";
 import { SteamGamesService } from "src/steam-games/steam-games.service";
+import { SteamIgdbEnrichmentService } from "./steam-igdb-enrichment.service";
 
 describe("GameController", () => {
 	let controller: GameController;
@@ -26,6 +27,9 @@ describe("GameController", () => {
 	let steamGames: {
 		getMostPlayedGames: jest.Mock;
 	};
+	let steamIgdbEnrichment: {
+		enrichOwnedSteamGamesMissingIgdbData: jest.Mock;
+	};
 
 	beforeEach(() => {
 		gameService = {
@@ -46,12 +50,16 @@ describe("GameController", () => {
 		steamGames = {
 			getMostPlayedGames: jest.fn(),
 		};
+		steamIgdbEnrichment = {
+			enrichOwnedSteamGamesMissingIgdbData: jest.fn(),
+		};
 
 		controller = new GameController(
 			gameService as unknown as GameService,
 			steamImport as unknown as SteamLibraryImportService,
 			igdbService as unknown as IgdbService,
 			steamGames as unknown as SteamGamesService,
+			steamIgdbEnrichment as unknown as SteamIgdbEnrichmentService,
 		);
 	});
 
@@ -376,5 +384,14 @@ describe("GameController", () => {
 
 		expect(gameService.removeOwnedGameForUser).toHaveBeenCalledWith("user-1", "game-1");
 		expect(result).toEqual(payload);
+	});
+
+	it("should call enrichOwnedSteamGamesMissingIgdbData and return the number of processed games", async () => {
+		steamIgdbEnrichment.enrichOwnedSteamGamesMissingIgdbData.mockResolvedValue(9);
+
+		const result = await controller.enrichMySteamGamesWithIgdb("user-1");
+
+		expect(steamIgdbEnrichment.enrichOwnedSteamGamesMissingIgdbData).toHaveBeenCalledWith("user-1");
+		expect(result).toEqual({ processed: 9 });
 	});
 });
