@@ -23,16 +23,22 @@ _Projet Transcendance 42 - Équipe [Leo, Gauthier, Kevin, Pierre]_
 
 ---
 
-## Modules pour 18 points
+## Modules pour 15 points
 
-### Web (9 points)
+### Web (7 points)
 
-- Use frameworks frontend + backend **(Major - 2pts)**
-- Use framework frontend **(Minor - 1pt)**
-- Use framework backend **(Minor - 1pt)**
-- Real-time features WebSockets **(Major - 2pts)**
-- User interaction (chat, profils, amis) **(Major - 2pts)**
-- Use ORM for database **(Minor - 1pts)**
+- Use frameworks frontend + backend **(Major - 2pts)** OK
+- Use framework frontend **(Minor - 1pt)** // pas sur
+- Use framework backend **(Minor - 1pt)** // pas sur
+- Real-time features WebSockets **(Major - 2pts)** OK
+- User interaction (chat, profils, amis) **(Major - 2pts)** // friend system manquant
+- Use ORM for database **(Minor - 1pts)** OK
+- Real-time collaborative features **(Minor - 1pts)** OK ( a argumenter a la correction )
+
+### IV.2 Accessibility and Internationalization ( 1 points )
+
+- Support for additional browsers. **(Minor - 1pt)** ( potentiel point, faut check safari / edge etc)
+( how does it work fonctionne pas sur safari + animation de defilement des jeux populaires )
 
 ### User Management (2 points)
 
@@ -42,18 +48,15 @@ _Projet Transcendance 42 - Équipe [Leo, Gauthier, Kevin, Pierre]_
 
 - Recommendation system using machine learning. **(Major - 2pts)**
 
-### DevOps (5 points)
+### DevOps (3 points)
 
-- Infrastructure for log management using ELK **(Major - 2pts)**
 - Monitoring system with Prometheus and Grafana. **(Major - 2pts)**
 - Health check and status page system **(Minor - 1pts)**
-
-### Bonus ( si jamais )
-
-- OAuth 2.0 Steam **(Minor - 1pt)**
-- Notification system **(Minor - 1pt)**
-- Advanced search **(Minor - 1pt)**
-- Custom design system **(Minor - 1pt)**
-- File upload (avatars) **(Minor - 1pt)**
+- Loki (potentiel 1pts)
 
 ---
+
+### Add justification in README.md for 2 minor modules
+
+- Loki for log management system - 1 point
+- Steam Auth for replacement of Authentication - 1 point
