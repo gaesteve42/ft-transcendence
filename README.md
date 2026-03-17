@@ -28,17 +28,13 @@ _Projet Transcendance 42 - Équipe [Leo, Gauthier, Kevin, Pierre]_
 ### Web (7 points)
 
 - Use frameworks frontend + backend **(Major - 2pts)** OK
-- Use framework frontend **(Minor - 1pt)** // pas sur
-- Use framework backend **(Minor - 1pt)** // pas sur
 - Real-time features WebSockets **(Major - 2pts)** OK
 - User interaction (chat, profils, amis) **(Major - 2pts)** // friend system manquant
 - Use ORM for database **(Minor - 1pts)** OK
-- Real-time collaborative features **(Minor - 1pts)** OK ( a argumenter a la correction )
 
 ### IV.2 Accessibility and Internationalization ( 1 points )
 
-- Support for additional browsers. **(Minor - 1pt)** ( potentiel point, faut check safari / edge etc)
-( how does it work fonctionne pas sur safari + animation de defilement des jeux populaires )
+- Support for additional browsers. **(Minor - 1pt)**
 
 ### User Management (2 points)
 
@@ -52,7 +48,6 @@ _Projet Transcendance 42 - Équipe [Leo, Gauthier, Kevin, Pierre]_
 
 - Monitoring system with Prometheus and Grafana. **(Major - 2pts)**
 - Health check and status page system **(Minor - 1pts)**
-- Loki (potentiel 1pts)
 
 ---
 
@@ -60,3 +55,8 @@ _Projet Transcendance 42 - Équipe [Leo, Gauthier, Kevin, Pierre]_
 
 - Loki for log management system - 1 point
 - Steam Auth for replacement of Authentication - 1 point
+
+### potentiels points
+
+- Use framework frontend **(Minor - 1pt)** // pas sur
+- Use framework backend **(Minor - 1pt)** // pas sur

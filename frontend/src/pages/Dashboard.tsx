@@ -96,30 +96,6 @@ function Dashboard() {
 			.finally(() => setSteamLoading(false))
 	}, [activeTab, user?.steamId])
 
-	// Auto-scroll is 0.5pixel per frame
-	useEffect(() => {
-		const el = scrollRef.current
-		if (!el || popularGames.length === 0) return
-		let paused = false
-		const step = () => {
-			if (!paused) {
-				if (el.scrollLeft >= el.scrollWidth - el.clientWidth) el.scrollLeft = 0
-				else el.scrollLeft += 0.5
-			}
-			id = requestAnimationFrame(step)
-		}
-		let id = requestAnimationFrame(step)
-		const stop = () => { paused = true }
-		const go = () => { paused = false }
-		el.closest('[data-marquee]')?.addEventListener('mouseenter', stop)
-		el.closest('[data-marquee]')?.addEventListener('mouseleave', go)
-		return () => {
-			cancelAnimationFrame(id)
-			el.closest('[data-marquee]')?.removeEventListener('mouseenter', stop)
-			el.closest('[data-marquee]')?.removeEventListener('mouseleave', go)
-		}
-	}, [popularGames])
-
 	const createNewLobby = async () => {
 		const token = localStorage.getItem('accessToken')
 		try {
@@ -279,7 +255,7 @@ function Dashboard() {
 								</div>
 								{/* Popular games */}
 								<motion.div
-									data-marquee
+
 									className="rounded-2xl p-6 bg-dark-800 border border-dark-600 mt-12"
 									initial={{ opacity: 0, y: 20 }}
 									animate={{ opacity: 1, y: 0 }}
