@@ -9,7 +9,7 @@ export default defineConfig({
 	],
 	server: {
 		host: '0.0.0.0',
-		allowedHosts: ['power-drainage-thumbs-venice.trycloudflare.com'],
+		allowedHosts: ['power-drainage-thumbs-venice.trycloudflare.com', 'gamefinder.quest'],
 		port: 5173,
 		watch: {
 			usePolling: true // Requis pour le hot-reload dans Docker
