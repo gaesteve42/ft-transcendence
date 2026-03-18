@@ -11,7 +11,7 @@ export class IgdbService {
 	){}
 	private accessToken: string | null = null;
 	private accessTokenExpiresAt: number | null = null;
-
+	
 	private mapCatalogItem(item: unknown): IgdbCatalogGame{	             
 		if (item === null)
 	                throw new InternalServerErrorException("Invalid IGDB catalog item format");
@@ -93,6 +93,45 @@ export class IgdbService {
 		}
 		return tags;
 	}
+	private mapGameModeNames(value: unknown): string[] {
+		if (!Array.isArray(value))
+			return [];
+		const gameModeNames: string[] = [];
+		for (const item of value){
+			if (item === null || typeof item !== "object")
+				continue;
+			if (!("name" in item))
+				continue;
+			const name = item.name;
+			if (typeof name !== "string")
+				continue;
+			gameModeNames.push(name);
+		}
+		return gameModeNames;
+	}
+	private supportsMultiplayerOrCoop(value: unknown): boolean {
+		if (!Array.isArray(value))
+			return false;
+		for (const item of value) {
+			if (item === null || typeof item !== "object")
+				continue;
+			const campaigncoop = "campaigncoop" in item ? item.campaigncoop : false;
+			const onlinecoop = "onlinecoop" in item ? item.onlinecoop : false;
+			const offlinecoop = "offlinecoop" in item ? item.offlinecoop : false;
+			const onlinemax = "onlinemax" in item ? item.onlinemax : 0;
+			const offlinemax = "offlinemax" in item ? item.offlinemax : 0;
+			if (
+				campaigncoop === true ||
+				onlinecoop === true ||
+				offlinecoop === true ||
+				(typeof onlinemax === "number" && onlinemax > 1) ||
+				(typeof offlinemax === "number" && offlinemax > 1)
+			)
+			return true;
+		}
+		return false;
+	}
+
 	private mapGameDetails(item: unknown): IgdbGameDetails{
 		if (item === null)
 	                throw new InternalServerErrorException("Invalid IGDB game details format");
@@ -132,6 +171,8 @@ export class IgdbService {
 		const genres = "genres" in item ? this.mapGameTags(item.genres, "genre") : [];
 		const themes = "themes" in item ? this.mapGameTags(item.themes, "theme") : [];
 		const keywords = "keywords" in item ? this.mapGameTags(item.keywords, "keyword") : [];
+		const gameModeNames = "game_modes" in item ? this.mapGameModeNames(item.game_modes) : [];
+		const supportsMultiplayerOrCoop = "multiplayer_modes" in item ? this.supportsMultiplayerOrCoop(item.multiplayer_modes): false;
 		return {
 				igdbId: id.toString(),
 				name,
@@ -141,6 +182,8 @@ export class IgdbService {
 				genres,
 				themes,
 				keywords,
+				gameModeNames,
+				supportsMultiplayerOrCoop,
 			};
 	}
 
@@ -152,7 +195,7 @@ export class IgdbService {
 		if ( !Number.isInteger(numericIgdbId)||numericIgdbId <= 0)
 			throw new BadRequestException("IGDB ID must be a positive integer");
 		const body = [
-  				"fields id, name, summary, cover.image_id, first_release_date, genres.id, genres.name, themes.id, themes.name, keywords.id, keywords.name;",
+  				"fields id, name, summary, cover.image_id, first_release_date, genres.id, genres.name, themes.id, themes.name, keywords.id, keywords.name, game_modes.name, multiplayer_modes.campaigncoop, multiplayer_modes.onlinecoop, multiplayer_modes.offlinecoop, multiplayer_modes.onlinemax, multiplayer_modes.offlinemax;",
 				`where id = ${numericIgdbId};`,
 				"limit 1;",
 				].join("\n");
