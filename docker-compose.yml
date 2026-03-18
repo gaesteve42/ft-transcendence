@@ -102,7 +102,7 @@ services:
       timeout: 5s
       retries: 3
   
-  # recommendation:  # TODO: uncomment when feature/container_python is merged into dev
+  # recommendation:  # TODO: uncomment when python part is merged into dev
   #   build:
   #     context: ./recommendation
   #     dockerfile: Dockerfile
