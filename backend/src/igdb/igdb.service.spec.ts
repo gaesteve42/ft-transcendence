@@ -301,6 +301,8 @@ describe("IgdbService", () => {
 				keywords: [
 					{ externalTagId: "keyword:902", label: "Roguelike" },
 				],
+				gameModeNames: [],
+				supportsMultiplayerOrCoop: false,
 			});
 
 			const igdbOptions = fetchMock.mock.calls[1][1] as {
@@ -310,6 +312,12 @@ describe("IgdbService", () => {
 			expect(igdbOptions.body).toContain("genres.id, genres.name");
 			expect(igdbOptions.body).toContain("themes.id, themes.name");
 			expect(igdbOptions.body).toContain("keywords.id, keywords.name");
+			expect(igdbOptions.body).toContain("game_modes.name");
+			expect(igdbOptions.body).toContain("multiplayer_modes.campaigncoop");
+			expect(igdbOptions.body).toContain("multiplayer_modes.onlinecoop");
+			expect(igdbOptions.body).toContain("multiplayer_modes.offlinecoop");
+			expect(igdbOptions.body).toContain("multiplayer_modes.onlinemax");
+			expect(igdbOptions.body).toContain("multiplayer_modes.offlinemax");
 			expect(igdbOptions.body).toContain("where id = 123;");
 			expect(igdbOptions.body).toContain("limit 1;");
 		});

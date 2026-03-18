@@ -43,7 +43,6 @@ function Dashboard() {
 	const [popularGames, setPopularGames] = useState<PopularGame[]>([])
 	const scrollRef = useRef<HTMLDivElement>(null)
 	const navigate = useNavigate()
-
 	const sortedGames = [...steamGames]
 		.filter((g) => sortBy !== 'recent' || g.playtimeMinutesLast2Weeks > 0)
 		.sort((a, b) =>
@@ -51,11 +50,8 @@ function Dashboard() {
 				? b.playtimeMinutesLast2Weeks - a.playtimeMinutesLast2Weeks
 				: b.playtimeMinutesForever - a.playtimeMinutesForever
 		)
-
 	const steamHeaderUrl = (appId: string) =>
 		`https://cdn.akamai.steamstatic.com/steam/apps/${appId}/header.jpg`
-
-	// Check if user is in an active lobby
 	useEffect(() => {
 		const token = localStorage.getItem('accessToken')
 		if (!token) return
@@ -66,36 +62,33 @@ function Dashboard() {
 			})
 			.catch(() => { })
 	}, [])
-
 	useEffect(() => {
 		fetch('/api/games/popular')
 			.then((res) => res.ok ? res.json() : [])
 			.then((data) => setPopularGames(Array.isArray(data) ? data : []))
 			.catch(() => setPopularGames([]))
 	}, [])
-
 	useEffect(() => {
 		if (activeTab !== 'library' || !user?.steamId) return
 
-		const token = localStorage.getItem('accessToken');
+		const token = localStorage.getItem('accessToken')
 		if (!token)
-			return;
+			return
 		setSteamLoading(true)
 		fetch(`/api/games/steam/preview/me`, {
 			headers: { Authorization: `Bearer ${token}` },
 		})
 			.then(async (res) => {
 				if (!res.ok)
-					throw new Error('Failed to load Steam preview');
-				return res.json();
+					throw new Error('Failed to load Steam preview')
+				return res.json()
 			})
 			.then((data) => {
-				setSteamGames(Array.isArray(data.games) ? data.games : []);
+				setSteamGames(Array.isArray(data.games) ? data.games : [])
 			})
 			.catch(() => setSteamGames([]))
 			.finally(() => setSteamLoading(false))
 	}, [activeTab, user?.steamId])
-
 	const createNewLobby = async () => {
 		const token = localStorage.getItem('accessToken')
 		try {
@@ -110,7 +103,6 @@ function Dashboard() {
 			}
 		} catch { /* ignore */ }
 	}
-
 	const joinLobby = async (lobbyId: string) => {
 		if (!lobbyId.trim()) return
 		setJoinError('')
@@ -122,7 +114,6 @@ function Dashboard() {
 			})
 			if (!res.ok) {
 				const data = await res.json()
-				// Already in this lobby = just navigate here
 				if (data.message?.includes('already inside')) {
 					navigate(`/session/${lobbyId}`)
 					return
@@ -135,7 +126,6 @@ function Dashboard() {
 			setJoinError('Network error')
 		}
 	}
-
 	if (loading) {
 		return (
 			<div className="flex items-center justify-center min-h-[60vh]">
@@ -143,7 +133,6 @@ function Dashboard() {
 			</div>
 		)
 	}
-
 	return (
 		<div className="text-white px-6 py-10">
 			<div className="max-w-5xl mx-auto">
@@ -200,7 +189,6 @@ function Dashboard() {
 										</button>
 									</motion.div>
 								)}
-								{/* Actions: Create + Join */}
 								<div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8 mt-12">
 									{/* Create Session */}
 									<motion.div
@@ -255,7 +243,6 @@ function Dashboard() {
 								</div>
 								{/* Popular games */}
 								<motion.div
-
 									className="rounded-2xl p-6 bg-dark-800 border border-dark-600 mt-12"
 									initial={{ opacity: 0, y: 20 }}
 									animate={{ opacity: 1, y: 0 }}

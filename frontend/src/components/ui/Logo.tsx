@@ -20,7 +20,7 @@ function Logo({ className = '', width = 100, height = 100 }: LogoProps) {
 					<stop offset="0%" stopColor="#38bdf8" stopOpacity="1" />
 					<stop offset="100%" stopColor="#8b5cf6" stopOpacity="1" />
 				</linearGradient>
-				{/* Clip-path hexagone intérieur pour couper les personnages */}
+				{/* Clip-path hexagone intérieur */}
 				<clipPath id="hexClip">
 					<path d="M50 23 L73 37 L73 63 L50 77 L27 63 L27 37 Z" />
 				</clipPath>

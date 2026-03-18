@@ -24,13 +24,10 @@ function Library() {
 	const [catalogLoading, setCatalogLoading] = useState(false)
 	const [hasSearched, setHasSearched] = useState(false)
 	const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-
 	const [myGames, setMyGames] = useState<LibraryGame[]>([])
 	const [libraryLoading, setLibraryLoading] = useState(true)
 	const [pendingIds, setPendingIds] = useState<Set<string>>(new Set())
-
 	const getToken = () => localStorage.getItem('accessToken') || ''
-
 	const fetchLibrary = useCallback(() => {
 		const token = getToken()
 		if (!token) return
@@ -43,12 +40,8 @@ function Library() {
 			.catch(() => setMyGames([]))
 			.finally(() => setLibraryLoading(false))
 	}, [])
-
 	useEffect(() => { fetchLibrary() }, [fetchLibrary])
-
-	// Set of igdbIds the user owns, for quick lookup
 	const ownedIgdbIds = new Set(myGames.map((g) => g.igdbId).filter(Boolean))
-
 	const addGame = async (igdbId: string) => {
 		setPendingIds(prev => new Set([...prev, igdbId]))
 		try {
@@ -62,7 +55,6 @@ function Library() {
 			setPendingIds(prev => { const next = new Set(prev); next.delete(igdbId); return next })
 		}
 	}
-
 	const removeGame = async (gameId: string) => {
 		setPendingIds(prev => new Set([...prev, gameId]))
 		try {
@@ -75,8 +67,6 @@ function Library() {
 			setPendingIds(prev => { const next = new Set(prev); next.delete(gameId); return next })
 		}
 	}
-
-	// Debounced IGDB search
 	useEffect(() => {
 		if (debounceRef.current) clearTimeout(debounceRef.current)
 
@@ -85,7 +75,6 @@ function Library() {
 			setHasSearched(false)
 			return
 		}
-
 		debounceRef.current = setTimeout(() => {
 			const token = localStorage.getItem('accessToken')
 			if (!token) return
@@ -99,15 +88,13 @@ function Library() {
 				.catch(() => setCatalogGames([]))
 				.finally(() => setCatalogLoading(false))
 		}, 400)
-
 		return () => {
 			if (debounceRef.current) clearTimeout(debounceRef.current)
 		}
 	}, [search])
-
 	return (
 		<div className="flex h-[calc(100vh-64px)]">
-			{/* Panneau mes jeux déjà joués */}
+			{/* Panneau my games */}
 			<div className="w-65 border-r border-dark-600 flex flex-col bg-dark-950 shrink-0">
 				<div className="px-4 py-3 border-b border-dark-600 flex items-center justify-between">
 					<p className="text-text-white text-xs font-semibold uppercase tracking-wider">
@@ -151,9 +138,9 @@ function Library() {
 					)}
 				</div>
 			</div>
-
 			{/* Panneau catalogue IGDB */}
 			<div className="flex-1 flex flex-col overflow-hidden">
+				{/* Search input */}
 				<div className="px-6 py-3 border-b border-dark-600">
 					<input
 						type="text"
@@ -165,23 +152,23 @@ function Library() {
 				</div>
 				<div className="flex-1 overflow-y-auto p-6">
 					{catalogLoading ? (
-					<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-						{Array.from({ length: 8 }).map((_, i) => (
-							<div
-								key={i}
-								className="rounded-xl bg-dark-800 border border-dark-600 overflow-hidden animate-pulse"
-							>
-								<div className="aspect-3/4 bg-dark-700" />
-								<div className="p-3">
-									<div className="h-4 bg-dark-700 rounded w-3/4 mb-2" />
-									<div className="h-3 bg-dark-700 rounded w-1/2" />
+						<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+							{Array.from({ length: 8 }).map((_, i) => (
+								<div
+									key={i}
+									className="rounded-xl bg-dark-800 border border-dark-600 overflow-hidden animate-pulse"
+								>
+									<div className="aspect-3/4 bg-dark-700" />
+									<div className="p-3">
+										<div className="h-4 bg-dark-700 rounded w-3/4 mb-2" />
+										<div className="h-3 bg-dark-700 rounded w-1/2" />
+									</div>
 								</div>
-							</div>
-						))}
-					</div>
-				) : !hasSearched ? (
-					<div className="flex flex-col items-center justify-center h-full text-center" />
-				) : catalogGames.length === 0 ? (
+							))}
+						</div>
+					) : !hasSearched ? (
+						<div className="flex flex-col items-center justify-center h-full text-center" />
+					) : catalogGames.length === 0 ? (
 						<motion.p
 							className="text-text-muted text-sm text-center mt-16"
 							initial={{ opacity: 0 }}
@@ -219,28 +206,28 @@ function Library() {
 											</div>
 										)}
 										<div className="p-3 flex items-start justify-between gap-2">
-										<div className="min-w-0">
-											<p className="text-sm font-semibold text-text-purple truncate group-hover:text-violet-400 transition-colors">
-												{game.name}
-											</p>
-											{game.firstReleaseDate && (
-												<p className="text-xs text-text-muted mt-1">
-													{new Date(game.firstReleaseDate).getFullYear()}
+											<div className="min-w-0">
+												<p className="text-sm font-semibold text-text-purple truncate group-hover:text-violet-400 transition-colors">
+													{game.name}
 												</p>
+												{game.firstReleaseDate && (
+													<p className="text-xs text-text-muted mt-1">
+														{new Date(game.firstReleaseDate).getFullYear()}
+													</p>
+												)}
+											</div>
+											{ownedIgdbIds.has(game.igdbId) ? (
+												<span className="text-green-400 text-xs shrink-0 mt-0.5">✓ Added</span>
+											) : (
+												<button
+													onClick={() => addGame(game.igdbId)}
+													disabled={pendingIds.has(game.igdbId)}
+													className="text-xs px-2 py-1 rounded border border-dark-500 hover:border-dark-400 disabled:opacity-50 text-text-muted hover:text-text-white shrink-0 transition-colors cursor-pointer"
+												>
+													{pendingIds.has(game.igdbId) ? '...' : '+ Add'}
+												</button>
 											)}
 										</div>
-										{ownedIgdbIds.has(game.igdbId) ? (
-											<span className="text-green-400 text-xs shrink-0 mt-0.5">✓ Added</span>
-										) : (
-											<button
-												onClick={() => addGame(game.igdbId)}
-												disabled={pendingIds.has(game.igdbId)}
-												className="text-xs px-2 py-1 rounded border border-dark-500 hover:border-dark-400 disabled:opacity-50 text-text-muted hover:text-text-white shrink-0 transition-colors cursor-pointer"
-											>
-												{pendingIds.has(game.igdbId) ? '...' : '+ Add'}
-											</button>
-										)}
-									</div>
 									</motion.div>
 								))}
 							</motion.div>

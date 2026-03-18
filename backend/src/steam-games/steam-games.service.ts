@@ -98,4 +98,19 @@ export class SteamGamesService {
 			});
 		return normalizedOwnedGames;
 	}
+	/**
+	 * Returns the raw Steam app ids from the current Steam Charts ranking.
+	 * The caller is responsible for deciding how many candidates to keep and when to stop.
+	 */
+	async getMostPlayedSteamGames(): Promise<{ appId: string}[]> {
+		const chartsRes = await fetch("https://api.steampowered.com/ISteamChartsService/GetMostPlayedGames/v1/");
+		if (!chartsRes.ok)
+			throw new BadRequestException(`Steam Charts API error (HTTP ${chartsRes.status})`);
+		const chartsData = await chartsRes.json();
+		const ranks: {appid: number}[] = chartsData.response?.ranks ?? [];
+
+		return ranks.map((rank) => ({
+			appId: rank.appid.toString(),
+		}));
+	}
 }

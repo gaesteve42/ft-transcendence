@@ -167,4 +167,26 @@ describe("SteamGamesService", () => {
 			},
 		]);
 	});
+
+	it("returns the raw Steam Charts app ids without applying a seed-specific limit", async () => {
+		fetchMock.mockResolvedValueOnce(makeResponse(true, {
+			response: {
+				ranks: [
+					{ appid: 10 },
+					{ appid: 20 },
+					{ appid: 30 },
+				],
+			},
+		}));
+
+		const result = await service.getMostPlayedSteamGames();
+
+		expect(result).toEqual([
+			{ appId: "10" },
+			{ appId: "20" },
+			{ appId: "30" },
+		]);
+		expect(fetchMock).toHaveBeenCalledTimes(1);
+		expect(fetchMock.mock.calls[0][0]).toBe("https://api.steampowered.com/ISteamChartsService/GetMostPlayedGames/v1/");
+	});
 });

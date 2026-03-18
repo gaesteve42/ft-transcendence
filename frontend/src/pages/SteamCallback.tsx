@@ -33,7 +33,6 @@ function SteamCallback() {
 		}
 		exchangeCode()
 	}, [searchParams, login, navigate])
-
 	if (error) {
 		return (
 			<div className="min-h-screen text-white flex flex-col items-center justify-center gap-4">
@@ -44,7 +43,6 @@ function SteamCallback() {
 			</div>
 		)
 	}
-
 	return (
 		<div className="min-h-screen text-white flex items-center justify-center">
 			<p className="text-text-muted">Connecting with Steam...</p>

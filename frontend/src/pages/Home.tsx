@@ -1,6 +1,40 @@
 import { motion } from 'motion/react'
 import Button from '../components/ui/Button'
 
+type FeatureCardProps = {
+	step: string
+	title: string
+	description: string
+	color: string
+	index: number
+}
+
+function FeatureCard({ step, title, description, color, index }: FeatureCardProps) {
+	return (
+		<motion.div
+			className="bg-dark-800/50 border border-dark-600/50 rounded-xl p-6 transition-all hover:-translate-y-1"
+			initial={{ opacity: 0, y: 20 }}
+			whileInView={{ opacity: 1, y: 0 }}
+			viewport={{ once: true }}
+			transition={{ delay: index * 0.1 }}
+		>
+			<span
+				className="inline-block text-xs font-bold mb-3 px-2 py-1 rounded"
+				style={{
+					color: color,
+					backgroundColor: `${color}15`,
+				}}
+			>
+				STEP {step}
+			</span>
+			<h3 className="text-xl font-semibold mb-3 transition-colors" style={{ color }}>
+				{title}
+			</h3>
+			<p className="text-text-white text-sm leading-relaxed">{description}</p>
+		</motion.div>
+	)
+}
+
 function Home() {
 	return (
 		<div className="relative">
@@ -47,7 +81,7 @@ function Home() {
 					</motion.p>
 				</div>
 			</section>
-			{/*How does it work section*/}
+			{ /*How does it work*/}
 			<section className="relative z-10 max-w-5xl mx-auto px-6 py-16">
 				<motion.h2
 					className="text-3xl font-bold text-center mb-4"
@@ -139,40 +173,6 @@ function Home() {
 				</motion.div>
 			</section>
 		</div>
-	)
-}
-
-type FeatureCardProps = {
-	step: string
-	title: string
-	description: string
-	color: string
-	index: number
-}
-
-function FeatureCard({ step, title, description, color, index }: FeatureCardProps) {
-	return (
-		<motion.div
-			className="bg-dark-800/50 border border-dark-600/50 rounded-xl p-6 transition-all hover:-translate-y-1"
-			initial={{ opacity: 0, y: 20 }}
-			whileInView={{ opacity: 1, y: 0 }}
-			viewport={{ once: true }}
-			transition={{ delay: index * 0.1 }}
-		>
-			<span
-				className="inline-block text-xs font-bold mb-3 px-2 py-1 rounded"
-				style={{
-					color: color,
-					backgroundColor: `${color}15`,
-				}}
-			>
-				STEP {step}
-			</span>
-			<h3 className="text-xl font-semibold mb-3 transition-colors" style={{ color }}>
-				{title}
-			</h3>
-			<p className="text-text-white text-sm leading-relaxed">{description}</p>
-		</motion.div>
 	)
 }
 

@@ -29,31 +29,25 @@ export function useLobbySocket(lobbyId: string | null) {
 
 	useEffect(() => {
 		if (!lobbyId) return
-
 		const socket = io({ path: '/socket.io' })
 		socketRef.current = socket
-
 		socket.on('connect', () => {
 			setConnected(true)
 			socket.emit('lobby:join', { lobbyId })
 		})
-
 		socket.on('lobby:state', (data: Lobby) => setLobby(data))
 		socket.on('lobby:updated', (data: Lobby) => setLobby(data))
 		socket.on('lobby:deleted', () => setLobby(null))
 		socket.on('lobby:chat:message', (msg: ChatMessage) => {
 			setMessages((prev) => [...prev, msg])
 		})
-
 		socket.on('disconnect', () => setConnected(false))
-
 		return () => {
 			socket.disconnect()
 			socketRef.current = null
 			setConnected(false)
 		}
 	}, [lobbyId])
-
 	const sendChat = useCallback(
 		(username: string, message: string) => {
 			if (socketRef.current && lobbyId) {
@@ -62,6 +56,5 @@ export function useLobbySocket(lobbyId: string | null) {
 		},
 		[lobbyId],
 	)
-
 	return { lobby, messages, connected, sendChat }
 }

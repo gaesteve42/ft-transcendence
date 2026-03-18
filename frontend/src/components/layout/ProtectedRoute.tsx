@@ -10,6 +10,5 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
 	if (!isLoggedIn) {
 		return <Navigate to="/" replace />
 	}
-
 	return <>{children}</>
 }

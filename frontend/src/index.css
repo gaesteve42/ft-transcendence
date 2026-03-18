@@ -28,7 +28,7 @@
 
 body {
 	background-color: var(--color-dark-900);
-	color: var(--color-text-purple);
+	color: var(--color-text-white);
 	font-family: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
