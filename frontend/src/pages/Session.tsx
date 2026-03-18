@@ -413,7 +413,7 @@ function Session() {
 							Chat
 						</p>
 						{/* Messages */}
-						<div className="flex-1 overflow-y-auto mb-4 pr-1">
+						<div className="flex-1 overflow-y-auto mb-4 pr-1 max-h-170">
 							{messages.length === 0 ? (
 								<div className="flex flex-col items-center justify-center h-full text-center">
 									<p className="text-text-muted/50 text-sm">No messages yet.</p>
