@@ -1,11 +1,9 @@
 numpy
 pandas
-scikit-learn
-matplotlib
 scipy
-scikit-surprise
+scikit-learn
+implicit
 fastapi
 uvicorn
 sqlalchemy
 psycopg2-binary
-implicit

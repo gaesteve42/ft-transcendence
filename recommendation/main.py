@@ -1,248 +1,252 @@
-# main.py - placeholder
 import numpy as np
-import pandas as pd
-import sklearn
-import matplotlib.pyplot as plt
+from collections import Counter
 from scipy.sparse import csr_matrix
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.preprocessing import MultiLabelBinarizer
-from scipy.sparse import hstack
-from fastapi import FastAPI
+from implicit.als import AlternatingLeastSquares
+from fastapi import FastAPI, Depends, HTTPException
+from sqlalchemy.orm import Session
+from db import get_db
+from data_loader import (
+    get_games_dataframe,
+    get_interactions_dataframe,
+    get_all_interactions_dataframe,
+    get_lobby_context,
+)
 
 app = FastAPI()
+
+
+# ALPHA is the maximum weight for the collaborative score
+# If the user's library has less than 5 games, ALPHA = 0, if more than 20, ALPHA = 0.4
+ALPHA = 0.4
+ALPHA_MIN_GAMES  = 5
+ALPHA_MAX_GAMES  = 20
+
+
+def normalize(arr: np.ndarray) -> np.ndarray:
+    """
+    Normalizes a vector between 0 and 1.
+    
+    Parameters
+    ----------
+    arr : np.ndarray
+        The vector to normalize
+
+    Returns
+    -------
+    np.darray
+        The normalized vector, zeros if the vector is constant
+    """
+    min_val, max_val = arr.min(), arr.max()
+    if max_val == min_val:
+        return np.zeros_like(arr)
+    return (arr - min_val) / (max_val - min_val)
+
+
+def compute_alpha_for_user(nb_games_in_library: int, als_available: bool) -> float:
+    """
+    Calculates the ALPHA for a user.
+
+    Parameters
+    ----------
+    nb_games_in_library: int
+        The number of games a user has in his library
+    als_available: bool
+        True if enough global users
+    
+    Returns
+    -------
+    float
+        The ALPHA of a user
+    """
+    if not als_available or nb_games_in_library < ALPHA_MIN_GAMES:
+        return 0.0
+    if nb_games_in_library >= ALPHA_MAX_GAMES:
+        return ALPHA
+    progress = (nb_games_in_library - ALPHA_MIN_GAMES) / (ALPHA_MAX_GAMES - ALPHA_MIN_GAMES)
+    return ALPHA * progress
+
+
 @app.get("/health")
 def health():
     return {"status": "ok"}
 
-@app.get("/recommend")
-def recommend(lobby_id, nb_recommendations): # A check les arguments
+
+@app.get("/recommend/{lobby_id}")
+def recommend(lobby_id: str, nb_recommendations: int = 10, db: Session = Depends(get_db)):
+    """
+    Recommends a list of games for a lobby.
+
+    Parameters
+    ----------
+    lobby_id : str
+        ID of the lobby to recommend
+    nb_recommendations
+        Number of recommended games (optionnal, default 10)
     
-    # Traitement des donnees
-
-    ## Table users
-    users = pd.DataFrame({
-    "user_id": [1,2,3,4]
-    })
+    Returns
+    -------
+    lobby_id
+    nb_players
+    selected_tags
+    alpha_per_user
+    recommendations
+    """
+    lobby = get_lobby_context(db, lobby_id)
+    if not lobby["user_ids"]:
+        raise HTTPException(status_code=404, detail="Lobby not found or empty")
+    games_df            = get_games_dataframe(db)
+    lobby_interactions  = get_interactions_dataframe(db, lobby["user_ids"])
+    all_interactions    = get_all_interactions_dataframe(db)
     
+    games_df = games_df.drop_duplicates("game_id").dropna(subset=["game_id", "tags"])
+    games_df = games_df[games_df["tags"].str.strip() != ""].reset_index(drop=True)
 
-
-    ## Table games (catalogue)
-    games = pd.DataFrame({
-    "game_id": [101,102,103],
-    "title": ["Elden Ring","Stardew Valley","Hades"],
-    "genres": [
-        "Action,RPG",
-        "Simulation,Farming",
-        "Action,Roguelike"
-    ],
-    "tags": [
-        "Souls-like,Open World",
-        "Relaxing,Pixel Art",
-        "Fast-paced,Indie"
-    ]})
-    ## Nettoyage des donnees (A remanier, voir si en local, ici ou en amont dans la db)
-    ## Nettoyer jeux sans id, jeux sans tags, doublons
-    games = games.drop_duplicates("game_id")
-    games = games.dropna()
-
-
-
-    ## Table user owned games (bibliotheques)
-    libraries = pd.DataFrame({
-    "user_id":[1,1,2,3,4],
-    "game_id":[101,102,101,103,102]})
-
-
-
-    ## Table likes user-games (implicit feedback)
-    likes = pd.DataFrame({
-    "user_id":[1,2,3],
-    "game_id":[103,102,101],
-    "liked":[1,1,1]})
-
-
-    ## Table d'interactions
-    ## On concatene les bibliotheques et les likes, on assigne 1
-    ## /!\/!\/!\A boucler pour tous les users pour rester dans le content-based /!\/!\/!\
-    interactions = pd.concat([libraries.assign(interaction=1),
-    likes.assign(interaction=1)])
-    [["user_id","game_id","interaction"]]
-
-
-
-    ## Transformation table interation -> matrice d'interactions
-    ## Lignes user, colonnes games(id), centre 0 ou 1 (interactions)
-    ## Fill avec 0 -> matrice sparse -> csr matrix a utiliser /!\/!\/!\(verifier le type de retour)/!\/!\/!\
-    interaction_matrix = interactions.pivot_table(
-    index="user_id",
-    columns="game_id",
-    values="interaction",
-    fill_value=0)
-
-
-
-    ## Multi-hot encoding des genres (Passage de texte a nombre)
-    games["genres"] = games["genres"].str.split(",") # /!\/!\/!\ pour csv /!\/!\/!\
-    mlb = MultiLabelBinarizer()
-    genre_matrix = mlb.fit_transform(games["genres"])
-    
-    
-    ## Vectorisation des tags TF-IDF
-    ## TF valorise la frequence N/nb_iterations
-    ## IDF penalise l'absence log(N/nb_iterations)
-    ## TF-IDF -> tf * idf (matrice finale)
     tfidf = TfidfVectorizer()
-    tag_matrix = tfidf.fit_transform(games["tags"])
+    tag_matrix = tfidf.fit_transform(games_df["tags"])  # shape : (nb_jeux, nb_tags_uniques)
+    similarity_matrix = cosine_similarity(tag_matrix)   # shape : (nb_jeux, nb_jeux)
+    game_id_to_idx = {gid: i for i, gid in enumerate(games_df["game_id"])}
 
-    ## Vecteur final des jeux
-    game_features = hstack([genre_matrix, tag_matrix])
+    def content_score_for_user(user_id: str) -> np.ndarray:
+        """
+        Calculates the content-based scores of a user, for each game of his library.
 
-    #########################################################
+        Parameters
+        ----------
+        user_id : str
+            ID of the user
 
-    # Content-based model
-
-    ## Calcul de similarite (cosine similarity)
-    similarity_matrix = cosine_similarity(game_features)
-
-    ## Construction d'une recommendation pour UN joueur
-    ## /!\/!\/!\ A boucler dans for ?? /!\/!\/!\
-    owned = libraries[libraries.user_id == user_id]["game_id"]
-    scores = similarity_matrix[owned].mean(axis=0)
-    recommended = np.argsort(scores)[::-1][:nb_recommendations]
-    games.iloc[recommended]
-
-### Exemple fct : 
-def recommend_content(user_id, nb_recommendations): #Les arguments en entree du endpoint fastapi
-owned = libraries[libraries.user_id == user_id]["game_id"]
-scores = similarity_matrix[owned].mean(axis=0)
-recommended = np.argsort(scores)[::-1][:nb_recommendations]
-return games.iloc[recommended]
-### Boucler fct dans for pour tout le lobby puis etendre au groupe
-
-    ## Extension au groupe
-    ### /!\/!\/!\Construire tous les scores_user/!\/!\/!\
-    score_group = moyenne(scores_user)
-
-    #########################################################
-
-    # Collaborative Filtering (implicit feedback, likes only)
-    ## Item_similarity pour un user du lobby
-    item_similarity = cosine_similarity(user_game_matrix.T)
-    ### /!\/!\/!\ A boucler sur le lobby /!\/!\/!\
-
-    ## Matrix factorisation (ALS = Alternating Least Squares)
-    ## Principe user vector, game vector
-
-    matrix = csr_matrix(user_game_matrix.values)
-    model = implicit.als.AlternatingLeastSquares(
-    factors=50,
-    regularization=0.01,
-    iterations=20)
-
-    model.fit(matrix)
-
-    ## Recommendation collaborative
-    ### A boucler sur les user du lobby
-    ### Fonction recommend_content plus haut
-
-    recommendations = model.recommend_content(
-    user_id,
-    matrix[user_id],
-    N=nb_recommendations)
-
-    ## Ranking the recommendations (BPR = Bayesian Personalized Ranking)
-    model = implicit.bpr.BayesianPersonalizedRanking()
-
-    ## Recommendation pour le lobby
-    ## Average strategy (moyenne des scores des joueurs)
-    group_score1 = np.mean(user_scores, axis=0)
-
-    ## Least misery (eviter les jeux detestes)
-    group_score2 = np.min(user_scores, axis=0)
-
-    ## Most pleasure (favoriser les jeux adores par un joueur)
-    group_score3 = np.max(user_scores, axis=0)
-
-    ## Weighted (on calcule le score final en ponderant chaque score)
-    ### A bien comprendre
-    group_score = w1*s1 + w2*s2 + w3*s3
-
-    #########################################
-
-    ## Hybrid
-    ## Regroupement content + collaborative
-    ## Tri des recommendations
-    ### A bien comprendre
-    final_score = α * collaborative + (1-α) * content
-    topNB = np.argsort(final_scores)[::-1][:nb_recommendations]
-    recommended_games = games.iloc[topNB]
-
-    ##########################################
-
-    return {"message": "Check logs in docker"} # A voir quoi et comment return
+        Returns
+        -------
+        np.darray
+            Matrix of the content-based scores
+        """
+        user_owned = lobby_interactions[lobby_interactions["user_id"] == user_id]
+        user_owned = user_owned[user_owned["game_id"].isin(game_id_to_idx)]
+        if user_owned.empty:
+            return np.zeros(len(games_df))
+        scores       = np.zeros(len(games_df))
+        total_weight = 0.0
+        for _, row in user_owned.iterrows():
+            idx = game_id_to_idx[row["game_id"]]
+            w = row["interaction"]
+            scores += w * similarity_matrix[idx]
+            total_weight += w
+        return scores / total_weight if total_weight > 0 else scores
 
 
-######################################
+    content_scores_per_user = np.array([
+        content_score_for_user(uid) for uid in lobby["user_ids"]
+    ])  # shape : (nb_joueurs, nb_jeux)
 
+    nb_users_total = all_interactions["user_id"].nunique()
+    if nb_users_total < 5 or all_interactions.empty:
+        collab_scores_per_user = np.zeros_like(content_scores_per_user)
+        alpha = 0.0
+    else:
+        all_user_ids = all_interactions["user_id"].unique().tolist()
+        all_game_ids = games_df["game_id"].tolist()
+        user_to_idx = {uid: i for i, uid in enumerate(all_user_ids)}
+        game_to_idx = {gid: i for i, gid in enumerate(all_game_ids)}
+        valid = all_interactions[all_interactions["game_id"].isin(game_to_idx)].copy()
+        rows_idx = valid["user_id"].map(user_to_idx).values
+        cols_idx = valid["game_id"].map(game_to_idx).values
+        data     = valid["interaction"].values.astype(np.float32)
+        user_item_matrix = csr_matrix(
+            (data, (rows_idx, cols_idx)),
+            shape=(len(all_user_ids), len(all_game_ids))
+        )
+        item_user_matrix = user_item_matrix.T.tocsr()
+        
+        als_model = AlternatingLeastSquares(
+            factors=50,
+            regularization=0.01,
+            iterations=20,
+            use_gpu=False,
+        )
+        als_model.fit(item_user_matrix)
+        collab_scores_per_user = np.zeros((len(lobby["user_ids"]), len(all_game_ids)))
+        for i, uid in enumerate(lobby["user_ids"]):
+            if uid not in user_to_idx:
+                continue
+            user_idx = user_to_idx[uid]
+            user_row = user_item_matrix[user_idx]
+            item_ids, scores = als_model.recommend(
+                user_idx,
+                user_row,
+                N=len(all_game_ids),
+                filter_already_liked_items=False,
+            )
+            for item_id, score in zip(item_ids, scores):
+                collab_scores_per_user[i][item_id] = float(score)
+        alpha = ALPHA
 
-# Evaluation du modele
+    als_available = alpha > 0.0
 
-Évaluation :
-##########
-Precision@k
+    hybrid_scores_per_user = np.zeros_like(content_scores_per_user)
+    for i, uid in enumerate(lobby["user_ids"]):
+        nb_games = len(
+            lobby_interactions[
+                (lobby_interactions["user_id"] == uid) &
+                (lobby_interactions["game_id"].isin(game_id_to_idx))
+            ]
+        )
+        alpha_i = compute_alpha_for_user(nb_games, als_available)
+        hybrid_scores_per_user[i] = (
+            alpha_i       * normalize(collab_scores_per_user[i]) +
+            (1 - alpha_i) * normalize(content_scores_per_user[i])
+        )  # shape : (nb_joueurs, nb_jeux)
 
-precision = liked_recommended / recommended
+    tag_boost = np.ones(len(games_df))
+    if lobby["all_selected_tags"]:
+        tag_counts = Counter(
+            tag
+            for tags in lobby["selected_tags_by_user"].values()
+            for tag in tags
+        )
+        weighted_tags_str = " ".join(
+            tag
+            for tag, count in tag_counts.items()
+            for _ in range(count)
+        )
+        selected_vector = tfidf.transform([weighted_tags_str])
+        tag_similarity = cosine_similarity(selected_vector, tag_matrix).flatten()
+        tag_boost = 1.0 + tag_similarity
 
-precision = hits / k
-##########
-Recall@k
+    group_score = np.mean(hybrid_scores_per_user, axis=0)
+    final_scores = group_score * tag_boost
+    owned_by_group = set(lobby_interactions["game_id"].tolist())
+    ranked_indices = np.argsort(final_scores)[::-1]
+    recommendations = []
+    for idx in ranked_indices:
+        game_id = games_df.iloc[idx]["game_id"]
+        if game_id in owned_by_group:
+            continue
+        recommendations.append({
+            "game_id": game_id,
+            "name":    games_df.iloc[idx]["name"],
+            "slug":    games_df.iloc[idx]["slug"],
+            "score":   round(float(final_scores[idx]), 4),
+        })
+        if len(recommendations) >= nb_recommendations:
+            break
 
-recall = hits / total_liked
-##########
-Hit Rate
-
-au moins un jeu aimé dans la liste
-##########
-MAP
-
-Moyenne de la précision cumulée.
-
-#########################################
-
-
-# Exemple de connection sqlalchemy
-
-from sqlalchemy import create_engine, text
-
-# paramètres de connexion
-user = "mon_user"
-password = "mon_password"
-host = "localhost"
-port = "5432"
-database = "ma_base"
-
-# URL de connexion
-DATABASE_URL = f"postgresql+psycopg2://{user}:{password}@{host}:{port}/{database}"
-
-# création du moteur
-engine = create_engine(DATABASE_URL)
-
-# test de connexion
-with engine.connect() as conn:
-    result = conn.execute(text("SELECT version();"))
-    for row in result:
-        print(row)
-
-# Format : postgresql+psycopg2://USER:PASSWORD@HOST:PORT/DATABASE
-
-# Exemple avec ORM
-from sqlalchemy.orm import sessionmaker
-
-Session = sessionmaker(bind=engine)
-session = Session()
-
-result = session.execute(text("SELECT NOW();"))
-print(result.fetchone())
-
-session.close()
+    alphas_debug = {
+        uid: round(compute_alpha_for_user(
+            len(lobby_interactions[
+                (lobby_interactions["user_id"] == uid) &
+                (lobby_interactions["game_id"].isin(game_id_to_idx))
+            ]),
+            als_available
+        ), 3)
+        for uid in lobby["user_ids"]
+    }
+    
+    return {
+        "lobby_id":        lobby_id,
+        "nb_players":      len(lobby["user_ids"]),
+        "selected_tags":   lobby["all_selected_tags"],
+        "alpha_per_user":  alphas_debug,
+        "recommendations": recommendations,
+    }
