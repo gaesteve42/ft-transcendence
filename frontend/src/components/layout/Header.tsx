@@ -33,7 +33,6 @@ function Header() {
 		document.addEventListener('mousedown', handleClickOutside)
 		return () => document.removeEventListener('mousedown', handleClickOutside)
 	}, [])
-
 	useEffect(() => {
 		if (debounceRef.current) clearTimeout(debounceRef.current)
 		if (search.trim().length === 0) {
@@ -52,18 +51,16 @@ function Header() {
 					setResults(data)
 					setShowResults(true)
 				}
-			} catch { /* ignore */ }
+			} catch { }
 		}, 300)
 		return () => { if (debounceRef.current) clearTimeout(debounceRef.current) }
 	}, [search])
-
 	const handleSelectUser = (userId: string) => {
 		setSearch('')
 		setResults([])
 		setShowResults(false)
 		navigate(`/profile/${userId}`)
 	}
-
 	const renderSearchResults = () => {
 		if (!showResults) return null
 		if (search.trim().length > 0 && results.length === 0) {
@@ -95,16 +92,17 @@ function Header() {
 			</div>
 		)
 	}
-
 	return (
 		<header className="bg-dark-800 border-b border-dark-600 relative z-20">
 			<nav className="px-10 py-5 flex items-center">
+				{/* Logo */}
 				<div className="flex-1 flex items-center gap-3">
 					<Link to={isLoggedIn ? '/dashboard' : '/'} className="flex items-center gap-3 shrink-0">
 						<Logo width={60} height={60} className="translate-y-1" />
 						<span className="text-2xl font-bold text-gradient-main">GameFinder</span>
 					</Link>
 				</div>
+				{/* Search bar */}
 				{isLoggedIn && (
 					<div className="flex-1 flex justify-center" ref={searchRef}>
 						<div className="relative w-full max-w-lg group">
@@ -129,9 +127,11 @@ function Header() {
 						</div>
 					</div>
 				)}
+				{/* User menu / Auth buttons */}
 				<div className="flex-1 flex items-center justify-end gap-4">
 					{isLoggedIn ? (
 						<div className="relative" ref={menuRef}>
+							{/* Avatar */}
 							<button
 								onClick={() => setMenuOpen(!menuOpen)}
 								className="cursor-pointer rounded-full transition-shadow hover:shadow-[0_0_12px_rgba(146,57,228,0.6)]"
@@ -144,6 +144,7 @@ function Header() {
 									</div>
 								)}
 							</button>
+							{/* Dropdown */}
 							{menuOpen && (
 								<div className="absolute right-0 mt-2 w-44 rounded-xl bg-dark-800 border border-dark-600 shadow-lg overflow-hidden">
 									<Link

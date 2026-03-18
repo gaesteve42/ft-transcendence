@@ -50,7 +50,6 @@ function Register() {
 			setIsLoading(false)
 		}
 	}
-
 	return (
 		<div className="min-h-screen text-white flex items-center justify-center">
 			<motion.form
@@ -60,6 +59,7 @@ function Register() {
 				animate={{ opacity: 1, y: 0 }}
 			>
 				<h1 className="text-3xl font-bold text-center mb-4">Sign up</h1>
+				{/* Form fields */}
 				<Input
 					type="text"
 					label="Username"
@@ -89,15 +89,18 @@ function Register() {
 					onChange={(e) => setConfirmPassword(e.target.value)}
 				/>
 				{error && <p className="text-red-500 text-sm">{error}</p>}
+				{/* Submit */}
 				<Button type="submit" variant="blue" disabled={isLoading}>
 					{isLoading ? 'Signing up...' : 'Sign up'}
 				</Button>
+				{/* Steam login */}
 				<a
 					href="/api/auth/steam"
 					className="self-center opacity-80 hover:opacity-100 transition-opacity"
 				>
 					<img src={steamLoginImg} alt="Sign in through Steam" className="h-9" />
 				</a>
+				{/* Redirect to login */}
 				<p className="text-center text-sm text-text-muted">
 					Already have an account?{' '}
 					<Link to="/login" className="text-blue-400 hover:text-blue-300 transition-colors">

@@ -18,7 +18,6 @@ function Login() {
 	const [isLoading, setIsLoading] = useState(false)
 	const navigate = useNavigate()
 	const { login } = useAuth()
-
 	const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
 		e.preventDefault()
 		setError('')
@@ -44,7 +43,6 @@ function Login() {
 			setIsLoading(false)
 		}
 	}
-
 	return (
 		<div className="min-h-screen text-white flex items-center justify-center">
 			<motion.form
@@ -54,6 +52,7 @@ function Login() {
 				animate={{ opacity: 1, y: 0 }}
 			>
 				<h1 className="text-3xl font-bold text-center mb-4">Login</h1>
+				{/* Form fields */}
 				<Input
 					type="email"
 					label="Email"
@@ -69,15 +68,18 @@ function Login() {
 					onChange={(e) => setPassword(e.target.value)}
 				/>
 				{error && <p className="text-red-500 text-sm">{error}</p>}
+				{/* Submit */}
 				<Button type="submit" variant="blue" disabled={isLoading}>
 					{isLoading ? 'Logging in...' : 'Log in'}
 				</Button>
+				{/* Steam login */}
 				<a
 					href="/api/auth/steam"
 					className="self-center opacity-80 hover:opacity-100 transition-opacity"
 				>
 					<img src={steamLoginImg} alt="Sign in through Steam" className="h-9" />
 				</a>
+				{/* Redirect to register */}
 				<p className="text-center text-sm text-text-muted">
 					Don't have an account?{' '}
 					<Link to="/register" className="text-blue-400 hover:text-blue-300 transition-colors">

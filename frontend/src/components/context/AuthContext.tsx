@@ -24,7 +24,6 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
 	const [user, setUser] = useState<User | null>(null)
 	const [loading, setLoading] = useState(() => !!localStorage.getItem('accessToken'))
 	const navigate = useNavigate()
-
 	const fetchUser = useCallback(async () => {
 		const token = localStorage.getItem('accessToken')
 		if (!token) return
@@ -44,21 +43,17 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
 			setLoading(false)
 		}
 	}, [])
-
 	useEffect(() => {
 		fetchUser()
 	}, [fetchUser])
-
 	const login = (token: string) => {
 		localStorage.setItem('accessToken', token)
 		setIsLoggedIn(true)
 		setLoading(true)
 		fetchUser().then(() => navigate('/dashboard'))
 	}
-
 	const logout = async () => {
 		const token = localStorage.getItem('accessToken')
-		// Leave active lobby before logging out
 		if (token) {
 			try {
 				const res = await fetch('/api/lobbies/me', { headers: { Authorization: `Bearer ${token}` } })
@@ -71,15 +66,18 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
 						})
 					}
 				}
-			} catch { /* ignore */ }
+			} catch { }
 		}
 		localStorage.removeItem('accessToken')
 		setIsLoggedIn(false)
 		setUser(null)
 		navigate('/')
 	}
-
-	return <AuthContext.Provider value={{ isLoggedIn, user, loading, login, logout }}>{children}</AuthContext.Provider>
+	return (
+		<AuthContext.Provider value={{ isLoggedIn, user, loading, login, logout }}>
+			{children}
+		</AuthContext.Provider>
+	)
 }
 
 function useAuth() {

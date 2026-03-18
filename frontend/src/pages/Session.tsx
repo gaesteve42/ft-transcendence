@@ -32,22 +32,18 @@ function Session() {
 	const [loading, setLoading] = useState(true)
 	const [error, setError] = useState('')
 	const [copied, setCopied] = useState(false)
-
 	const { lobby, messages, sendChat } = useLobbySocket(lobbyId)
 	const [chatInput, setChatInput] = useState('')
 	const chatEndRef = useRef<HTMLDivElement>(null)
-
 	const [prefsOpen, setPrefsOpen] = useState(true)
 	const [selectedTags, setSelectedTags] = useState<string[]>([])
 	const [budget, setBudget] = useState<string | null>(null)
-
 	const playerColorMap = useMemo(() => new Map(
 		(lobby?.players ?? []).map((p, i) => [p.username, PLAYER_COLORS[i % PLAYER_COLORS.length]])
 	), [lobby?.players])
 	const isHost = lobby?.ownerId === user?.id
 	const getToken = () => localStorage.getItem('accessToken') || ''
 
-	// On mount: check existing lobby or auto-create one
 	useEffect(() => {
 		if (urlLobbyId) { setLoading(false); return }
 		const init = async () => {
@@ -81,11 +77,9 @@ function Session() {
 		}
 		init()
 	}, []) // eslint-disable-line react-hooks/exhaustive-deps
-
 	useEffect(() => {
 		chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
 	}, [messages])
-
 	const leaveLobby = async () => {
 		if (!lobbyId) return
 		try {
@@ -97,31 +91,25 @@ function Session() {
 		setLobbyId(null)
 		navigate('/dashboard')
 	}
-
 	const copyCode = () => {
 		if (!lobby) return
 		navigator.clipboard.writeText(lobby.id)
 		setCopied(true)
 		setTimeout(() => setCopied(false), 2000)
 	}
-
 	const handleSendChat = () => {
 		if (!chatInput.trim() || !user) return
 		sendChat(user.username, chatInput.trim())
 		setChatInput('')
 	}
-
 	const toggleTag = (tag: string) => {
 		setSelectedTags((prev) =>
 			prev.includes(tag) ? prev.filter((t) => t !== tag) : prev.length < 3 ? [...prev, tag] : prev
 		)
 	}
-
 	const handlePrefsDone = () => {
 		setPrefsOpen(false)
 	}
-
-	// Loading
 	if (loading) {
 		return (
 			<div className="flex items-center justify-center py-32">
@@ -129,8 +117,6 @@ function Session() {
 			</div>
 		)
 	}
-
-	// Error
 	if (!lobbyId) {
 		return (
 			<div className="max-w-md mx-auto px-6 py-32 text-center">
@@ -153,8 +139,6 @@ function Session() {
 			</div>
 		)
 	}
-
-	// Skeleton
 	if (!lobby) {
 		return (
 			<div className="max-w-6xl mx-auto px-6 py-12">
@@ -172,8 +156,6 @@ function Session() {
 			</div>
 		)
 	}
-
-	// Main lobby screen
 	return (
 		<div className="px-10 py-8 min-h-[calc(100vh-180px)] flex flex-col">
 			{/* Header */}
@@ -206,9 +188,9 @@ function Session() {
 					</button>
 				</div>
 			</motion.div>
-			{/* 3-column layout — stretches to fill available height */}
+			{/* 3-column layout */}
 			<div className="flex gap-6 flex-1 items-stretch">
-				{/* ── Left: Players ── */}
+				{/* left column */}
 				<motion.div
 					initial={{ opacity: 0, x: -16 }}
 					animate={{ opacity: 1, x: 0 }}

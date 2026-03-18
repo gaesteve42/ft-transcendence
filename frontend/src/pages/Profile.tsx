@@ -17,7 +17,6 @@ function Profile() {
 	const { userId } = useParams<{ userId: string }>()
 	const { user: authUser } = useAuth()
 	const isOwnProfile = !userId || userId === authUser?.id
-
 	const [user, setUser] = useState<ProfileUser | null>(null)
 	const [isEditing, setIsEditing] = useState(false)
 	const [editForm, setEditForm] = useState({ username: '' })
@@ -30,12 +29,10 @@ function Profile() {
 	const [passwordError, setPasswordError] = useState('')
 	const [passwordSuccess, setPasswordSuccess] = useState('')
 	const [saveStatus, setSaveStatus] = useState<'saved' | 'error' | ''>('')
-
 	useEffect(() => {
 		const token = localStorage.getItem('accessToken')
 		setLoading(true)
 		setIsEditing(false)
-
 		if (isOwnProfile) {
 			fetch('/api/auth/me', {
 				headers: { Authorization: `Bearer ${token}` },
@@ -75,12 +72,11 @@ function Profile() {
 				})
 		}
 	}, [userId, isOwnProfile])
-
 	const startEditing = () => {
 		setEditForm({ username: user!.username })
 		setIsEditing(true)
 	}
-const handleLinkSteam = async () => {
+	const handleLinkSteam = async () => {
 		const token = localStorage.getItem('accessToken')
 		const res = await fetch('/api/auth/steam/link/start', {
 			method: 'POST',
@@ -96,7 +92,6 @@ const handleLinkSteam = async () => {
 		setPasswordError('')
 		setPasswordSuccess('')
 		setSaveStatus('')
-		// Save password if fields are filled
 		if (passwordForm.current || passwordForm.newPass || passwordForm.confirm) {
 			if (passwordForm.newPass !== passwordForm.confirm) {
 				setPasswordError('Passwords do not match')
@@ -127,7 +122,6 @@ const handleLinkSteam = async () => {
 		setSaveStatus('saved')
 		setTimeout(() => setSaveStatus(''), 3000)
 	}
-
 	if (loading) {
 		return (
 			<div className="flex items-center justify-center min-h-[60vh]">
@@ -142,12 +136,13 @@ const handleLinkSteam = async () => {
 			</div>
 		)
 	}
-
 	return (
 		<div className="max-w-6xl mx-auto px-6 py-12">
+			{/* Edit mode */}
 			{isEditing && isOwnProfile ? (
 				<div className="bg-dark-800 border border-dark-600 rounded-2xl p-12">
 					<div className="flex items-center gap-12">
+						{/* Avatar */}
 						{user.avatar ? (
 							<img src={user.avatar} alt={user.username} className="w-40 h-40 rounded-full border-2 border-dark-500 object-cover shrink-0" />
 						) : (
@@ -155,6 +150,7 @@ const handleLinkSteam = async () => {
 								{user.username.charAt(0).toUpperCase()}
 							</div>
 						)}
+						{/* Edit form */}
 						<div className="flex-1 space-y-4">
 							<Input
 								label="Username"
@@ -166,6 +162,7 @@ const handleLinkSteam = async () => {
 									})
 								}
 							/>
+							{/* Password change */}
 							<div className="border-t border-dark-500 pt-4 mt-4">
 								<p className="text-text-muted text-sm mb-3">Change password</p>
 								<div className="space-y-3">
@@ -203,8 +200,8 @@ const handleLinkSteam = async () => {
 										}
 									/>
 								</div>
-							{passwordError && <p className="text-red-500 text-sm mt-2">{passwordError}</p>}
-							{passwordSuccess && <p className="text-green-400 text-sm mt-2">{passwordSuccess}</p>}
+								{passwordError && <p className="text-red-500 text-sm mt-2">{passwordError}</p>}
+								{passwordSuccess && <p className="text-green-400 text-sm mt-2">{passwordSuccess}</p>}
 							</div>
 						</div>
 					</div>
