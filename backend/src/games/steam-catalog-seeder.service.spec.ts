@@ -13,17 +13,12 @@ describe("SteamCatalogSeederService", () => {
 			count: jest.Mock;
 		};
 	};
-	let steamGames: {
-		getMostPlayedSteamGames: jest.Mock;
-	};
+	let steamGames: Record<string, never>;
 	let igdbService: {
-		getGameIdBySteamAppId: jest.Mock;
-		getGameDetails: jest.Mock;
+		getPopularMultiplayerGames: jest.Mock;
 	};
 	let gameService: {
 		upsertFromExternal: jest.Mock;
-		findByExternalId: jest.Mock;
-		linkExternalId: jest.Mock;
 		upsertSourceTagsForGame: jest.Mock;
 	};
 
@@ -33,17 +28,12 @@ describe("SteamCatalogSeederService", () => {
 				count: jest.fn(),
 			},
 		};
-		steamGames = {
-			getMostPlayedSteamGames: jest.fn(),
-		};
+		steamGames = {};
 		igdbService = {
-			getGameIdBySteamAppId: jest.fn(),
-			getGameDetails: jest.fn(),
+			getPopularMultiplayerGames: jest.fn(),
 		};
 		gameService = {
 			upsertFromExternal: jest.fn(),
-			findByExternalId: jest.fn(),
-			linkExternalId: jest.fn(),
 			upsertSourceTagsForGame: jest.fn(),
 		};
 
@@ -79,35 +69,12 @@ describe("SteamCatalogSeederService", () => {
 		await expect(service.seedMostPopularMultiplayerGames(0)).rejects.toThrow(
 			new BadRequestException("Target count must be a positive integer"),
 		);
-		expect(steamGames.getMostPlayedSteamGames).not.toHaveBeenCalled();
+		expect(igdbService.getPopularMultiplayerGames).not.toHaveBeenCalled();
 	});
 
-	it("keeps scanning Steam Charts candidates until enough final multiplayer games were seeded", async () => {
-		steamGames.getMostPlayedSteamGames.mockResolvedValue([
-			{ appId: "10" },
-			{ appId: "20" },
-			{ appId: "30" },
-			{ appId: "40" },
-		]);
-		igdbService.getGameIdBySteamAppId
-			.mockResolvedValueOnce(null)
-			.mockResolvedValueOnce("200")
-			.mockResolvedValueOnce("300")
-			.mockResolvedValueOnce("400");
-		igdbService.getGameDetails
-			.mockResolvedValueOnce({
-				igdbId: "200",
-				name: "Solo Game",
-				summary: null,
-				coverUrl: null,
-				firstReleaseDate: null,
-				supportsMultiplayerOrCoop: false,
-				genres: [],
-				themes: [],
-				keywords: [],
-				gameModeNames: [],
-			})
-			.mockResolvedValueOnce({
+	it("seeds games from IGDB until the target count is reached", async () => {
+		igdbService.getPopularMultiplayerGames.mockResolvedValueOnce([
+			{
 				igdbId: "300",
 				name: "Multiplayer Game 1",
 				summary: "tagged",
@@ -118,8 +85,8 @@ describe("SteamCatalogSeederService", () => {
 				themes: [],
 				keywords: [],
 				gameModeNames: ["Multiplayer"],
-			})
-			.mockResolvedValueOnce({
+			},
+			{
 				igdbId: "400",
 				name: "Multiplayer Game 2",
 				summary: "tagged",
@@ -130,64 +97,117 @@ describe("SteamCatalogSeederService", () => {
 				themes: [],
 				keywords: [],
 				gameModeNames: ["Co-operative"],
-			});
+			},
+		]);
 		gameService.upsertFromExternal
 			.mockResolvedValueOnce({ id: "game-300", name: "Multiplayer Game 1" })
 			.mockResolvedValueOnce({ id: "game-400", name: "Multiplayer Game 2" });
-		gameService.findByExternalId
-			.mockResolvedValueOnce(null)
-			.mockResolvedValueOnce(null);
 
 		const result = await service.seedMostPopularMultiplayerGames(2);
 
-		// The seed must continue past rejected candidates until it reaches the target count.
 		expect(result).toBe(2);
-		expect(steamGames.getMostPlayedSteamGames).toHaveBeenCalled();
-		expect(igdbService.getGameIdBySteamAppId).toHaveBeenCalledTimes(4);
+		expect(igdbService.getPopularMultiplayerGames).toHaveBeenCalledWith(500, 0);
 		expect(gameService.upsertFromExternal).toHaveBeenCalledTimes(2);
-		expect(gameService.linkExternalId).toHaveBeenNthCalledWith(
+		expect(gameService.upsertSourceTagsForGame).toHaveBeenCalledTimes(2);
+		expect(gameService.upsertSourceTagsForGame).toHaveBeenNthCalledWith(
 			1,
 			"game-300",
-			ExternalGameSource.STEAM,
-			"30",
-			"https://store.steampowered.com/app/30",
+			ExternalGameSource.IGDB,
+			[{ externalTagId: "genre:12", label: "Role-playing (RPG)" }],
 		);
-		expect(gameService.linkExternalId).toHaveBeenNthCalledWith(
+		expect(gameService.upsertSourceTagsForGame).toHaveBeenNthCalledWith(
 			2,
 			"game-400",
-			ExternalGameSource.STEAM,
-			"40",
-			"https://store.steampowered.com/app/40",
+			ExternalGameSource.IGDB,
+			[{ externalTagId: "genre:31", label: "Adventure" }],
 		);
-		expect(gameService.upsertSourceTagsForGame).toHaveBeenCalledTimes(2);
 	});
 
-	it("does not recreate the Steam mapping when it already exists for the seeded game", async () => {
-		steamGames.getMostPlayedSteamGames.mockResolvedValue([{ appId: "10" }]);
-		igdbService.getGameIdBySteamAppId.mockResolvedValue("200");
-		igdbService.getGameDetails.mockResolvedValue({
-			igdbId: "200",
-			name: "Multiplayer Game 1",
-			summary: "tagged",
-			coverUrl: null,
-			firstReleaseDate: null,
-			supportsMultiplayerOrCoop: true,
-			genres: [],
-			themes: [],
-			keywords: [],
-			gameModeNames: ["Multiplayer"],
-		});
-		gameService.upsertFromExternal.mockResolvedValue({ id: "game-200", name: "Multiplayer Game 1" });
-		gameService.findByExternalId.mockResolvedValue({ id: "game-200", name: "Multiplayer Game 1" });
+	it("paginates to the next batch when the first batch is not enough", async () => {
+		igdbService.getPopularMultiplayerGames
+			.mockResolvedValueOnce([
+				{
+					igdbId: "100",
+					name: "Game A",
+					summary: null,
+					coverUrl: null,
+					firstReleaseDate: null,
+					supportsMultiplayerOrCoop: true,
+					genres: [],
+					themes: [],
+					keywords: [],
+					gameModeNames: ["Multiplayer"],
+				},
+			])
+			.mockResolvedValueOnce([
+				{
+					igdbId: "200",
+					name: "Game B",
+					summary: null,
+					coverUrl: null,
+					firstReleaseDate: null,
+					supportsMultiplayerOrCoop: true,
+					genres: [],
+					themes: [],
+					keywords: [],
+					gameModeNames: ["Co-operative"],
+				},
+			]);
+		gameService.upsertFromExternal
+			.mockResolvedValueOnce({ id: "game-100", name: "Game A" })
+			.mockResolvedValueOnce({ id: "game-200", name: "Game B" });
 
-		const result = await service.seedMostPopularMultiplayerGames(1);
+		const result = await service.seedMostPopularMultiplayerGames(2);
+
+		expect(result).toBe(2);
+		expect(igdbService.getPopularMultiplayerGames).toHaveBeenNthCalledWith(1, 500, 0);
+		expect(igdbService.getPopularMultiplayerGames).toHaveBeenNthCalledWith(2, 500, 500);
+	});
+
+	it("stops when IGDB returns an empty batch", async () => {
+		igdbService.getPopularMultiplayerGames.mockResolvedValueOnce([]);
+
+		const result = await service.seedMostPopularMultiplayerGames(500);
+
+		expect(result).toBe(0);
+		expect(gameService.upsertFromExternal).not.toHaveBeenCalled();
+	});
+
+	it("skips duplicate games already seeded in the same run", async () => {
+		igdbService.getPopularMultiplayerGames
+			.mockResolvedValueOnce([
+				{
+					igdbId: "300",
+					name: "Same Game",
+					summary: null,
+					coverUrl: null,
+					firstReleaseDate: null,
+					supportsMultiplayerOrCoop: true,
+					genres: [],
+					themes: [],
+					keywords: [],
+					gameModeNames: ["Multiplayer"],
+				},
+				{
+					igdbId: "300",
+					name: "Same Game",
+					summary: null,
+					coverUrl: null,
+					firstReleaseDate: null,
+					supportsMultiplayerOrCoop: true,
+					genres: [],
+					themes: [],
+					keywords: [],
+					gameModeNames: ["Multiplayer"],
+				},
+			])
+			.mockResolvedValueOnce([]);
+		gameService.upsertFromExternal
+			.mockResolvedValue({ id: "game-300", name: "Same Game" });
+
+		const result = await service.seedMostPopularMultiplayerGames(10);
 
 		expect(result).toBe(1);
-		expect(gameService.linkExternalId).not.toHaveBeenCalled();
-		expect(gameService.upsertSourceTagsForGame).toHaveBeenCalledWith(
-			"game-200",
-			ExternalGameSource.IGDB,
-			[],
-		);
+		expect(gameService.upsertSourceTagsForGame).toHaveBeenCalledTimes(1);
 	});
 });

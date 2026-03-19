@@ -305,4 +305,21 @@ export class IgdbService {
 			throw new InternalServerErrorException("Game ID must be a number");
 		return gameId.toString();
 	}
+	async getPopularMultiplayerGames(limit: number, offset: number) : Promise<IgdbGameDetails[]> {
+		if (!Number.isInteger(limit) || limit <= 0 || limit > 500)
+			throw new BadRequestException("Limit must be a positive integer between 1 and 500");
+		if (!Number.isInteger(offset) || offset < 0)
+			throw new BadRequestException("offset must be a positive integer");
+		const body = [
+  				"fields id, name, summary, cover.image_id, first_release_date, genres.id, genres.name, themes.id, themes.name, keywords.id, keywords.name, game_modes.name, multiplayer_modes.campaigncoop, multiplayer_modes.onlinecoop, multiplayer_modes.offlinecoop, multiplayer_modes.onlinemax, multiplayer_modes.offlinemax;",
+				`where multiplayer_modes != null & total_rating_count > 3;`,
+				"sort total_rating_count desc;",
+				`limit ${limit};`,
+				`offset ${offset};`,
+				].join("\n");
+		const data = await this.fetchFromIgdb("games", body);
+		if (!Array.isArray(data))
+			throw new InternalServerErrorException("IGDB game details response is not an array");
+		return data.map((item) => this.mapGameDetails(item));
+	}
 }
