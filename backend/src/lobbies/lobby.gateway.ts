@@ -9,7 +9,7 @@ import {
 import { Server, Socket } from "socket.io";
 import { LobbiesService } from "./lobbies.service";
 
-@WebSocketGateway({ cors: { origin: "*" } })
+@WebSocketGateway({ cors: { origin: process.env.FRONTEND_URL } })
 export class LobbyGateway implements OnGatewayDisconnect {
 	@WebSocketServer()
 	server: Server;
