@@ -14,8 +14,6 @@ build/
 # DevOps
 .env
 backups/
-ssl/*.crt
-ssl/*.key
 
 # Miscellanous
 .idea/
