@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { motion } from 'motion/react'
 import { useAuth } from '../components/context/AuthContext'
@@ -11,6 +11,37 @@ type RegisterResponse = {
 	accessToken?: string
 }
 
+type PasswordStrength = {
+	score: 0 | 1 | 2 | 3 | 4
+	label: string
+	color: string
+	missingRequirements: string[]
+}
+
+function getPasswordStrength(password: string): PasswordStrength {
+	if (password.length === 0) return { score: 0, label: '', color: '', missingRequirements: [] }
+
+	const requirements = [
+		{ test: password.length >= 8, missing: 'At least 8 characters' },
+		{ test: /[A-Z]/.test(password), missing: 'An uppercase letter' },
+		{ test: /[0-9]/.test(password), missing: 'A number' },
+		{ test: /[^A-Za-z0-9]/.test(password), missing: 'A special character (!@#$%...)' },
+	]
+
+	const passed = requirements.filter((r) => r.test).length
+	const missingRequirements = requirements.filter((r) => !r.test).map((r) => r.missing)
+
+	const configs: Record<number, { label: string; color: string }> = {
+		0: { label: 'Very weak', color: 'bg-red-500' },
+		1: { label: 'Weak', color: 'bg-red-500' },
+		2: { label: 'Medium', color: 'bg-yellow-500' },
+		3: { label: 'Strong', color: 'bg-green-500' },
+		4: { label: 'Very strong', color: 'bg-green-500' },
+	}
+
+	return { score: passed as PasswordStrength['score'], label: configs[passed].label, color: configs[passed].color, missingRequirements }
+}
+
 function Register() {
 	const [username, setUsername] = useState('')
 	const [email, setEmail] = useState('')
@@ -20,6 +51,7 @@ function Register() {
 	const [isLoading, setIsLoading] = useState(false)
 	const navigate = useNavigate()
 	const { login } = useAuth()
+	const strength = useMemo(() => getPasswordStrength(password), [password])
 
 	const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
 		e.preventDefault()
@@ -74,13 +106,39 @@ function Register() {
 					value={email}
 					onChange={(e) => setEmail(e.target.value)}
 				/>
-				<Input
-					type="password"
-					label="Password"
-					placeholder="••••••••"
-					value={password}
-					onChange={(e) => setPassword(e.target.value)}
-				/>
+				<div>
+					<Input
+						type="password"
+						label="Password"
+						placeholder="••••••••"
+						value={password}
+						onChange={(e) => setPassword(e.target.value)}
+					/>
+					{password.length > 0 && (
+						<div className="mt-2">
+							<div className="flex gap-1">
+								{[1, 2, 3, 4].map((level) => (
+									<div
+										key={level}
+										className={`h-1.5 flex-1 rounded-full transition-all duration-300 ${
+											level <= strength.score ? strength.color : 'bg-dark-600'
+										}`}
+									/>
+								))}
+							</div>
+							<p className={`text-xs mt-1.5 ${
+								strength.score <= 1 ? 'text-red-400' : strength.score <= 2 ? 'text-yellow-400' : 'text-green-400'
+							}`}>
+								{strength.label}
+							</p>
+							{strength.missingRequirements.length > 0 && (
+								<p className="text-xs text-text-muted mt-1">
+									Missing: {strength.missingRequirements.join(', ').toLowerCase()}
+								</p>
+							)}
+						</div>
+					)}
+				</div>
 				<Input
 					type="password"
 					label="Confirm Password"
