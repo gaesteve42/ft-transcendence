@@ -1,6 +1,7 @@
-import { Controller, Get, Post, Param, Body, HttpCode, UseGuards, Put} from "@nestjs/common";
+import { Controller, Get, Post, Param, Body, HttpCode, UseGuards, Put, ForbiddenException, BadRequestException} from "@nestjs/common";
 import { LobbiesService } from "./lobbies.service";
 import { LobbyGateway } from "./lobby.gateway";
+import { RecommendService } from "./recommend.service";
 import { CreateLobbyDto } from "./dto/create-lobby.dto";
 import { JwtAuthGuard } from "src/auth/jwt-auth.guard";
 import { CurrentUser } from "src/auth/current-user.decorator";
@@ -11,6 +12,7 @@ export class LobbiesController{
 	constructor(
 		private readonly service : LobbiesService,
 		private readonly gateway: LobbyGateway,
+		private readonly recommend: RecommendService,
 	){}
 	@Get("ping")
 	ping(){
@@ -73,4 +75,19 @@ export class LobbiesController{
 	){
 		return this.service.getLobbyReadiness(lobbyId);
 	}
+	@UseGuards(JwtAuthGuard)
+	@Post(":id/recommend")
+	async getRecommendation(
+		@Param("id") lobbyId: string,
+		@CurrentUser("id") userId: string,
+	){
+		const lobby = await this.service.getLobbyById(lobbyId);
+		if (lobby.ownerId !== userId)
+			throw new ForbiddenException("User isnt the leader");
+		const lobbyState = await this.service.getLobbyReadiness(lobbyId);
+		if (lobbyState.ready === false)
+			throw new BadRequestException("All players must be ready");
+		return await this.recommend.callRecommend(lobbyId);
+	}
+
 }
