@@ -1,10 +1,16 @@
 import { INestApplication, ValidationPipe } from "@nestjs/common";
 import { Test, TestingModule } from "@nestjs/testing";
+import { PrismaClient } from "@prisma/client";
 import request from "supertest";
 import { AppModule } from "../src/app.module";
+import { RecommendService } from "../src/lobbies/recommend.service";
 
 describe("Lobbies (e2e)", () => {
 	let app: INestApplication;
+	let prisma: PrismaClient;
+	let recommendMock: {
+		callRecommend: jest.Mock;
+	};
 
 	const shortId = (): string => Math.random().toString(36).slice(2, 10);
 	const uniqueEmail = (): string => `u_${shortId()}@test.com`;
@@ -29,9 +35,16 @@ describe("Lobbies (e2e)", () => {
 	};
 
 	beforeEach(async () => {
+		recommendMock = {
+			callRecommend: jest.fn(),
+		};
+
 		const moduleFixture: TestingModule = await Test.createTestingModule({
 			imports: [AppModule],
-		}).compile();
+		})
+			.overrideProvider(RecommendService)
+			.useValue(recommendMock)
+			.compile();
 
 		app = moduleFixture.createNestApplication();
 		app.useGlobalPipes(
@@ -41,10 +54,21 @@ describe("Lobbies (e2e)", () => {
 			}),
 		);
 		await app.init();
+
+		prisma = new PrismaClient();
+		await prisma.$connect();
 	});
 
 	afterEach(async () => {
+		await prisma.lobbyTagPreference.deleteMany();
+		await prisma.lobbyMember.deleteMany();
+		await prisma.lobby.deleteMany();
+		await prisma.user.deleteMany();
 		await app.close();
+	});
+
+	afterAll(async () => {
+		await prisma.$disconnect();
 	});
 
 	it("POST /api/auth/register returns accessToken", async () => {
@@ -204,5 +228,124 @@ describe("Lobbies (e2e)", () => {
 		expect(leaveRes.body.statusCode).toBe(400);
 		expect(leaveRes.body.error).toBe("Bad Request");
 		expect(leaveRes.body.message).toBe("Player is not inside the lobby");
+	});
+
+	it("POST /api/lobbies/:id/recommend returns 403 when the requester is not the lobby leader", async () => {
+		const owner = await registerAndLogin();
+		const member = await registerAndLogin();
+
+		const createRes = await request(app.getHttpServer())
+			.post("/api/lobbies")
+			.set("Authorization", `Bearer ${owner.token}`)
+			.send({ name: "Lobby recommend forbidden", maxPlayers: 4 })
+			.expect(201);
+
+		const lobbyId = createRes.body.id;
+
+		await request(app.getHttpServer())
+			.post(`/api/lobbies/${lobbyId}/join`)
+			.set("Authorization", `Bearer ${member.token}`)
+			.expect(200);
+
+		const res = await request(app.getHttpServer())
+			.post(`/api/lobbies/${lobbyId}/recommend`)
+			.set("Authorization", `Bearer ${member.token}`)
+			.expect(403);
+
+		expect(res.body.statusCode).toBe(403);
+		expect(res.body.message).toBe("User isnt the leader");
+		expect(recommendMock.callRecommend).not.toHaveBeenCalled();
+	});
+
+	// Even the leader must wait until every member has at least one tag before the algo can run.
+	it("POST /api/lobbies/:id/recommend returns 400 when all players are not ready", async () => {
+		const owner = await registerAndLogin();
+		const member = await registerAndLogin();
+
+		const createRes = await request(app.getHttpServer())
+			.post("/api/lobbies")
+			.set("Authorization", `Bearer ${owner.token}`)
+			.send({ name: "Lobby recommend not ready", maxPlayers: 4 })
+			.expect(201);
+
+		const lobbyId = createRes.body.id;
+
+		await request(app.getHttpServer())
+			.post(`/api/lobbies/${lobbyId}/join`)
+			.set("Authorization", `Bearer ${member.token}`)
+			.expect(200);
+
+		const res = await request(app.getHttpServer())
+			.post(`/api/lobbies/${lobbyId}/recommend`)
+			.set("Authorization", `Bearer ${owner.token}`)
+			.expect(400);
+
+		expect(res.body.statusCode).toBe(400);
+		expect(res.body.message).toBe("All players must be ready");
+		expect(recommendMock.callRecommend).not.toHaveBeenCalled();
+	});
+
+	// Full HTTP happy path: real auth, real lobby, real tags in DB, mocked algo service.
+	it("POST /api/lobbies/:id/recommend returns the algo payload when the lobby leader triggers it and everyone is ready", async () => {
+		const owner = await registerAndLogin();
+		const member = await registerAndLogin();
+		recommendMock.callRecommend.mockResolvedValue([
+			{
+				game_id: "game-1",
+				score: 0.91,
+			},
+		]);
+
+		const createRes = await request(app.getHttpServer())
+			.post("/api/lobbies")
+			.set("Authorization", `Bearer ${owner.token}`)
+			.send({ name: "Lobby recommend ready", maxPlayers: 4 })
+			.expect(201);
+
+		const lobbyId = createRes.body.id;
+
+		const ownerTag = await prisma.tag.create({
+			data: {
+				slug: `owner-tag-${shortId()}`,
+				label: "Owner Tag",
+			},
+		});
+		const memberTag = await prisma.tag.create({
+			data: {
+				slug: `member-tag-${shortId()}`,
+				label: "Member Tag",
+			},
+		});
+
+		await request(app.getHttpServer())
+			.post(`/api/lobbies/${lobbyId}/join`)
+			.set("Authorization", `Bearer ${member.token}`)
+			.expect(200);
+
+		// The recommendation route is gated behind readiness, so each player needs at least one tag first.
+		await request(app.getHttpServer())
+			.put(`/api/lobbies/${lobbyId}/tags`)
+			.set("Authorization", `Bearer ${owner.token}`)
+			.send({ tagIds: [ownerTag.id] })
+			.expect(200);
+
+		await request(app.getHttpServer())
+			.put(`/api/lobbies/${lobbyId}/tags`)
+			.set("Authorization", `Bearer ${member.token}`)
+			.send({ tagIds: [memberTag.id] })
+			.expect(200);
+
+		const res = await request(app.getHttpServer())
+			.post(`/api/lobbies/${lobbyId}/recommend`)
+			.set("Authorization", `Bearer ${owner.token}`)
+			.expect(201);
+
+		expect(recommendMock.callRecommend).toHaveBeenCalledWith(lobbyId);
+		expect(res.body).toEqual([
+			{
+				game_id: "game-1",
+				score: 0.91,
+			},
+		]);
 	});
 });
