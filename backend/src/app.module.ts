@@ -7,6 +7,7 @@ import { ConfigModule } from '@nestjs/config';
 import { LoggingModule } from './common/logging/logging.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { GameModule } from './games/games.module';
+import { FriendshipsModule } from './friendships/friendships.module';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
 @Module({
@@ -17,7 +18,8 @@ import { JwtAuthGuard } from './auth/jwt-auth.guard';
     AuthModule,
     LoggingModule,
     PrismaModule,
-    GameModule],
+    GameModule,
+    FriendshipsModule],
   controllers: [AppController],
   providers: [
     AppService,
