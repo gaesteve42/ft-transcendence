@@ -4,6 +4,7 @@ import { SteamGamesService } from "src/steam-games/steam-games.service";
 import { GameService } from "./games.service";
 import { ExternalGameSource } from "@prisma/client";
 import { PrismaService } from "src/prisma/prisma.service";
+import { ArrayUnique } from "class-validator";
 
 @Injectable()
 export class SteamCatalogSeederService implements OnApplicationBootstrap{
@@ -68,6 +69,30 @@ export class SteamCatalogSeederService implements OnApplicationBootstrap{
 		});
 		return processed;
 	}
+	async seedTagsFromGenres(): Promise<number>{
+		const genres = await this.prisma.gameSourceTag.findMany({
+			where: { externalTagId: { startsWith: "genre:"} },
+			distinct: ["label"],
+			select: { label : true },
+		});
+		let count = 0;
+		for (const genre of genres) {
+			const slug = genre.label
+				.toLowerCase()
+				.replace(/[^a-z0-9\s-]/g, "")
+				.replace(/\s+/g, "-")
+				.replace(/-+/g, "-")
+				.trim();
+			await this.prisma.tag.upsert({
+				where: { slug },
+				update: { label: genre.label },
+				create: { slug, label: genre.label },
+			});
+			count++;
+		}
+		console.info("[SteamCatalogSeederService] seeded tags", { count });
+		return count;
+	}
 	async seedIfDatabaseIsEmpty(limit: number): Promise<number> {
 		if (!Number.isInteger(limit) || limit <= 0)
 			throw new BadRequestException("Limit must be a positive integer");
@@ -78,6 +103,9 @@ export class SteamCatalogSeederService implements OnApplicationBootstrap{
 		});
 		if (existingIgdbTags > 0)
 			return 0;
-		return this.seedMostPopularMultiplayerGames(limit);
+		const seeded = await this.seedMostPopularMultiplayerGames(limit);
+		await this.seedTagsFromGenres();
+		return seeded;
 	}
+	
 }

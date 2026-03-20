@@ -8,6 +8,7 @@ import { LoggingModule } from './common/logging/logging.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { GameModule } from './games/games.module';
 import { FriendshipsModule } from './friendships/friendships.module';
+import { TagsModule } from './tags/tags.module';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
 @Module({
@@ -19,7 +20,8 @@ import { JwtAuthGuard } from './auth/jwt-auth.guard';
     LoggingModule,
     PrismaModule,
     GameModule,
-    FriendshipsModule],
+    FriendshipsModule,
+    TagsModule],
   controllers: [AppController],
   providers: [
     AppService,
