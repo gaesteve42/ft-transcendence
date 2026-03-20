@@ -38,6 +38,8 @@ function Session() {
 	const [prefsOpen, setPrefsOpen] = useState(true)
 	const [selectedTags, setSelectedTags] = useState<string[]>([])
 	const [budget, setBudget] = useState<string | null>(null)
+	const [recommendations, setRecommendations] = useState<{ gameId: string; name: string; slug: string; score: number }[]>([])
+	const [launching, setLaunching] = useState(false)
 	const playerColorMap = useMemo(() => new Map(
 		(lobby?.players ?? []).map((p, i) => [p.username, PLAYER_COLORS[i % PLAYER_COLORS.length]])
 	), [lobby?.players])
@@ -109,6 +111,26 @@ function Session() {
 	}
 	const handlePrefsDone = () => {
 		setPrefsOpen(false)
+	}
+	const launchAlgorithm = async () => {
+		if (!lobbyId) return
+		setLaunching(true)
+		try {
+			const res = await fetch(`/api/lobbies/${lobbyId}/recommend`, {
+				method: 'POST',
+				headers: { Authorization: `Bearer ${getToken()}` },
+			})
+			if (res.ok) {
+				const data = await res.json()
+				setRecommendations(data)
+			} else {
+				const errData = await res.json()
+				setError(errData.message || 'Failed to get recommendations')
+			}
+		} catch {
+			setError('Network error')
+		}
+		setLaunching(false)
 	}
 	if (loading) {
 		return (
@@ -390,10 +412,14 @@ function Session() {
 									</p>
 									{isHost && (
 										<button
-											disabled
-											className="px-12 py-3.5 rounded-xl font-semibold text-sm bg-dark-700 border border-dark-600 text-text-muted cursor-not-allowed"
+											onClick={launchAlgorithm}
+											disabled={launching}
+											className={`px-12 py-3.5 rounded-xl font-semibold text-sm transition-all cursor-pointer ${launching
+												? 'bg-dark-700 border border-dark-600 text-text-muted cursor-not-allowed'
+												: 'bg-violet-600 hover:bg-violet-700 text-white shadow-[0_0_20px_rgba(146,57,228,0.3)] hover:shadow-[0_0_30px_rgba(146,57,228,0.5)]'
+												}`}
 										>
-											Launch algorithm
+											{launching ? 'Searching...' : 'Launch algorithm'}
 										</button>
 									)}
 								</div>
