@@ -15,7 +15,7 @@ export class SteamCatalogSeederService implements OnApplicationBootstrap{
 		
 	){}
 	async onApplicationBootstrap(): Promise<void> {
-		await this.seedIfDatabaseIsEmpty(500);
+		await this.seedIfDatabaseIsEmpty(5000);
 	}
 
 	/**
