@@ -13,6 +13,11 @@ enum AuthProvider {
   STEAM
 }
 
+enum FriendshipStatus {
+  PENDING
+  ACCEPTED
+}
+
 enum ExternalGameSource {
   STEAM
   IGDB
@@ -29,12 +34,16 @@ model User {
   updatedAt        DateTime     @updatedAt
   steamLinkedAt    DateTime?
   lastSteamUpdated DateTime?
+  lastSeenAt       DateTime?
   authProvider     AuthProvider @default(LOCAL)
 
   ownedLobbies   Lobby[]              @relation("LobbyOwner")
   memberships    LobbyMember[]
   tagPreferences LobbyTagPreference[]
   userGames      UserGame[]
+
+  sentFriendRequests     Friendship[] @relation("FriendshipRequester")
+  receivedFriendRequests Friendship[] @relation("FriendshipAddressee")
 }
 
 model Lobby {
@@ -133,6 +142,20 @@ model GameSourceTag {
   @@id([gameId, source, externalTagId])
   @@index([source, externalTagId])
   @@index([normalizedTagId])
+}
+
+model Friendship {
+  requesterId String
+  addresseeId String
+  status      FriendshipStatus @default(PENDING)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  requester User @relation("FriendshipRequester", fields: [requesterId], references: [id], onDelete: Cascade)
+  addressee User @relation("FriendshipAddressee", fields: [addresseeId], references: [id], onDelete: Cascade)
+
+  @@id([requesterId, addresseeId])
+  @@index([addresseeId])
 }
 
 model UserGame {

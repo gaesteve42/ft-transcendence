@@ -16,6 +16,8 @@ export class LobbyGateway implements OnGatewayDisconnect {
 
 	// Track which socket is in which lobby
 	private socketLobby = new Map<string, string>();
+	// In-memory chat history per lobby (capped at 100 messages)
+	private chatHistory = new Map<string, { username: string; message: string; timestamp: number }[]>();
 
 	constructor(private readonly lobbiesService: LobbiesService) {}
 
@@ -29,10 +31,14 @@ export class LobbyGateway implements OnGatewayDisconnect {
 		client.join(lobbyId);
 		this.socketLobby.set(client.id, lobbyId);
 
-		// Send current lobby state to the joining client
+		// Send current lobby state + chat history to the joining client
 		try {
 			const lobby = await this.lobbiesService.getLobbyById(lobbyId);
 			client.emit("lobby:state", lobby);
+			const history = this.chatHistory.get(lobbyId) ?? [];
+			if (history.length > 0) {
+				client.emit("lobby:chat:history", history);
+			}
 			// Notify others in the room
 			client.to(lobbyId).emit("lobby:updated", lobby);
 		} catch {
@@ -54,6 +60,15 @@ export class LobbyGateway implements OnGatewayDisconnect {
 			message: message.trim().slice(0, 500),
 			timestamp: Date.now(),
 		};
+		// Store in history (cap at 100)
+		if (!this.chatHistory.has(lobbyId)) {
+			this.chatHistory.set(lobbyId, []);
+		}
+		const history = this.chatHistory.get(lobbyId)!;
+		history.push(chatMessage);
+		if (history.length > 100) {
+			history.shift();
+		}
 		this.server.to(lobbyId).emit("lobby:chat:message", chatMessage);
 	}
 
@@ -63,7 +78,8 @@ export class LobbyGateway implements OnGatewayDisconnect {
 			const lobby = await this.lobbiesService.getLobbyById(lobbyId);
 			this.server.to(lobbyId).emit("lobby:updated", lobby);
 		} catch {
-			// Lobby was deleted (last player left)
+			// Lobby was deleted (last player left) — clean up chat history
+			this.chatHistory.delete(lobbyId);
 			this.server.to(lobbyId).emit("lobby:deleted", { lobbyId });
 		}
 	}

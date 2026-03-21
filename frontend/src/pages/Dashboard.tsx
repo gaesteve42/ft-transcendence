@@ -324,17 +324,6 @@ function Dashboard() {
 										Open library
 									</Link>
 								</motion.div>
-								{/* Steam connection prompt if not linked */}
-								{!user?.steamId && (
-									<motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="rounded-2xl p-5 bg-dark-800 border border-dark-600 flex items-center justify-between">
-										<div className="flex items-center gap-3">
-											<div>
-												<p className="text-sm font-medium text-text-white">Connect your Steam account</p>
-												<p className="text-xs text-text-muted">Import your game library automatically from your <Link to="/profile" className="text-violet-400 hover:text-violet-300 transition-colors">profile settings</Link></p>
-											</div>
-										</div>
-									</motion.div>
-								)}
 								{/* Steam Library Preview */}
 								<motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="rounded-2xl p-6 bg-dark-800 border border-dark-600">
 									<div className="flex items-center justify-between mb-4">
@@ -372,7 +361,7 @@ function Dashboard() {
 									) : steamGames.length === 0 ? (
 										<div className="flex flex-col items-center justify-center h-40 rounded-xl border border-dashed border-dark-500">
 											<p className="text-text-muted text-sm mb-3">
-												{user?.steamId ? 'No games found' : 'Connect your account Steam to see your games'}
+												{user?.steamId ? 'No games found' : 'Connect your account to your Steam account to see your games'}
 											</p>
 										</div>
 									) : (

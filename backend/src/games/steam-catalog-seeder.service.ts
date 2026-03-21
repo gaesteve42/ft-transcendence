@@ -4,6 +4,7 @@ import { SteamGamesService } from "src/steam-games/steam-games.service";
 import { GameService } from "./games.service";
 import { ExternalGameSource } from "@prisma/client";
 import { PrismaService } from "src/prisma/prisma.service";
+import { ArrayUnique } from "class-validator";
 
 @Injectable()
 export class SteamCatalogSeederService implements OnApplicationBootstrap{
@@ -15,7 +16,7 @@ export class SteamCatalogSeederService implements OnApplicationBootstrap{
 		
 	){}
 	async onApplicationBootstrap(): Promise<void> {
-		await this.seedIfDatabaseIsEmpty(500);
+		await this.seedIfDatabaseIsEmpty(5000);
 	}
 
 	/**
@@ -25,53 +26,33 @@ export class SteamCatalogSeederService implements OnApplicationBootstrap{
 	async seedMostPopularMultiplayerGames(targetCount: number): Promise<number> {
 		if (!Number.isInteger(targetCount) || targetCount <= 0)
 			throw new BadRequestException("Target count must be a positive integer");
-		const mostPlayedGames = await this.steamGames.getMostPlayedSteamGames();
 		let processed = 0;
-		let steamCandidatesExamined = 0;
-		let igdbMatched = 0;
-		let multiplayerEligible = 0;
+		let offset = 0;
 		const seededGameIds = new Set<string>();
-
-		for (const mostPlayedGame of mostPlayedGames){
-			if (processed >= targetCount)
-				break;
-			steamCandidatesExamined += 1;
-			const igdbGameId = await this.igdbService.getGameIdBySteamAppId(mostPlayedGame.appId);
-			if (!igdbGameId)
-				continue;
-			igdbMatched += 1;
-			const details = await this.igdbService.getGameDetails(igdbGameId);
-			if (!details.supportsMultiplayerOrCoop)
-				continue;
-			multiplayerEligible += 1;
-			const game = await this.gameService.upsertFromExternal({
-				source: ExternalGameSource.IGDB,
-				externalId: details.igdbId,
-				externalUrl: null,
-				canonicalSlug: details.name,
-				name: details.name,
-				summary: details.summary,
-				coverUrl:details.coverUrl,
-				firstReleaseDate: details.firstReleaseDate,
-			});
-			const existingSteamGame = await this.gameService.findByExternalId(
-				ExternalGameSource.STEAM,
-				mostPlayedGame.appId,
-			);
-			if (!existingSteamGame) {
-				await this.gameService.linkExternalId(
-					game.id,
-				ExternalGameSource.STEAM,
-				mostPlayedGame.appId,
-				`https://store.steampowered.com/app/${mostPlayedGame.appId}`,
-				)
-			}
+		while (processed < targetCount) {
+			const mostPlayedGames = await this.igdbService.getPopularMultiplayerGames(500, offset);
+			offset += 500;
+			if (mostPlayedGames.length === 0) 
+				break ;
+			for (const mostPlayedGame of mostPlayedGames){
+				if (processed >= targetCount)
+					break;
+				const game = await this.gameService.upsertFromExternal({
+					source: ExternalGameSource.IGDB,
+					externalId: mostPlayedGame.igdbId,
+					externalUrl: null,
+					canonicalSlug: mostPlayedGame.name,
+					name: mostPlayedGame.name,
+					summary: mostPlayedGame.summary,
+					coverUrl:mostPlayedGame.coverUrl,
+					firstReleaseDate: mostPlayedGame.firstReleaseDate,
+				});
 			if (seededGameIds.has(game.id))
 				continue;
 			const sourceTags = [
-				...details.genres,
-				...details.themes,
-				...details.keywords,
+				...mostPlayedGame.genres,
+				...mostPlayedGame.themes,
+				...mostPlayedGame.keywords,
 			];
 			await this.gameService.upsertSourceTagsForGame(
 				game.id,
@@ -81,14 +62,36 @@ export class SteamCatalogSeederService implements OnApplicationBootstrap{
 			seededGameIds.add(game.id);
 			processed +=1;
 		}
+		}
 		console.info("[SteamCatalogSeederService] seed diagnostics", {
 			targetCount,
-			steamCandidatesExamined,
-			igdbMatched,
-			multiplayerEligible,
 			processed,
 		});
 		return processed;
+	}
+	async seedTagsFromGenres(): Promise<number>{
+		const genres = await this.prisma.gameSourceTag.findMany({
+			where: { externalTagId: { startsWith: "genre:"} },
+			distinct: ["label"],
+			select: { label : true },
+		});
+		let count = 0;
+		for (const genre of genres) {
+			const slug = genre.label
+				.toLowerCase()
+				.replace(/[^a-z0-9\s-]/g, "")
+				.replace(/\s+/g, "-")
+				.replace(/-+/g, "-")
+				.trim();
+			await this.prisma.tag.upsert({
+				where: { slug },
+				update: { label: genre.label },
+				create: { slug, label: genre.label },
+			});
+			count++;
+		}
+		console.info("[SteamCatalogSeederService] seeded tags", { count });
+		return count;
 	}
 	async seedIfDatabaseIsEmpty(limit: number): Promise<number> {
 		if (!Number.isInteger(limit) || limit <= 0)
@@ -100,6 +103,9 @@ export class SteamCatalogSeederService implements OnApplicationBootstrap{
 		});
 		if (existingIgdbTags > 0)
 			return 0;
-		return this.seedMostPopularMultiplayerGames(limit);
+		const seeded = await this.seedMostPopularMultiplayerGames(limit);
+		await this.seedTagsFromGenres();
+		return seeded;
 	}
+	
 }

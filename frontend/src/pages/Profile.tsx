@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams } from 'react-router'
 import { useAuth } from '../components/context/AuthContext'
 import Button from '../components/ui/Button'
@@ -13,9 +13,27 @@ type ProfileUser = {
 	avatarUrl: string | null
 }
 
+async function uploadAvatar(file: File): Promise<string | null> {
+	try {
+		const token = localStorage.getItem('accessToken')
+		const body = new FormData()
+		body.append('avatar', file)
+		const res = await fetch('/api/users/avatar', {
+			method: 'POST',
+			headers: { Authorization: `Bearer ${token}` },
+			body,
+		})
+		if (!res.ok) return null
+		const data = await res.json()
+		return data.avatarUrl
+	} catch {
+		return null
+	}
+}
+
 function Profile() {
 	const { userId } = useParams<{ userId: string }>()
-	const { user: authUser } = useAuth()
+	const { user: authUser, refreshUser } = useAuth()
 	const isOwnProfile = !userId || userId === authUser?.id
 	const [user, setUser] = useState<ProfileUser | null>(null)
 	const [isEditing, setIsEditing] = useState(false)
@@ -29,6 +47,28 @@ function Profile() {
 	const [passwordError, setPasswordError] = useState('')
 	const [passwordSuccess, setPasswordSuccess] = useState('')
 	const [saveStatus, setSaveStatus] = useState<'saved' | 'error' | ''>('')
+	const [avatarUploading, setAvatarUploading] = useState(false)
+	const [avatarError, setAvatarError] = useState('')
+	const fileInputRef = useRef<HTMLInputElement>(null)
+	const [isFriend, setIsFriend] = useState(false)
+	const [friendLoading, setFriendLoading] = useState(false)
+
+	const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+		const file = e.target.files?.[0]
+		if (!file) return
+		setAvatarError('')
+		setAvatarUploading(true)
+		const newUrl = await uploadAvatar(file)
+		if (newUrl) {
+			setUser({ ...user!, avatar: newUrl, avatarUrl: newUrl })
+			await refreshUser()
+		} else {
+			setAvatarError('Impossible d\'importer cette image')
+			setTimeout(() => setAvatarError(''), 4000)
+		}
+		setAvatarUploading(false)
+		if (fileInputRef.current) fileInputRef.current.value = ''
+	}
 	useEffect(() => {
 		const token = localStorage.getItem('accessToken')
 		setLoading(true)
@@ -72,6 +112,43 @@ function Profile() {
 				})
 		}
 	}, [userId, isOwnProfile])
+	useEffect(() => {
+		if (isOwnProfile || !userId) return
+		const token = localStorage.getItem('accessToken')
+		fetch('/api/friendships', { headers: { Authorization: `Bearer ${token}` } })
+			.then((res) => res.ok ? res.json() : [])
+			.then((friends) => {
+				setIsFriend(friends.some((f: { id: string }) => f.id === userId))
+			})
+			.catch(() => setIsFriend(false))
+	}, [userId, isOwnProfile])
+	const handleToggleFriend = async () => {
+		const token = localStorage.getItem('accessToken')
+		setFriendLoading(true)
+		try {
+			if (isFriend) {
+				const res = await fetch(`/api/friendships/${userId}`, {
+					method: 'DELETE',
+					headers: { Authorization: `Bearer ${token}` },
+				})
+				if (res.ok) setIsFriend(false)
+			} else {
+				const res = await fetch(`/api/friendships/${userId}`, {
+					method: 'POST',
+					headers: { Authorization: `Bearer ${token}` },
+				})
+				if (res.ok) setIsFriend(true)
+			}
+		} catch { }
+		setFriendLoading(false)
+	}
+	const renderFriendButton = () => {
+		return (
+			<Button variant={isFriend ? 'white' : 'blue'} onClick={friendLoading ? undefined : handleToggleFriend}>
+				{isFriend ? 'Remove friend' : 'Add friend'}
+			</Button>
+		)
+	}
 	const startEditing = () => {
 		setEditForm({ username: user!.username })
 		setIsEditing(true)
@@ -142,14 +219,21 @@ function Profile() {
 			{isEditing && isOwnProfile ? (
 				<div className="bg-dark-800 border border-dark-600 rounded-2xl p-12">
 					<div className="flex items-center gap-12">
-						{/* Avatar */}
-						{user.avatar ? (
-							<img src={user.avatar} alt={user.username} className="w-40 h-40 rounded-full border-2 border-dark-500 object-cover shrink-0" />
-						) : (
-							<div className="w-40 h-40 rounded-full bg-dark-700 border-2 border-dark-500 flex items-center justify-center text-6xl shrink-0 text-text-muted">
-								{user.username.charAt(0).toUpperCase()}
+						{/* Avatar — clickable in edit mode */}
+						<div className="relative shrink-0 cursor-pointer group" onClick={() => fileInputRef.current?.click()}>
+							{user.avatar ? (
+								<img src={user.avatar} alt={user.username} className="w-40 h-40 rounded-full border-2 border-dark-500 object-cover" />
+							) : (
+								<div className="w-40 h-40 rounded-full bg-dark-700 border-2 border-dark-500 flex items-center justify-center text-6xl text-text-muted">
+									{user.username.charAt(0).toUpperCase()}
+								</div>
+							)}
+							<div className="absolute inset-0 rounded-full bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+								<span className="text-white text-sm font-medium">{avatarUploading ? 'Uploading...' : 'Change'}</span>
 							</div>
-						)}
+							<input ref={fileInputRef} type="file" accept="image/jpeg,image/png" onChange={handleAvatarChange} className="hidden" />
+						</div>
+						{avatarError && <p className="text-red-500 text-sm mt-2">{avatarError}</p>}
 						{/* Edit form */}
 						<div className="flex-1 space-y-4">
 							<Input
@@ -235,10 +319,12 @@ function Profile() {
 									<p className="text-text-white text-sm mt-1">{user.email || 'Steam account'}</p>
 								)}
 							</div>
-							{isOwnProfile && (
+							{isOwnProfile ? (
 								<Button variant="white" onClick={startEditing}>
 									Edit profile
 								</Button>
+							) : (
+								renderFriendButton()
 							)}
 						</div>
 						{/* Stats row */}

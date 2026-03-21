@@ -1,11 +1,39 @@
-import { Controller, Get, Param, Query, NotFoundException, UseGuards } from "@nestjs/common";
+import { Controller, Get, HttpCode, Patch, Post, Param, Query, NotFoundException, UseGuards, UseInterceptors, UploadedFile, BadRequestException } from "@nestjs/common";
+import { FileInterceptor } from "@nestjs/platform-express";
+import { diskStorage } from "multer";
 import { UsersService } from "./users.service";
 import { JwtAuthGuard } from "../auth/jwt-auth.guard";
+import { CurrentUser } from "../auth/current-user.decorator";
+
+// Où sauvegarder les avatars + comment nommer le fichier
+const avatarStorage = diskStorage({
+	destination: "./uploads/avatars",
+	filename: (_req, _file, cb) => {
+		cb(null, Date.now() + ".jpg");
+	},
+});
 
 @UseGuards(JwtAuthGuard)
 @Controller("api/users")
 export class UsersController {
 	constructor(private readonly users: UsersService) {}
+
+	// POST /api/users/avatar — upload d'image (jpeg/png, max 5 MB)
+	@Post("avatar")
+	@UseInterceptors(FileInterceptor("avatar", { storage: avatarStorage, limits: { fileSize: 5 * 1024 * 1024 } }))
+	async uploadAvatar(@CurrentUser("id") userId: string, @UploadedFile() file: Express.Multer.File) {
+		if (!file)
+			throw new BadRequestException("No file provided");
+		const avatarUrl = `/api/uploads/avatars/${file.filename}`;
+		const user = await this.users.updateAvatar(userId, avatarUrl);
+		return { avatarUrl: user.avatarUrl };
+	}
+
+	@Patch("me/ping")
+	@HttpCode(204)
+	async ping(@CurrentUser("id") userId: string) {
+		await this.users.updateLastSeen(userId);
+	}
 
 	@Get("search")
 	async search(@Query("q") query: string) {

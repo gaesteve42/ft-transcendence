@@ -4,11 +4,7 @@ import { motion, AnimatePresence } from 'motion/react'
 import { useAuth } from '../components/context/AuthContext'
 import { useLobbySocket } from '../hooks/useLobbySocket'
 
-const AVAILABLE_TAGS = [
-	'Action', 'Adventure', 'RPG', 'Strategy', 'FPS',
-	'Simulation', 'Puzzle', 'Platformer', 'Survival', 'Horror',
-	'Racing', 'Sports', 'Fighting', 'Sandbox', 'MMO', 'Roguelike', 'Indie',
-]
+type Tag = { id: string; slug: string; label: string }
 
 const BUDGETS = [
 	{ id: 'free', label: 'Free to play' },
@@ -36,8 +32,12 @@ function Session() {
 	const [chatInput, setChatInput] = useState('')
 	const chatEndRef = useRef<HTMLDivElement>(null)
 	const [prefsOpen, setPrefsOpen] = useState(true)
-	const [selectedTags, setSelectedTags] = useState<string[]>([])
+	const [availableTags, setAvailableTags] = useState<Tag[]>([])
+	const [selectedTagIds, setSelectedTagIds] = useState<string[]>([])
 	const [budget, setBudget] = useState<string | null>(null)
+	const [recommendations, setRecommendations] = useState<{ gameId: string; name: string; slug: string; coverUrl: string | null; score: number }[]>([])
+	const [launching, setLaunching] = useState(false)
+	const [showAllResults, setShowAllResults] = useState(false)
 	const playerColorMap = useMemo(() => new Map(
 		(lobby?.players ?? []).map((p, i) => [p.username, PLAYER_COLORS[i % PLAYER_COLORS.length]])
 	), [lobby?.players])
@@ -102,13 +102,47 @@ function Session() {
 		sendChat(user.username, chatInput.trim())
 		setChatInput('')
 	}
-	const toggleTag = (tag: string) => {
-		setSelectedTags((prev) =>
-			prev.includes(tag) ? prev.filter((t) => t !== tag) : prev.length < 3 ? [...prev, tag] : prev
+	useEffect(() => {
+		fetch('/api/tags', { headers: { Authorization: `Bearer ${getToken()}` } })
+			.then((res) => res.ok ? res.json() : [])
+			.then((data) => setAvailableTags(data))
+			.catch(() => { })
+	}, [])
+	const toggleTag = (tagId: string) => {
+		setSelectedTagIds((prev) =>
+			prev.includes(tagId) ? prev.filter((t) => t !== tagId) : prev.length < 5 ? [...prev, tagId] : prev
 		)
 	}
-	const handlePrefsDone = () => {
+	const handlePrefsDone = async () => {
+		if (!lobbyId || selectedTagIds.length === 0) return
+		try {
+			await fetch(`/api/lobbies/${lobbyId}/tags`, {
+				method: 'PUT',
+				headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getToken()}` },
+				body: JSON.stringify({ tagIds: selectedTagIds }),
+			})
+		} catch { }
 		setPrefsOpen(false)
+	}
+	const launchAlgorithm = async () => {
+		if (!lobbyId) return
+		setLaunching(true)
+		try {
+			const res = await fetch(`/api/lobbies/${lobbyId}/recommend`, {
+				method: 'POST',
+				headers: { Authorization: `Bearer ${getToken()}` },
+			})
+			if (res.ok) {
+				const data = await res.json()
+				setRecommendations(data)
+			} else {
+				const errData = await res.json()
+				setError(errData.message || 'Failed to get recommendations')
+			}
+		} catch {
+			setError('Network error')
+		}
+		setLaunching(false)
 	}
 	if (loading) {
 		return (
@@ -251,7 +285,7 @@ function Session() {
 						</div>
 						{/* Collapsed prefs summary */}
 						<AnimatePresence>
-							{!prefsOpen && selectedTags.length > 0 && (
+							{!prefsOpen && selectedTagIds.length > 0 && (
 								<motion.div
 									initial={{ opacity: 0, height: 0 }}
 									animate={{ opacity: 1, height: 'auto' }}
@@ -261,11 +295,14 @@ function Session() {
 									<div className="border-t border-dark-600 mt-4 pt-4">
 										<p className="text-[11px] font-semibold uppercase tracking-wider text-text-muted mb-2">Your preferences</p>
 										<div className="flex flex-wrap gap-1.5 mb-2">
-											{selectedTags.map((tag) => (
-												<span key={tag} className="px-2 py-0.5 rounded-md text-[11px] bg-violet-500/15 text-violet-300 border border-violet-500/25">
-													{tag}
-												</span>
-											))}
+											{selectedTagIds.map((tagId) => {
+												const tag = availableTags.find((t) => t.id === tagId)
+												return (
+													<span key={tagId} className="px-2 py-0.5 rounded-md text-[11px] bg-violet-500/15 text-violet-300 border border-violet-500/25">
+														{tag?.label ?? tagId}
+													</span>
+												)
+											})}
 											{budget && (
 												<span className="px-2 py-0.5 rounded-md text-[11px] bg-cyan-500/15 text-cyan-300 border border-cyan-500/25">
 													{BUDGETS.find((b) => b.id === budget)?.label}
@@ -308,7 +345,7 @@ function Session() {
 									</div>
 									<div className="flex items-center gap-2 shrink-0 ml-4">
 										<span className="text-xs text-text-muted bg-dark-700 px-3 py-1.5 rounded-lg">
-											{selectedTags.length}/3 genres
+											{selectedTagIds.length}/5 genres
 										</span>
 										<span className={`text-xs px-3 py-1.5 rounded-lg ${budget ? 'bg-cyan-500/15 text-cyan-300' : 'bg-dark-700 text-text-muted'}`}>
 											{budget ? BUDGETS.find((b) => b.id === budget)?.label : 'No budget'}
@@ -320,18 +357,18 @@ function Session() {
 									Game genres <span className="text-red-400">*</span>
 								</p>
 								<div className="flex flex-wrap gap-2.5">
-									{AVAILABLE_TAGS.map((tag) => {
-										const selected = selectedTags.includes(tag)
+									{availableTags.map((tag) => {
+										const selected = selectedTagIds.includes(tag.id)
 										return (
 											<button
-												key={tag}
-												onClick={() => toggleTag(tag)}
+												key={tag.id}
+												onClick={() => toggleTag(tag.id)}
 												className={`px-4 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer h-fit ${selected
 													? 'bg-violet-500/20 text-violet-300 border border-violet-500/40 shadow-[0_0_12px_rgba(146,57,228,0.15)]'
 													: 'bg-dark-700 text-text-muted border border-dark-500 hover:border-dark-400 hover:text-text-white'
 													}`}
 											>
-												{tag}
+												{tag.label}
 											</button>
 										)
 									})}
@@ -359,8 +396,8 @@ function Session() {
 								<div className="flex justify-end mt-auto pt-5 border-t border-dark-600">
 									<button
 										onClick={handlePrefsDone}
-										disabled={selectedTags.length === 0}
-										className={`px-10 py-3 rounded-lg font-semibold text-sm transition-all cursor-pointer ${selectedTags.length > 0
+										disabled={selectedTagIds.length === 0}
+										className={`px-10 py-3 rounded-lg font-semibold text-sm transition-all cursor-pointer ${selectedTagIds.length > 0
 											? 'bg-violet-600 hover:bg-violet-700 text-white shadow-[0_0_20px_rgba(146,57,228,0.3)] hover:shadow-[0_0_30px_rgba(146,57,228,0.5)]'
 											: 'bg-dark-700 text-text-muted cursor-not-allowed'
 											}`}
@@ -368,6 +405,93 @@ function Session() {
 										Confirm preferences
 									</button>
 								</div>
+							</motion.div>
+						) : recommendations.length > 0 ? (
+							<motion.div
+								key="results"
+								initial={{ opacity: 0 }}
+								animate={{ opacity: 1 }}
+								exit={{ opacity: 0, scale: 0.98 }}
+								transition={{ duration: 0.4 }}
+								className="bg-dark-800 border border-dark-600 rounded-2xl p-6 flex-1 flex flex-col overflow-y-auto"
+							>
+								<div className="text-center mb-5">
+									<p className="text-xs font-semibold uppercase tracking-wider text-violet-400 mb-1">Algorithm results</p>
+									<h2 className="text-xl font-bold">Games for your group</h2>
+								</div>
+								{/* Podium — top 3 */}
+								<div className="grid grid-cols-3 gap-3 mb-5">
+									{recommendations.slice(0, 3).map((rec, i) => (
+										<motion.div
+											key={rec.gameId}
+											initial={{ opacity: 0, y: 20 }}
+											animate={{ opacity: 1, y: 0 }}
+											transition={{ delay: 0.2 + i * 0.1, duration: 0.4 }}
+											className={`relative rounded-xl overflow-hidden border group ${i === 0
+												? 'border-violet-500/40'
+												: 'border-dark-600 hover:border-violet-500/30'
+											} transition-colors`}
+											style={i === 0 ? { boxShadow: '0 0 20px rgba(146,57,228,0.2)' } : undefined}
+										>
+											{rec.coverUrl ? (
+												<img
+													src={rec.coverUrl.replace('t_cover_big', 't_cover_big_2x')}
+													alt={rec.name}
+													className="w-full aspect-3/4 object-cover group-hover:scale-105 transition-transform duration-300"
+												/>
+											) : (
+												<div className="w-full aspect-3/4 bg-dark-700 flex items-center justify-center text-2xl text-text-muted">?</div>
+											)}
+											<div className="absolute inset-0 bg-linear-to-t from-black/85 via-black/30 to-transparent" />
+											<div className="absolute top-2 left-2">
+												<span className={`px-2 py-0.5 rounded-md text-xs font-bold ${i === 0
+													? 'bg-violet-500/90 text-white'
+													: 'bg-dark-700/80 text-text-white border border-dark-500'
+												}`}>
+													#{i + 1}
+												</span>
+											</div>
+											<div className="absolute bottom-0 left-0 right-0 p-2.5">
+												<p className="text-sm font-semibold truncate">{rec.name}</p>
+											</div>
+										</motion.div>
+									))}
+								</div>
+								{/* See all button */}
+								{recommendations.length > 3 && !showAllResults && (
+									<button
+										onClick={() => setShowAllResults(true)}
+										className="mx-auto px-6 py-2 rounded-lg text-sm font-medium border border-dark-600 text-text-muted hover:text-violet-400 hover:border-violet-500/30 transition-all cursor-pointer"
+									>
+										See all {recommendations.length} recommendations
+									</button>
+								)}
+								{/* Full list with scores */}
+								<AnimatePresence>
+									{showAllResults && (
+										<motion.div
+											initial={{ opacity: 0 }}
+											animate={{ opacity: 1 }}
+											exit={{ opacity: 0 }}
+											className="space-y-1.5 overflow-y-auto max-h-60"
+										>
+											{recommendations.map((rec, i) => (
+												<div key={rec.gameId} className="flex items-center gap-3 bg-dark-700/50 border border-dark-600 rounded-lg px-3 py-2">
+													<span className="text-sm font-bold text-text-muted w-6 text-center shrink-0">#{i + 1}</span>
+													{rec.coverUrl ? (
+														<img src={rec.coverUrl} alt={rec.name} className="w-8 h-11 rounded object-cover shrink-0" />
+													) : (
+														<div className="w-8 h-11 rounded bg-dark-600 shrink-0" />
+													)}
+													<p className="text-sm font-medium text-text-white truncate flex-1">{rec.name}</p>
+													<span className="text-xs text-violet-300/60 font-medium shrink-0">
+														{rec.score.toFixed(2)}
+													</span>
+												</div>
+											))}
+										</motion.div>
+									)}
+								</AnimatePresence>
 							</motion.div>
 						) : (
 							<motion.div
@@ -389,12 +513,21 @@ function Session() {
 											: 'Waiting for the host to launch the algorithm.'}
 									</p>
 									{isHost && (
-										<button
-											disabled
-											className="px-12 py-3.5 rounded-xl font-semibold text-sm bg-dark-700 border border-dark-600 text-text-muted cursor-not-allowed"
-										>
-											Launch algorithm
-										</button>
+										<>
+											<button
+												onClick={launchAlgorithm}
+												disabled={launching || lobby.players.length < 2}
+												className={`px-12 py-3.5 rounded-xl font-semibold text-sm transition-all cursor-pointer ${launching || lobby.players.length < 2
+													? 'bg-dark-700 border border-dark-600 text-text-muted cursor-not-allowed'
+													: 'bg-violet-600 hover:bg-violet-700 text-white shadow-[0_0_20px_rgba(146,57,228,0.3)] hover:shadow-[0_0_30px_rgba(146,57,228,0.5)]'
+													}`}
+											>
+												{launching ? 'Searching...' : 'Launch algorithm'}
+											</button>
+											{lobby.players.length < 2 && (
+												<p className="text-text-muted text-xs mt-3">At least 2 players required</p>
+											)}
+										</>
 									)}
 								</div>
 							</motion.div>
@@ -413,7 +546,7 @@ function Session() {
 							Chat
 						</p>
 						{/* Messages */}
-						<div className="flex-1 overflow-y-auto mb-4 pr-1">
+						<div className="flex-1 overflow-y-auto mb-4 pr-1 max-h-170">
 							{messages.length === 0 ? (
 								<div className="flex flex-col items-center justify-center h-full text-center">
 									<p className="text-text-muted/50 text-sm">No messages yet.</p>

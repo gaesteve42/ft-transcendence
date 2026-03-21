@@ -38,6 +38,9 @@ export function useLobbySocket(lobbyId: string | null) {
 		socket.on('lobby:state', (data: Lobby) => setLobby(data))
 		socket.on('lobby:updated', (data: Lobby) => setLobby(data))
 		socket.on('lobby:deleted', () => setLobby(null))
+		socket.on('lobby:chat:history', (history: ChatMessage[]) => {
+			setMessages(history)
+		})
 		socket.on('lobby:chat:message', (msg: ChatMessage) => {
 			setMessages((prev) => [...prev, msg])
 		})
