@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { useAuth } from '../context/AuthContext'
 import Button from '../ui/Button'
@@ -10,10 +10,20 @@ type SearchResult = {
 	avatarUrl: string | null
 }
 
+type Friend = {
+	id: string
+	username: string
+	avatarUrl: string | null
+}
+
+
 function Header() {
 	const { isLoggedIn, user, logout } = useAuth()
 	const [menuOpen, setMenuOpen] = useState(false)
 	const menuRef = useRef<HTMLDivElement>(null)
+	const [friendsOpen, setFriendsOpen] = useState(false)
+	const friendsRef = useRef<HTMLDivElement>(null)
+	const [friends, setFriends] = useState<Friend[]>([])
 	const [search, setSearch] = useState('')
 	const [results, setResults] = useState<SearchResult[]>([])
 	const [showResults, setShowResults] = useState(false)
@@ -28,6 +38,9 @@ function Header() {
 			}
 			if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
 				setShowResults(false)
+			}
+			if (friendsRef.current && !friendsRef.current.contains(e.target as Node)) {
+				setFriendsOpen(false)
 			}
 		}
 		document.addEventListener('mousedown', handleClickOutside)
@@ -55,6 +68,18 @@ function Header() {
 		}, 300)
 		return () => { if (debounceRef.current) clearTimeout(debounceRef.current) }
 	}, [search])
+	const fetchFriends = useCallback(async () => {
+		const token = localStorage.getItem('accessToken')
+		if (!token) return
+		try {
+			const res = await fetch('/api/friendships', { headers: { Authorization: `Bearer ${token}` } })
+			if (res.ok) setFriends(await res.json())
+		} catch { }
+	}, [])
+	const handleToggleFriends = () => {
+		if (!friendsOpen) fetchFriends()
+		setFriendsOpen(!friendsOpen)
+	}
 	const handleSelectUser = (userId: string) => {
 		setSearch('')
 		setResults([])
@@ -130,6 +155,45 @@ function Header() {
 				{/* User menu / Auth buttons */}
 				<div className="flex-1 flex items-center justify-end gap-4">
 					{isLoggedIn ? (
+						<>
+						{/* Friends panel */}
+						<div className="relative" ref={friendsRef}>
+							<button
+								onClick={handleToggleFriends}
+								className="relative cursor-pointer p-2 rounded-full hover:bg-dark-700 transition-colors"
+							>
+								<svg className="w-6 h-6 text-text-muted hover:text-text-white transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+									<path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
+								</svg>
+							</button>
+							{friendsOpen && (
+								<div className="absolute right-0 mt-2 w-72 rounded-xl bg-dark-800 border border-dark-600 shadow-lg overflow-hidden">
+									{/* Friends list */}
+									<p className="px-4 pt-3 pb-1 text-xs font-semibold text-text-muted uppercase tracking-wider">Friends</p>
+									{friends.length === 0 ? (
+										<p className="px-4 py-3 text-sm text-text-muted">No friends yet</p>
+									) : (
+										friends.map((f) => (
+											<Link
+												key={f.id}
+												to={`/profile/${f.id}`}
+												onClick={() => setFriendsOpen(false)}
+												className="flex items-center gap-3 px-4 py-2 hover:bg-dark-700 transition-colors"
+											>
+												{f.avatarUrl ? (
+													<img src={f.avatarUrl} alt={f.username} className="w-8 h-8 rounded-full border border-dark-500 object-cover" />
+												) : (
+													<div className="w-8 h-8 rounded-full bg-dark-700 border border-dark-500 flex items-center justify-center text-xs font-medium text-text-muted">
+														{f.username.charAt(0).toUpperCase()}
+													</div>
+												)}
+												<span className="text-sm text-text-white truncate">{f.username}</span>
+											</Link>
+										))
+									)}
+								</div>
+							)}
+						</div>
 						<div className="relative" ref={menuRef}>
 							{/* Avatar */}
 							<button
@@ -170,6 +234,7 @@ function Header() {
 								</div>
 							)}
 						</div>
+						</>
 					) : (
 						<>
 							<Button variant="purple" to="/register">

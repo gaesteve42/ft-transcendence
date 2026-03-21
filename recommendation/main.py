@@ -27,7 +27,7 @@ ALPHA_MAX_GAMES  = 20
 def normalize(arr: np.ndarray) -> np.ndarray:
     """
     Normalizes a vector between 0 and 1.
-    
+
     Parameters
     ----------
     arr : np.ndarray
@@ -54,7 +54,7 @@ def compute_alpha_for_user(nb_games_in_library: int, als_available: bool) -> flo
         The number of games a user has in his library
     als_available: bool
         True if enough global users
-    
+
     Returns
     -------
     float
@@ -84,7 +84,7 @@ def recommend(lobby_id: str, nb_recommendations: int = 10, db: Session = Depends
         ID of the lobby to recommend
     nb_recommendations
         Number of recommended games (optionnal, default 10)
-    
+
     Returns
     -------
     lobby_id
@@ -99,7 +99,7 @@ def recommend(lobby_id: str, nb_recommendations: int = 10, db: Session = Depends
     games_df            = get_games_dataframe(db)
     lobby_interactions  = get_interactions_dataframe(db, lobby["user_ids"])
     all_interactions    = get_all_interactions_dataframe(db)
-    
+
     games_df = games_df.drop_duplicates("game_id").dropna(subset=["game_id", "tags"])
     games_df = games_df[games_df["tags"].str.strip() != ""].reset_index(drop=True)
 
@@ -158,7 +158,7 @@ def recommend(lobby_id: str, nb_recommendations: int = 10, db: Session = Depends
             shape=(len(all_user_ids), len(all_game_ids))
         )
         item_user_matrix = user_item_matrix.T.tocsr()
-        
+
         als_model = AlternatingLeastSquares(
             factors=50,
             regularization=0.01,
@@ -215,7 +215,10 @@ def recommend(lobby_id: str, nb_recommendations: int = 10, db: Session = Depends
         tag_boost = 1.0 + tag_similarity
 
     group_score = np.mean(hybrid_scores_per_user, axis=0)
-    final_scores = group_score * tag_boost
+    if group_score.max() == 0:
+        final_scores = tag_boost
+    else:
+        final_scores = group_score * tag_boost
     owned_by_group = set(lobby_interactions["game_id"].tolist())
     ranked_indices = np.argsort(final_scores)[::-1]
     recommendations = []
@@ -228,6 +231,7 @@ def recommend(lobby_id: str, nb_recommendations: int = 10, db: Session = Depends
             "name":    games_df.iloc[idx]["name"],
             "slug":    games_df.iloc[idx]["slug"],
             "score":   round(float(final_scores[idx]), 4),
+            "coverUrl": games_df.iloc[idx].get("coverUrl"),
         })
         if len(recommendations) >= nb_recommendations:
             break
@@ -242,7 +246,7 @@ def recommend(lobby_id: str, nb_recommendations: int = 10, db: Session = Depends
         ), 3)
         for uid in lobby["user_ids"]
     }
-    
+
     return {
         "lobby_id":        lobby_id,
         "nb_players":      len(lobby["user_ids"]),

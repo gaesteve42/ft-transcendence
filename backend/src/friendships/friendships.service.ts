@@ -38,7 +38,7 @@ export class FriendshipsService {
 			throw new BadRequestException("A friendship or pending request already exists with this user");
 
 		try {
-			await this.prisma.friendship.create({ data: { requesterId, addresseeId } });
+			await this.prisma.friendship.create({ data: { requesterId, addresseeId, status: 'ACCEPTED' } });
 		} catch (error: unknown) {
 			if (this.isUniqueConstraintError(error))
 				throw new BadRequestException("Friend request already sent");

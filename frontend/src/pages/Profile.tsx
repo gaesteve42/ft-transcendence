@@ -50,6 +50,8 @@ function Profile() {
 	const [avatarUploading, setAvatarUploading] = useState(false)
 	const [avatarError, setAvatarError] = useState('')
 	const fileInputRef = useRef<HTMLInputElement>(null)
+	const [isFriend, setIsFriend] = useState(false)
+	const [friendLoading, setFriendLoading] = useState(false)
 
 	const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
 		const file = e.target.files?.[0]
@@ -110,6 +112,43 @@ function Profile() {
 				})
 		}
 	}, [userId, isOwnProfile])
+	useEffect(() => {
+		if (isOwnProfile || !userId) return
+		const token = localStorage.getItem('accessToken')
+		fetch('/api/friendships', { headers: { Authorization: `Bearer ${token}` } })
+			.then((res) => res.ok ? res.json() : [])
+			.then((friends) => {
+				setIsFriend(friends.some((f: { id: string }) => f.id === userId))
+			})
+			.catch(() => setIsFriend(false))
+	}, [userId, isOwnProfile])
+	const handleToggleFriend = async () => {
+		const token = localStorage.getItem('accessToken')
+		setFriendLoading(true)
+		try {
+			if (isFriend) {
+				const res = await fetch(`/api/friendships/${userId}`, {
+					method: 'DELETE',
+					headers: { Authorization: `Bearer ${token}` },
+				})
+				if (res.ok) setIsFriend(false)
+			} else {
+				const res = await fetch(`/api/friendships/${userId}`, {
+					method: 'POST',
+					headers: { Authorization: `Bearer ${token}` },
+				})
+				if (res.ok) setIsFriend(true)
+			}
+		} catch { }
+		setFriendLoading(false)
+	}
+	const renderFriendButton = () => {
+		return (
+			<Button variant={isFriend ? 'white' : 'blue'} onClick={friendLoading ? undefined : handleToggleFriend}>
+				{isFriend ? 'Remove friend' : 'Add friend'}
+			</Button>
+		)
+	}
 	const startEditing = () => {
 		setEditForm({ username: user!.username })
 		setIsEditing(true)
@@ -280,10 +319,12 @@ function Profile() {
 									<p className="text-text-white text-sm mt-1">{user.email || 'Steam account'}</p>
 								)}
 							</div>
-							{isOwnProfile && (
+							{isOwnProfile ? (
 								<Button variant="white" onClick={startEditing}>
 									Edit profile
 								</Button>
+							) : (
+								renderFriendButton()
 							)}
 						</div>
 						{/* Stats row */}

@@ -7,7 +7,7 @@ from models import Game, GameSourceTag, UserGame, LobbyMember, LobbyTagPreferenc
 def get_games_dataframe(db: Session) -> pd.DataFrame:
     """
     Gets the game list with their tags from the database.
-    
+
     Parameters
     ----------
     db : Session
@@ -38,6 +38,7 @@ def get_games_dataframe(db: Session) -> pd.DataFrame:
             "name":    game.name,
             "slug":    game.canonicalSlug,
             "tags":    " ".join(tag_labels),
+            "coverUrl": game.coverUrl,
         })
     df = pd.DataFrame(rows)
     df = df.drop_duplicates("game_id")
@@ -49,14 +50,14 @@ def get_games_dataframe(db: Session) -> pd.DataFrame:
 def get_interactions_dataframe(db: Session, user_ids: list[str]) -> pd.DataFrame:
     """
     Get the libraries of the users in the lobby.
-    
+
     Parameters
     ----------
     db: Session
         SQLAlchemy session
     user_ids: list[str]
         Users in the lobby
-        
+
     Returns
     -------
     pd.DataFrame
@@ -92,7 +93,7 @@ def get_interactions_dataframe(db: Session, user_ids: list[str]) -> pd.DataFrame
 def get_all_interactions_dataframe(db: Session) -> pd.DataFrame:
     """
     Get all the users libraries.
-    
+
     Parameters
     ----------
     db: Session
@@ -130,7 +131,7 @@ def get_all_interactions_dataframe(db: Session) -> pd.DataFrame:
 def get_lobby_context(db: Session, lobby_id: str) -> dict:
     """
     Get the id of the users in the lobby and their associated tags.
-    
+
     Parameters
     ----------
     db: Session
