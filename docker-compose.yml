@@ -110,7 +110,6 @@ services:
     build:
       context: ./recommendation
       dockerfile: Dockerfile
-    restart: unless-stopped
     environment:
         - DATABASE_URL=${RECOMMENDATION_DATABASE_URL}
     depends_on:
