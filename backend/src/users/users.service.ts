@@ -19,8 +19,9 @@ export class UsersService{
 					passwordHash: user.passwordHash,
 					steamLinkedAt : user.steamLinkedAt,
 					lastSteamUpdated: user.lastSteamUpdated,
+					lastSeenAt: user.lastSeenAt,
 					authProvider: user.authProvider,
-			};	
+			};
 	}
 		private isUniqueConstraintError(error: unknown): error is Prisma.PrismaClientKnownRequestError {
   			return (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002");
@@ -148,6 +149,12 @@ export class UsersService{
 				throw new NotFoundException("User not found");
 			throw error;
 		}
+	}
+	async updateLastSeen(userId: string): Promise<void> {
+		await this.prisma.user.update({
+			where: { id: userId },
+			data: { lastSeenAt: new Date() },
+		});
 	}
 	async linkSteamToLocalUser(userId: string, steamId: string, avatarUrl: string): Promise<User>{
 		const existingUser= await this.findById(userId);

@@ -3,7 +3,9 @@ import { PrismaService } from "src/prisma/prisma.service";
 import { Prisma, FriendshipStatus } from "@prisma/client";
 import { FriendProfile, PendingRequest } from "./types/friendship";
 
-const friendUserSelect = { id: true, username: true, avatarUrl: true } as const;
+const ONLINE_THRESHOLD_MS = 120000; // 2 minutes
+
+const friendUserSelect = { id: true, username: true, avatarUrl: true, lastSeenAt: true } as const;
 
 @Injectable()
 export class FriendshipsService {
@@ -13,8 +15,9 @@ export class FriendshipsService {
 		return (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002");
 	}
 
-	private toProfile(user: { id: string; username: string; avatarUrl: string | null }): FriendProfile {
-		return { id: user.id, username: user.username, avatarUrl: user.avatarUrl };
+	private toProfile(user: { id: string; username: string; avatarUrl: string | null; lastSeenAt: Date | null }): FriendProfile {
+		const isOnline = user.lastSeenAt !== null && (Date.now() - user.lastSeenAt.getTime()) < ONLINE_THRESHOLD_MS;
+		return { id: user.id, username: user.username, avatarUrl: user.avatarUrl, isOnline };
 	}
 
 	async sendRequest(requesterId: string, addresseeId: string): Promise<void> {
