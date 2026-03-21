@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Param, Query, NotFoundException, UseGuards, UseInterceptors, UploadedFile, BadRequestException } from "@nestjs/common";
+import { Controller, Get, HttpCode, Patch, Post, Param, Query, NotFoundException, UseGuards, UseInterceptors, UploadedFile, BadRequestException } from "@nestjs/common";
 import { FileInterceptor } from "@nestjs/platform-express";
 import { diskStorage } from "multer";
 import { UsersService } from "./users.service";
@@ -27,6 +27,12 @@ export class UsersController {
 		const avatarUrl = `/api/uploads/avatars/${file.filename}`;
 		const user = await this.users.updateAvatar(userId, avatarUrl);
 		return { avatarUrl: user.avatarUrl };
+	}
+
+	@Patch("me/ping")
+	@HttpCode(204)
+	async ping(@CurrentUser("id") userId: string) {
+		await this.users.updateLastSeen(userId);
 	}
 
 	@Get("search")

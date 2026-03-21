@@ -10,4 +10,5 @@ export type User ={
 	authProvider: AuthProvider;
 	steamLinkedAt: Date | null;
 	lastSteamUpdated: Date | null;
+	lastSeenAt: Date | null;
 };

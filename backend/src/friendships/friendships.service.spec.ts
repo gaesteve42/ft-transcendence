@@ -6,7 +6,13 @@ const USER_A = "user-a-id";
 const USER_B = "user-b-id";
 const USER_C = "user-c-id";
 
-const makeProfile = (id: string) => ({ id, username: `user_${id}`, avatarUrl: null });
+const makeProfile = (id: string, lastSeenAt: Date | null = null) => ({
+	id,
+	username: `user_${id}`,
+	avatarUrl: null,
+	lastSeenAt,
+});
+const makeOnlineProfile = (id: string) => makeProfile(id, new Date());
 
 describe("FriendshipsService", () => {
 	let service: FriendshipsService;
@@ -37,8 +43,7 @@ describe("FriendshipsService", () => {
 		service = new FriendshipsService(prisma as unknown as PrismaService);
 	});
 
-	// ─── sendRequest ─────────────────────────────────────────────────────────
-
+	// sendRequest
 	describe("sendRequest", () => {
 		it("throws BadRequestException when sending a request to yourself", async () => {
 			await expect(service.sendRequest(USER_A, USER_A)).rejects.toThrow(BadRequestException);
@@ -68,20 +73,19 @@ describe("FriendshipsService", () => {
 			expect(prisma.friendship.create).not.toHaveBeenCalled();
 		});
 
-		it("creates a PENDING friendship when all checks pass", async () => {
+		it("creates a friendship (ACCEPTED) when all checks pass", async () => {
 			prisma.user.findUnique.mockResolvedValue({ id: USER_B });
 			prisma.friendship.findFirst.mockResolvedValue(null);
 			prisma.friendship.create.mockResolvedValue({});
 
 			await expect(service.sendRequest(USER_A, USER_B)).resolves.toBeUndefined();
 			expect(prisma.friendship.create).toHaveBeenCalledWith({
-				data: { requesterId: USER_A, addresseeId: USER_B },
+				data: { requesterId: USER_A, addresseeId: USER_B, status: "ACCEPTED" },
 			});
 		});
 	});
 
-	// ─── acceptRequest ────────────────────────────────────────────────────────
-
+	// acceptRequest
 	describe("acceptRequest", () => {
 		it("throws NotFoundException when no pending request exists from that user", async () => {
 			prisma.friendship.findUnique.mockResolvedValue(null);
@@ -117,8 +121,7 @@ describe("FriendshipsService", () => {
 		});
 	});
 
-	// ─── remove ───────────────────────────────────────────────────────────────
-
+	// remove
 	describe("remove", () => {
 		it("throws NotFoundException when no friendship exists in either direction", async () => {
 			prisma.friendship.deleteMany.mockResolvedValue({ count: 0 });
@@ -141,8 +144,7 @@ describe("FriendshipsService", () => {
 		});
 	});
 
-	// ─── listFriends ──────────────────────────────────────────────────────────
-
+	// listFriends
 	describe("listFriends", () => {
 		it("returns an empty array when the user has no accepted friendships", async () => {
 			prisma.friendship.findMany.mockResolvedValue([]);
@@ -156,7 +158,7 @@ describe("FriendshipsService", () => {
 			]);
 
 			const result = await service.listFriends(USER_A);
-			expect(result).toEqual([makeProfile(USER_B)]);
+			expect(result).toMatchObject([{ id: USER_B, isOnline: false }]);
 		});
 
 		it("returns the other user's profile when current user is the addressee", async () => {
@@ -165,12 +167,30 @@ describe("FriendshipsService", () => {
 			]);
 
 			const result = await service.listFriends(USER_A);
-			expect(result).toEqual([makeProfile(USER_C)]);
+			expect(result).toMatchObject([{ id: USER_C, isOnline: false }]);
+		});
+
+		it("marks a friend as online when lastSeenAt is recent", async () => {
+			prisma.friendship.findMany.mockResolvedValue([
+				{ requester: makeProfile(USER_A), addressee: makeOnlineProfile(USER_B) },
+			]);
+
+			const result = await service.listFriends(USER_A);
+			expect(result).toMatchObject([{ id: USER_B, isOnline: true }]);
+		});
+
+		it("marks a friend as offline when lastSeenAt is older than 2 minutes", async () => {
+			const oldDate = new Date(Date.now() - 3 * 60 * 1000);
+			prisma.friendship.findMany.mockResolvedValue([
+				{ requester: makeProfile(USER_A), addressee: makeProfile(USER_B, oldDate) },
+			]);
+
+			const result = await service.listFriends(USER_A);
+			expect(result).toMatchObject([{ id: USER_B, isOnline: false }]);
 		});
 	});
 
-	// ─── listPendingReceived ──────────────────────────────────────────────────
-
+	// listPendingReceived
 	describe("listPendingReceived", () => {
 		it("returns an empty array when no pending requests", async () => {
 			prisma.friendship.findMany.mockResolvedValue([]);
@@ -185,7 +205,7 @@ describe("FriendshipsService", () => {
 			]);
 
 			const result = await service.listPendingReceived(USER_B);
-			expect(result).toEqual([{ from: makeProfile(USER_A), since }]);
+			expect(result).toMatchObject([{ from: { id: USER_A }, since }]);
 		});
 	});
 });
