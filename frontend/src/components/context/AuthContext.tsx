@@ -47,6 +47,16 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
 	useEffect(() => {
 		fetchUser()
 	}, [fetchUser])
+	useEffect(() => {
+		if (!isLoggedIn) return
+		const ping = () => {
+			const token = localStorage.getItem('accessToken')
+			if (token) fetch('/api/users/me/ping', { method: 'PATCH', headers: { Authorization: `Bearer ${token}` } }).catch(() => { })
+		}
+		ping()
+		const id = setInterval(ping, 3_000)
+		return () => clearInterval(id)
+	}, [isLoggedIn])
 	const login = (token: string) => {
 		localStorage.setItem('accessToken', token)
 		setIsLoggedIn(true)
