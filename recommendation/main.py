@@ -216,7 +216,7 @@ def recommend(lobby_id: str, nb_recommendations: int = 10, db: Session = Depends
 
     group_score = np.mean(hybrid_scores_per_user, axis=0)
     if group_score.max() == 0:
-        final_scores = tag_boost
+        final_scores = tag_similarity
     else:
         final_scores = group_score * tag_boost
     owned_by_group = set(lobby_interactions["game_id"].tolist())
