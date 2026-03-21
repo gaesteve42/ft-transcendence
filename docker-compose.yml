@@ -108,6 +108,8 @@ services:
     build:
       context: ./recommendation
       dockerfile: Dockerfile
+    container_name: gamefinder_recommendation
+    restart: unless-stopped
     environment:
         - DATABASE_URL=${RECOMMENDATION_DATABASE_URL}
     depends_on:
