@@ -3,7 +3,7 @@ import { PrismaService } from "src/prisma/prisma.service";
 import { Prisma, FriendshipStatus } from "@prisma/client";
 import { FriendProfile, PendingRequest } from "./types/friendship";
 
-const ONLINE_THRESHOLD_MS = 120000; // 2 minutes
+const ONLINE_THRESHOLD_MS = 10000; // 10 seconds
 
 const friendUserSelect = { id: true, username: true, avatarUrl: true, lastSeenAt: true } as const;
 
