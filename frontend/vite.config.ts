@@ -12,7 +12,8 @@ export default defineConfig({
 		allowedHosts: ['power-drainage-thumbs-venice.trycloudflare.com'],
 		port: 5173,
 		watch: {
-			usePolling: true // Requis pour le hot-reload dans Docker
+			// Requis pour le hot-reload dans Docker
+			usePolling: true, ignored: ['**/Dockerfile', '**/.dockerignore']
 		}
 	},
 })

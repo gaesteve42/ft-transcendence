@@ -123,14 +123,14 @@ services:
     networks:
         - gamefinder_network
     ports:
-        - "8001:8001"
+        - "127.0.0.1:8001:8001"
 
   prometheus:
     image: prom/prometheus
     container_name: gamefinder_prometheus
     restart: unless-stopped
-    ports: 
-      - "9090:9090"
+    ports:
+      - "127.0.0.1:9090:9090"
     volumes:
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus_data:/prometheus
@@ -145,7 +145,7 @@ services:
       - grafana_data:/var/lib/grafana
       - ./grafana/provisioning:/etc/grafana/provisioning:ro
     ports:
-      - "3000:3000"
+      - "127.0.0.1:3000:3000"
     depends_on:
       - prometheus
     networks:
@@ -167,8 +167,6 @@ services:
       PG_EXPORTER_EXTEND_QUERY_PATH: /queries.yaml
     depends_on:
       - postgres
-    ports: #for testing purpose, rm after -- no need to expose this, accessible from within
-      - "9187:9187"
     networks:
       - gamefinder_network
   
@@ -181,8 +179,6 @@ services:
     depends_on:
       - nginx
     command: --nginx.scrape-uri=http://nginx:80/stub_status
-    ports: #testing purpose only, rm after -- same as postgres exporter.
-      - "9113:9113"
 
   blackbox-exporter:
     image: prom/blackbox-exporter
