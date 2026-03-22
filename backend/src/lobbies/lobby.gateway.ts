@@ -84,6 +84,11 @@ export class LobbyGateway implements OnGatewayDisconnect {
 		}
 	}
 
+	// Broadcast recommendations to all players in the lobby
+	broadcastRecommendations(lobbyId: string, recommendations: unknown[]) {
+		this.server.to(lobbyId).emit("lobby:recommendations", recommendations);
+	}
+
 	// Clean up when a socket disconnects
 	handleDisconnect(client: Socket) {
 		const lobbyId = this.socketLobby.get(client.id);

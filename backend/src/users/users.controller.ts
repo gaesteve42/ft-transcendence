@@ -27,7 +27,13 @@ export class UsersController {
 		const avatarUrl = `/api/uploads/avatars/${file.filename}`;
 		const user = await this.users.updateAvatar(userId, avatarUrl);
 		return { avatarUrl: user.avatarUrl };
-	}
+	}	
+	// TODO - User deletion
+	// @Delete("me")
+	// @HttpCode(204)
+	// async deleteMe(@CurrentUser("id") userId: string) {
+	// 	await this.users.deleteMe(userId);
+	// }
 
 	@Patch("me/ping")
 	@HttpCode(204)

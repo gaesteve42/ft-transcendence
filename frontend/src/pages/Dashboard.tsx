@@ -91,6 +91,10 @@ function Dashboard() {
 	}, [activeTab, user?.steamId])
 	const createNewLobby = async () => {
 		const token = localStorage.getItem('accessToken')
+		if (activeLobby) {
+			navigate(`/session/${activeLobby.id}`)
+			return
+		}
 		try {
 			const res = await fetch('/api/lobbies', {
 				method: 'POST',

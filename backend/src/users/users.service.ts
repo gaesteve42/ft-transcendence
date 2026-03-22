@@ -156,6 +156,13 @@ export class UsersService{
 			data: { lastSeenAt: new Date() },
 		});
 	}
+	// TODO - User deletion
+	// async deleteMe(userId: string): Promise<void> {
+	// 	await this.prisma.$transaction([
+	// 		this.prisma.lobby.deleteMany({ where: { ownerId: userId } }),
+	// 		this.prisma.user.delete({ where: { id: userId } }),
+	// 	]);
+	// }
 	async linkSteamToLocalUser(userId: string, steamId: string, avatarUrl: string): Promise<User>{
 		const existingUser= await this.findById(userId);
 		const now = new Date();
