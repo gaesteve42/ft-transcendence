@@ -245,7 +245,7 @@ function Session() {
 					transition={{ delay: 0.05 }}
 					className="w-80 shrink-0 flex flex-col"
 				>
-					<div className="bg-dark-800 border border-dark-600 rounded-2xl p-5 flex-1 flex flex-col">
+					<div className="bg-dark-800 border border-dark-600 rounded-2xl p-5 flex-1 flex flex-col max-h-200">
 						<p className="text-[11px] font-semibold uppercase tracking-wider text-text-muted mb-4">
 							Players · {lobby.players.length}/{lobby.maxPlayers}
 						</p>
@@ -345,7 +345,7 @@ function Session() {
 								animate={{ opacity: 1, scale: 1 }}
 								exit={{ opacity: 0, scale: 0.98 }}
 								transition={{ duration: 0.25 }}
-								className="bg-dark-800 border border-dark-600 rounded-2xl p-8 flex-1 flex flex-col"
+								className="bg-dark-800 border border-dark-600 rounded-2xl p-8 flex-1 flex flex-col max-h-200"
 							>
 								<div className="flex items-start justify-between mb-6">
 									<div>
@@ -399,7 +399,7 @@ function Session() {
 								animate={{ opacity: 1 }}
 								exit={{ opacity: 0, scale: 0.98 }}
 								transition={{ duration: 0.4 }}
-								className="bg-dark-800 border border-dark-600 rounded-2xl p-6 flex-1 flex flex-col overflow-y-auto"
+								className="bg-dark-800 border border-dark-600 rounded-2xl p-6 flex-1 flex flex-col overflow-y-auto max-h-200"
 							>
 								<div className="text-center mb-5">
 									<p className="text-xs font-semibold uppercase tracking-wider text-violet-400 mb-1">Algorithm results</p>
@@ -508,7 +508,7 @@ function Session() {
 								animate={{ opacity: 1, scale: 1 }}
 								exit={{ opacity: 0, scale: 0.98 }}
 								transition={{ duration: 0.25 }}
-								className="bg-dark-800 border border-dark-600 rounded-2xl p-8 flex-1 flex flex-col items-center justify-center"
+								className="bg-dark-800 border border-dark-600 rounded-2xl p-8 flex-1 flex flex-col items-center justify-center max-h-200"
 							>
 								<div className="text-center">
 									<div className="flex justify-center mb-5">
@@ -521,31 +521,31 @@ function Session() {
 											: 'Waiting for the host to launch the algorithm.'}
 									</p>
 									{isHost && (() => {
-									const notReady = !lobby.readiness?.ready || lobby.players.length < 2
-									return (
-										<>
-											<button
-												onClick={launchAlgorithm}
-												disabled={launching || notReady}
-												className={`px-12 py-3.5 rounded-xl font-semibold text-sm transition-all cursor-pointer ${launching || notReady
-													? 'bg-dark-700 border border-dark-600 text-text-muted cursor-not-allowed'
-													: 'bg-violet-600 hover:bg-violet-700 text-white shadow-[0_0_20px_rgba(146,57,228,0.3)] hover:shadow-[0_0_30px_rgba(146,57,228,0.5)]'
-													}`}
-											>
-												{launching ? 'Searching...' : 'Launch algorithm'}
-											</button>
-											{lobby.players.length < 2 && (
-												<p className="text-text-muted text-xs mt-3">At least 2 players required</p>
-											)}
-											{lobby.players.length >= 2 && notReady && !launching && (
-												<p className="text-text-muted text-xs mt-3">Waiting for all players to confirm their preferences</p>
-											)}
-											{launchError && (
-												<p className="text-red-400 text-xs mt-3">{launchError}</p>
-											)}
-										</>
-									)
-								})()}
+										const notReady = !lobby.readiness?.ready || lobby.players.length < 2
+										return (
+											<>
+												<button
+													onClick={launchAlgorithm}
+													disabled={launching || notReady}
+													className={`px-12 py-3.5 rounded-xl font-semibold text-sm transition-all cursor-pointer ${launching || notReady
+														? 'bg-dark-700 border border-dark-600 text-text-muted cursor-not-allowed'
+														: 'bg-violet-600 hover:bg-violet-700 text-white shadow-[0_0_20px_rgba(146,57,228,0.3)] hover:shadow-[0_0_30px_rgba(146,57,228,0.5)]'
+														}`}
+												>
+													{launching ? 'Searching...' : 'Launch algorithm'}
+												</button>
+												{lobby.players.length < 2 && (
+													<p className="text-text-muted text-xs mt-3">At least 2 players required</p>
+												)}
+												{lobby.players.length >= 2 && notReady && !launching && (
+													<p className="text-text-muted text-xs mt-3">Waiting for all players to confirm their preferences</p>
+												)}
+												{launchError && (
+													<p className="text-red-400 text-xs mt-3">{launchError}</p>
+												)}
+											</>
+										)
+									})()}
 								</div>
 							</motion.div>
 						)}
@@ -558,12 +558,12 @@ function Session() {
 					transition={{ delay: 0.15 }}
 					className="w-96 shrink-0 flex flex-col"
 				>
-					<div className="bg-dark-800 border border-dark-600 rounded-2xl p-5 flex flex-col flex-1">
+					<div className="bg-dark-800 border border-dark-600 rounded-2xl p-5 flex flex-col flex-1 max-h-200">
 						<p className="text-[11px] font-semibold uppercase tracking-wider text-text-muted mb-4">
 							Chat
 						</p>
 						{/* Messages */}
-						<div className="flex-1 overflow-y-auto mb-4 pr-1 max-h-170">
+						<div className="flex-1 overflow-y-auto mb-4 pr-1 min-h-0">
 							{messages.length === 0 ? (
 								<div className="flex flex-col items-center justify-center h-full text-center">
 									<p className="text-text-muted/50 text-sm">No messages yet.</p>
