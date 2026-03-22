@@ -34,13 +34,15 @@ export class LobbyGateway implements OnGatewayDisconnect {
 		// Send current lobby state + chat history to the joining client
 		try {
 			const lobby = await this.lobbiesService.getLobbyById(lobbyId);
-			client.emit("lobby:state", lobby);
+			const readiness = await this.lobbiesService.getLobbyReadiness(lobbyId);
+			const lobbyWithReadiness = { ...lobby, readiness };
+			client.emit("lobby:state", lobbyWithReadiness);
 			const history = this.chatHistory.get(lobbyId) ?? [];
 			if (history.length > 0) {
 				client.emit("lobby:chat:history", history);
 			}
 			// Notify others in the room
-			client.to(lobbyId).emit("lobby:updated", lobby);
+			client.to(lobbyId).emit("lobby:updated", lobbyWithReadiness);
 		} catch {
 			client.emit("lobby:error", { message: "Lobby not found" });
 		}
@@ -76,7 +78,8 @@ export class LobbyGateway implements OnGatewayDisconnect {
 	async broadcastLobbyUpdate(lobbyId: string) {
 		try {
 			const lobby = await this.lobbiesService.getLobbyById(lobbyId);
-			this.server.to(lobbyId).emit("lobby:updated", lobby);
+			const readiness = await this.lobbiesService.getLobbyReadiness(lobbyId);
+			this.server.to(lobbyId).emit("lobby:updated", { ...lobby, readiness });
 		} catch {
 			// Lobby was deleted (last player left) — clean up chat history
 			this.chatHistory.delete(lobbyId);

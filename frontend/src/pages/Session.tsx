@@ -101,6 +101,29 @@ function Session() {
 			.then((data) => setAvailableTags(data))
 			.catch(() => { })
 	}, [])
+	// Load saved tags from backend on mount / when lobbyId changes
+	useEffect(() => {
+		if (!lobbyId) return
+		fetch(`/api/lobbies/${lobbyId}/tags/me`, { headers: { Authorization: `Bearer ${getToken()}` } })
+			.then((res) => res.ok ? res.json() : [])
+			.then((tagIds: string[]) => {
+				if (tagIds.length > 0) {
+					setSelectedTagIds(tagIds)
+					setPrefsOpen(false)
+				}
+			})
+			.catch(() => { })
+	}, [lobbyId])
+	const openEditPrefs = async () => {
+		setPrefsOpen(true)
+		if (!lobbyId) return
+		try {
+			await fetch(`/api/lobbies/${lobbyId}/tags`, {
+				method: 'DELETE',
+				headers: { Authorization: `Bearer ${getToken()}` },
+			})
+		} catch { /* ignore */ }
+	}
 	const toggleTag = (tagId: string) => {
 		setSelectedTagIds((prev) =>
 			prev.includes(tagId) ? prev.filter((t) => t !== tagId) : prev.length < 5 ? [...prev, tagId] : prev
@@ -296,7 +319,7 @@ function Session() {
 											})}
 										</div>
 										<button
-											onClick={() => setPrefsOpen(true)}
+											onClick={openEditPrefs}
 											className="text-[11px] text-violet-400 hover:text-violet-300 font-medium transition-colors cursor-pointer"
 										>
 											Edit preferences
@@ -460,6 +483,23 @@ function Session() {
 										</motion.div>
 									)}
 								</AnimatePresence>
+								{isHost && (
+									<div className="mt-4 flex justify-center">
+										<button
+											onClick={launchAlgorithm}
+											disabled={launching}
+											className={`px-8 py-2.5 rounded-lg text-sm font-medium transition-all cursor-pointer border ${launching
+												? 'bg-dark-700 border-dark-600 text-text-muted cursor-not-allowed'
+												: 'border-violet-500/30 text-violet-400 hover:bg-violet-500/10 hover:border-violet-500/50'
+												}`}
+										>
+											{launching ? 'Searching...' : 'Relaunch algorithm'}
+										</button>
+									</div>
+								)}
+								{launchError && (
+									<p className="text-red-400 text-xs mt-2 text-center">{launchError}</p>
+								)}
 							</motion.div>
 						) : (
 							<motion.div
@@ -480,12 +520,14 @@ function Session() {
 											? 'Waiting for all players to set their preferences before launching.'
 											: 'Waiting for the host to launch the algorithm.'}
 									</p>
-									{isHost && (
+									{isHost && (() => {
+									const notReady = !lobby.readiness?.ready || lobby.players.length < 2
+									return (
 										<>
 											<button
 												onClick={launchAlgorithm}
-												disabled={launching || lobby.players.length < 2}
-												className={`px-12 py-3.5 rounded-xl font-semibold text-sm transition-all cursor-pointer ${launching || lobby.players.length < 2
+												disabled={launching || notReady}
+												className={`px-12 py-3.5 rounded-xl font-semibold text-sm transition-all cursor-pointer ${launching || notReady
 													? 'bg-dark-700 border border-dark-600 text-text-muted cursor-not-allowed'
 													: 'bg-violet-600 hover:bg-violet-700 text-white shadow-[0_0_20px_rgba(146,57,228,0.3)] hover:shadow-[0_0_30px_rgba(146,57,228,0.5)]'
 													}`}
@@ -495,11 +537,15 @@ function Session() {
 											{lobby.players.length < 2 && (
 												<p className="text-text-muted text-xs mt-3">At least 2 players required</p>
 											)}
+											{lobby.players.length >= 2 && notReady && !launching && (
+												<p className="text-text-muted text-xs mt-3">Waiting for all players to confirm their preferences</p>
+											)}
 											{launchError && (
 												<p className="text-red-400 text-xs mt-3">{launchError}</p>
 											)}
 										</>
-									)}
+									)
+								})()}
 								</div>
 							</motion.div>
 						)}

@@ -7,12 +7,20 @@ export type LobbyPlayer = {
 	avatarUrl: string | null
 }
 
+export type LobbyReadiness = {
+	totalPlayers: number
+	playersWithTags: number
+	ready: boolean
+	missingUserIds: string[]
+}
+
 export type Lobby = {
 	id: string
 	name: string
 	maxPlayers: number
 	ownerId: string
 	players: LobbyPlayer[]
+	readiness?: LobbyReadiness
 }
 
 export type ChatMessage = {

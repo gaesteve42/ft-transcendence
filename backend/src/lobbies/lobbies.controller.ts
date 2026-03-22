@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Param, Body, HttpCode, UseGuards, Put, ForbiddenException, BadRequestException} from "@nestjs/common";
+import { Controller, Get, Post, Param, Body, HttpCode, UseGuards, Put, Delete, ForbiddenException, BadRequestException} from "@nestjs/common";
 import { LobbiesService } from "./lobbies.service";
 import { LobbyGateway } from "./lobby.gateway";
 import { RecommendService } from "./recommend.service";
@@ -67,6 +67,24 @@ export class LobbiesController{
 		const result = await this.service.setPlayerTags(lobbyId, userId, body.tagIds);
 		this.gateway.broadcastLobbyUpdate(lobbyId);
 		return result;
+	}
+	@UseGuards(JwtAuthGuard)
+	@Get(":id/tags/me")
+	async getMyTags(
+		@Param("id") lobbyId: string,
+		@CurrentUser("id") userId: string,
+	){
+		return this.service.getPlayerTags(lobbyId, userId);
+	}
+	@UseGuards(JwtAuthGuard)
+	@Delete(":id/tags")
+	@HttpCode(204)
+	async clearTags(
+		@Param("id") lobbyId: string,
+		@CurrentUser("id") userId: string,
+	){
+		await this.service.clearPlayerTags(lobbyId, userId);
+		this.gateway.broadcastLobbyUpdate(lobbyId);
 	}
 	@UseGuards(JwtAuthGuard)
 	@Get(":id/readiness")
