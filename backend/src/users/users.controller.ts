@@ -1,9 +1,10 @@
-import { Controller, Get, HttpCode, Patch, Post, Param, Query, NotFoundException, UseGuards, UseInterceptors, UploadedFile, BadRequestException } from "@nestjs/common";
+import { Body, Controller, Get, HttpCode, Patch, Post, Param, Query, NotFoundException, UseGuards, UseInterceptors, UploadedFile, BadRequestException } from "@nestjs/common";
 import { FileInterceptor } from "@nestjs/platform-express";
 import { diskStorage } from "multer";
 import { UsersService } from "./users.service";
 import { JwtAuthGuard } from "../auth/jwt-auth.guard";
 import { CurrentUser } from "../auth/current-user.decorator";
+import { UpdateProfileDto } from "./dto/update-profile.dto";
 
 // Où sauvegarder les avatars + comment nommer le fichier
 const avatarStorage = diskStorage({
@@ -34,6 +35,12 @@ export class UsersController {
 	// async deleteMe(@CurrentUser("id") userId: string) {
 	// 	await this.users.deleteMe(userId);
 	// }
+
+	@Patch("me")
+	async updateMe(@CurrentUser("id") userId: string, @Body() body: UpdateProfileDto) {
+		const updated = await this.users.updateUsername(userId, body.username);
+		return { username: updated.username };
+	}
 
 	@Patch("me/ping")
 	@HttpCode(204)
