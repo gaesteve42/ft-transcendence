@@ -320,9 +320,18 @@ function Profile() {
 								)}
 							</div>
 							{isOwnProfile ? (
-								<Button variant="white" onClick={startEditing}>
-									Edit profile
-								</Button>
+								user.email ? (
+									<Button variant="white" onClick={startEditing}>
+										Edit profile
+									</Button>
+								) : (
+									<button
+										disabled
+										className="px-5 py-2.5 rounded-lg text-sm font-medium border border-dark-600 text-text-muted opacity-50 cursor-not-allowed"
+									>
+										Edit profile
+									</button>
+								)
 							) : (
 								renderFriendButton()
 							)}

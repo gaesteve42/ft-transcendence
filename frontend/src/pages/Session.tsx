@@ -2,16 +2,10 @@ import { useState, useRef, useEffect, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router'
 import { motion, AnimatePresence } from 'motion/react'
 import { useAuth } from '../components/context/AuthContext'
+import Logo from '../components/ui/Logo'
 import { useLobbySocket } from '../hooks/useLobbySocket'
 
 type Tag = { id: string; slug: string; label: string }
-
-const BUDGETS = [
-	{ id: 'free', label: 'Free to play' },
-	{ id: 'under20', label: 'Under 20€' },
-	{ id: 'under40', label: 'Under 40€' },
-	{ id: 'any', label: 'Any price' },
-] as const
 
 const PLAYER_COLORS = [
 	'text-blue-400',
@@ -34,9 +28,9 @@ function Session() {
 	const [prefsOpen, setPrefsOpen] = useState(true)
 	const [availableTags, setAvailableTags] = useState<Tag[]>([])
 	const [selectedTagIds, setSelectedTagIds] = useState<string[]>([])
-	const [budget, setBudget] = useState<string | null>(null)
 	const [recommendations, setRecommendations] = useState<{ gameId: string; name: string; slug: string; coverUrl: string | null; score: number }[]>([])
 	const [launching, setLaunching] = useState(false)
+	const [launchError, setLaunchError] = useState('')
 	const [showAllResults, setShowAllResults] = useState(false)
 	const playerColorMap = useMemo(() => new Map(
 		(lobby?.players ?? []).map((p, i) => [p.username, PLAYER_COLORS[i % PLAYER_COLORS.length]])
@@ -127,6 +121,7 @@ function Session() {
 	const launchAlgorithm = async () => {
 		if (!lobbyId) return
 		setLaunching(true)
+		setLaunchError('')
 		try {
 			const res = await fetch(`/api/lobbies/${lobbyId}/recommend`, {
 				method: 'POST',
@@ -137,10 +132,10 @@ function Session() {
 				setRecommendations(data)
 			} else {
 				const errData = await res.json()
-				setError(errData.message || 'Failed to get recommendations')
+				setLaunchError(errData.message || 'Failed to get recommendations')
 			}
 		} catch {
-			setError('Network error')
+			setLaunchError('Network error')
 		}
 		setLaunching(false)
 	}
@@ -303,11 +298,6 @@ function Session() {
 													</span>
 												)
 											})}
-											{budget && (
-												<span className="px-2 py-0.5 rounded-md text-[11px] bg-cyan-500/15 text-cyan-300 border border-cyan-500/25">
-													{BUDGETS.find((b) => b.id === budget)?.label}
-												</span>
-											)}
 										</div>
 										<button
 											onClick={() => setPrefsOpen(true)}
@@ -347,9 +337,6 @@ function Session() {
 										<span className="text-xs text-text-muted bg-dark-700 px-3 py-1.5 rounded-lg">
 											{selectedTagIds.length}/5 genres
 										</span>
-										<span className={`text-xs px-3 py-1.5 rounded-lg ${budget ? 'bg-cyan-500/15 text-cyan-300' : 'bg-dark-700 text-text-muted'}`}>
-											{budget ? BUDGETS.find((b) => b.id === budget)?.label : 'No budget'}
-										</span>
 									</div>
 								</div>
 								{/* Genres */}
@@ -372,26 +359,6 @@ function Session() {
 											</button>
 										)
 									})}
-								</div>
-								{/* Budget */}
-								<div className="mt-7">
-									<p className="text-[11px] font-semibold uppercase tracking-wider text-text-muted mb-3">
-										Budget
-									</p>
-									<div className="flex gap-2.5">
-										{BUDGETS.map((b) => (
-											<button
-												key={b.id}
-												onClick={() => setBudget(b.id)}
-												className={`px-4 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer border ${budget === b.id
-													? 'bg-cyan-500/15 text-cyan-300 border-cyan-500/40'
-													: 'bg-dark-700 text-text-muted border-dark-500 hover:border-dark-400 hover:text-text-white'
-													}`}
-											>
-												{b.label}
-											</button>
-										))}
-									</div>
 								</div>
 								<div className="flex justify-end mt-auto pt-5 border-t border-dark-600">
 									<button
@@ -430,7 +397,7 @@ function Session() {
 											className={`relative rounded-xl overflow-hidden border group ${i === 0
 												? 'border-violet-500/40'
 												: 'border-dark-600 hover:border-violet-500/30'
-											} transition-colors`}
+												} transition-colors`}
 											style={i === 0 ? { boxShadow: '0 0 20px rgba(146,57,228,0.2)' } : undefined}
 										>
 											{rec.coverUrl ? (
@@ -447,7 +414,7 @@ function Session() {
 												<span className={`px-2 py-0.5 rounded-md text-xs font-bold ${i === 0
 													? 'bg-violet-500/90 text-white'
 													: 'bg-dark-700/80 text-text-white border border-dark-500'
-												}`}>
+													}`}>
 													#{i + 1}
 												</span>
 											</div>
@@ -503,8 +470,8 @@ function Session() {
 								className="bg-dark-800 border border-dark-600 rounded-2xl p-8 flex-1 flex flex-col items-center justify-center"
 							>
 								<div className="text-center">
-									<div className="w-20 h-20 rounded-full bg-violet-500/10 border border-violet-500/30 flex items-center justify-center mx-auto mb-5">
-										<span className="text-3xl">&#9889;</span>
+									<div className="flex justify-center mb-5">
+										<Logo width={120} height={120} />
 									</div>
 									<h2 className="text-xl font-bold mb-2">Ready to go</h2>
 									<p className="text-text-muted text-sm mb-8 max-w-sm">
@@ -526,6 +493,9 @@ function Session() {
 											</button>
 											{lobby.players.length < 2 && (
 												<p className="text-text-muted text-xs mt-3">At least 2 players required</p>
+											)}
+											{launchError && (
+												<p className="text-red-400 text-xs mt-3">{launchError}</p>
 											)}
 										</>
 									)}
