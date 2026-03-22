@@ -32,14 +32,18 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
 			const res = await fetch('/api/auth/me', {
 				headers: { Authorization: `Bearer ${token}` },
 			})
-			if (!res.ok) throw new Error('auth')
+			if (res.status === 401) {
+				localStorage.removeItem('accessToken')
+				setIsLoggedIn(false)
+				setUser(null)
+				return
+			}
+			if (!res.ok) return
 			const userData = (await res.json()) as User
 			setUser(userData)
 			setIsLoggedIn(true)
 		} catch {
-			localStorage.removeItem('accessToken')
-			setIsLoggedIn(false)
-			setUser(null)
+			// Network error (aborted request, timeout, etc.) — keep the token
 		} finally {
 			setLoading(false)
 		}
