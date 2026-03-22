@@ -13,7 +13,7 @@ export default defineConfig({
 		port: 5173,
 		watch: {
 			// Requis pour le hot-reload dans Docker
-			usePolling: true, ignored: ['**/Dockerfile', '**/.dockerignore']
+			usePolling: true, ignored: ['**/Dockerfile']
 		}
 	},
 })
