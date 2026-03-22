@@ -7,7 +7,7 @@ import Button from '../components/ui/Button'
 import steamLoginImg from '../assets/steam_login.png'
 
 type RegisterResponse = {
-	message?: string
+	message?: string | string[]
 	accessToken?: string
 }
 
@@ -69,7 +69,8 @@ function Register() {
 			})
 			const data = (await response.json()) as RegisterResponse
 			if (!response.ok) {
-				setError(data.message || 'Registration failed')
+				const msg = data.message
+				setError(Array.isArray(msg) ? msg.join('\n') : msg || 'Registration failed')
 				return
 			}
 			if (data.accessToken) {
@@ -146,7 +147,7 @@ function Register() {
 					value={confirmPassword}
 					onChange={(e) => setConfirmPassword(e.target.value)}
 				/>
-				{error && <p className="text-red-500 text-sm">{error}</p>}
+				{error && <p className="text-red-500 text-sm whitespace-pre-line">{error}</p>}
 				{/* Submit */}
 				<Button type="submit" variant="blue" disabled={isLoading}>
 					{isLoading ? 'Signing up...' : 'Sign up'}
