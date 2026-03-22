@@ -342,6 +342,18 @@ export class LobbiesService{
 			return { lobbyId, userId, tagIds };
 		})
 	}
+	async getPlayerTags(lobbyId: string, userId: string): Promise<string[]> {
+		const rows = await this.prisma.lobbyTagPreference.findMany({
+			where: { lobbyId, userId },
+			select: { tagId: true },
+		});
+		return rows.map((r) => r.tagId);
+	}
+	async clearPlayerTags(lobbyId: string, userId: string): Promise<void> {
+		await this.prisma.lobbyTagPreference.deleteMany({
+			where: { lobbyId, userId },
+		});
+	}
 	async getLobbyReadiness(lobbyId: string): Promise<{lobbyId: string; totalPlayers: number; playersWithTags: number; ready: boolean; missingUserIds: string[]}> {
 		const lobby = await this.getLobbyById(lobbyId);
 		const totalPlayers = lobby.players.length;
