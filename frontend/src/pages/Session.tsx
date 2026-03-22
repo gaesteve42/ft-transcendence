@@ -22,13 +22,12 @@ function Session() {
 	const [loading, setLoading] = useState(true)
 	const [error, setError] = useState('')
 	const [copied, setCopied] = useState(false)
-	const { lobby, messages, sendChat } = useLobbySocket(lobbyId)
+	const { lobby, messages, sendChat, recommendations } = useLobbySocket(lobbyId)
 	const [chatInput, setChatInput] = useState('')
 	const chatEndRef = useRef<HTMLDivElement>(null)
 	const [prefsOpen, setPrefsOpen] = useState(true)
 	const [availableTags, setAvailableTags] = useState<Tag[]>([])
 	const [selectedTagIds, setSelectedTagIds] = useState<string[]>([])
-	const [recommendations, setRecommendations] = useState<{ gameId: string; name: string; slug: string; coverUrl: string | null; score: number }[]>([])
 	const [launching, setLaunching] = useState(false)
 	const [launchError, setLaunchError] = useState('')
 	const [showAllResults, setShowAllResults] = useState(false)
@@ -127,10 +126,7 @@ function Session() {
 				method: 'POST',
 				headers: { Authorization: `Bearer ${getToken()}` },
 			})
-			if (res.ok) {
-				const data = await res.json()
-				setRecommendations(data)
-			} else {
+			if (!res.ok) {
 				const errData = await res.json()
 				setLaunchError(errData.message || 'Failed to get recommendations')
 			}
@@ -404,10 +400,10 @@ function Session() {
 												<img
 													src={rec.coverUrl.replace('t_cover_big', 't_cover_big_2x')}
 													alt={rec.name}
-													className="w-full aspect-3/4 object-cover group-hover:scale-105 transition-transform duration-300"
+													className="w-full aspect-2/3 object-cover group-hover:scale-105 transition-transform duration-300"
 												/>
 											) : (
-												<div className="w-full aspect-3/4 bg-dark-700 flex items-center justify-center text-2xl text-text-muted">?</div>
+												<div className="w-full aspect-2/3 bg-dark-700 flex items-center justify-center text-2xl text-text-muted">?</div>
 											)}
 											<div className="absolute inset-0 bg-linear-to-t from-black/85 via-black/30 to-transparent" />
 											<div className="absolute top-2 left-2">
@@ -416,6 +412,11 @@ function Session() {
 													: 'bg-dark-700/80 text-text-white border border-dark-500'
 													}`}>
 													#{i + 1}
+												</span>
+											</div>
+											<div className="absolute top-2 right-2">
+												<span className="px-2 py-0.5 rounded-md text-xs font-bold bg-dark-700/80 text-violet-300 border border-violet-500/25">
+													{Math.round(rec.score * 100)}%
 												</span>
 											</div>
 											<div className="absolute bottom-0 left-0 right-0 p-2.5">
@@ -452,7 +453,7 @@ function Session() {
 													)}
 													<p className="text-sm font-medium text-text-white truncate flex-1">{rec.name}</p>
 													<span className="text-xs text-violet-300/60 font-medium shrink-0">
-														{rec.score.toFixed(2)}
+														{Math.round(rec.score * 100)}%
 													</span>
 												</div>
 											))}

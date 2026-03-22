@@ -87,7 +87,9 @@ export class LobbiesController{
 		const lobbyState = await this.service.getLobbyReadiness(lobbyId);
 		if (lobbyState.ready === false)
 			throw new BadRequestException("All players must be ready");
-		return await this.recommend.callRecommend(lobbyId);
+		const results = await this.recommend.callRecommend(lobbyId);
+		this.gateway.broadcastRecommendations(lobbyId, results);
+		return results;
 	}
 
 }

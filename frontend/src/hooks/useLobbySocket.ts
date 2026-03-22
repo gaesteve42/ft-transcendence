@@ -26,6 +26,7 @@ export function useLobbySocket(lobbyId: string | null) {
 	const [lobby, setLobby] = useState<Lobby | null>(null)
 	const [messages, setMessages] = useState<ChatMessage[]>([])
 	const [connected, setConnected] = useState(false)
+	const [recommendations, setRecommendations] = useState<{ gameId: string; name: string; slug: string; coverUrl: string | null; score: number }[]>([])
 
 	useEffect(() => {
 		if (!lobbyId) return
@@ -44,6 +45,7 @@ export function useLobbySocket(lobbyId: string | null) {
 		socket.on('lobby:chat:message', (msg: ChatMessage) => {
 			setMessages((prev) => [...prev, msg])
 		})
+		socket.on('lobby:recommendations', (data) => setRecommendations(data))
 		socket.on('disconnect', () => setConnected(false))
 		return () => {
 			socket.disconnect()
@@ -59,5 +61,5 @@ export function useLobbySocket(lobbyId: string | null) {
 		},
 		[lobbyId],
 	)
-	return { lobby, messages, connected, sendChat }
+	return { lobby, messages, connected, sendChat, recommendations }
 }
