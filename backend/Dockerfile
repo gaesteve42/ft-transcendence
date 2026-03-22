@@ -13,4 +13,5 @@ COPY . .
 
 EXPOSE 3001
 
-CMD ["sh", "-c", "npx prisma migrate deploy && npm run start:dev"]
+# command changed for production - removed hot-reload for production
+CMD ["sh", "-c", "npx prisma migrate deploy && npm run build && npm run start:prod"]

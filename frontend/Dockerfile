@@ -11,6 +11,6 @@ COPY . .
 # Vite default port
 EXPOSE 5173
 
-# Start dev server with hot-reload
-# --host for access from outside of the container
-CMD ["npm", "run", "dev", "--", "--host"]
+# command changed for production - removed hot-reload for production
+RUN npm run build
+CMD ["npm", "run", "preview", "--", "--host", "--port", "5173"]
