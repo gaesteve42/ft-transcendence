@@ -195,7 +195,28 @@ function Profile() {
 				return
 			}
 		}
-		setUser({ ...user!, username: editForm.username })
+		if (editForm.username !== user!.username) {
+			try {
+				const res = await fetch('/api/users/me', {
+					method: 'PATCH',
+					headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+					body: JSON.stringify({ username: editForm.username }),
+				})
+				if (!res.ok) {
+					const data = await res.json()
+					setPasswordError(data.message || 'Failed to update username')
+					setSaveStatus('error')
+					return
+				}
+				const data = await res.json()
+				setUser({ ...user!, username: data.username })
+				await refreshUser()
+			} catch {
+				setPasswordError('Network error')
+				setSaveStatus('error')
+				return
+			}
+		}
 		setSaveStatus('saved')
 		setTimeout(() => setSaveStatus(''), 3000)
 	}
