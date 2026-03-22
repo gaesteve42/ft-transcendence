@@ -209,7 +209,7 @@ function Dashboard() {
 											<p className="text-sm text-text-white">Host a lobby and invite your friends with a given code</p>
 										</div>
 										<div className="flex gap-3 mt-4">
-											<Button variant="blue" size="small" onClick={createNewLobby}>
+											<Button variant="blue" size="small" onClick={createNewLobby} disabled={!!activeLobby}>
 												Start now
 											</Button>
 										</div>
@@ -234,11 +234,12 @@ function Dashboard() {
 												type="text"
 												value={sessionCode}
 												onChange={(e) => setSessionCode(e.target.value)}
-												onKeyDown={(e) => e.key === 'Enter' && joinLobby(sessionCode)}
+												onKeyDown={(e) => e.key === 'Enter' && !activeLobby && joinLobby(sessionCode)}
 												placeholder="Session code"
-												className="flex-1 px-4 py-2 rounded-lg bg-dark-700 border border-dark-500 text-white placeholder-text-muted text-sm focus:outline-none focus:border-violet-500 transition-colors"
+												disabled={!!activeLobby}
+												className={`flex-1 px-4 py-2 rounded-lg bg-dark-700 border border-dark-500 text-white placeholder-text-muted text-sm focus:outline-none focus:border-violet-500 transition-colors ${activeLobby ? 'opacity-50 cursor-not-allowed' : ''}`}
 											/>
-											<Button variant="purple" size="small" onClick={() => joinLobby(sessionCode)}>
+											<Button variant="purple" size="small" onClick={() => joinLobby(sessionCode)} disabled={!!activeLobby}>
 												Join
 											</Button>
 										</div>

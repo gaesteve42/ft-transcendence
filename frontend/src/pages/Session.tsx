@@ -483,6 +483,23 @@ function Session() {
 										</motion.div>
 									)}
 								</AnimatePresence>
+								{isHost && (
+									<div className="mt-4 flex justify-center">
+										<button
+											onClick={launchAlgorithm}
+											disabled={launching}
+											className={`px-8 py-2.5 rounded-lg text-sm font-medium transition-all cursor-pointer border ${launching
+												? 'bg-dark-700 border-dark-600 text-text-muted cursor-not-allowed'
+												: 'border-violet-500/30 text-violet-400 hover:bg-violet-500/10 hover:border-violet-500/50'
+												}`}
+										>
+											{launching ? 'Searching...' : 'Relaunch algorithm'}
+										</button>
+									</div>
+								)}
+								{launchError && (
+									<p className="text-red-400 text-xs mt-2 text-center">{launchError}</p>
+								)}
 							</motion.div>
 						) : (
 							<motion.div
