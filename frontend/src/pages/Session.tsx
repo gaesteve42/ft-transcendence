@@ -126,7 +126,7 @@ function Session() {
 	}
 	const toggleTag = (tagId: string) => {
 		setSelectedTagIds((prev) =>
-			prev.includes(tagId) ? prev.filter((t) => t !== tagId) : prev.length < 5 ? [...prev, tagId] : prev
+			prev.includes(tagId) ? prev.filter((t) => t !== tagId) : prev.length < 3 ? [...prev, tagId] : prev
 		)
 	}
 	const handlePrefsDone = async () => {
@@ -354,7 +354,7 @@ function Session() {
 									</div>
 									<div className="flex items-center gap-2 shrink-0 ml-4">
 										<span className="text-xs text-text-muted bg-dark-700 px-3 py-1.5 rounded-lg">
-											{selectedTagIds.length}/5 genres
+											{selectedTagIds.length}/3 genres
 										</span>
 									</div>
 								</div>
@@ -423,10 +423,10 @@ function Session() {
 												<img
 													src={rec.coverUrl.replace('t_cover_big', 't_cover_big_2x')}
 													alt={rec.name}
-													className="w-full aspect-2/3 object-cover group-hover:scale-105 transition-transform duration-300"
+													className="w-full aspect-3/4 object-cover group-hover:scale-105 transition-transform duration-300"
 												/>
 											) : (
-												<div className="w-full aspect-2/3 bg-dark-700 flex items-center justify-center text-2xl text-text-muted">?</div>
+												<div className="w-full aspect-3/4 bg-dark-700 flex items-center justify-center text-2xl text-text-muted">?</div>
 											)}
 											<div className="absolute inset-0 bg-linear-to-t from-black/85 via-black/30 to-transparent" />
 											<div className="absolute top-2 left-2">
