@@ -415,10 +415,10 @@ function Session() {
 												<img
 													src={rec.coverUrl.replace('t_cover_big', 't_cover_big_2x')}
 													alt={rec.name}
-													className="w-full aspect-3/4 object-cover group-hover:scale-105 transition-transform duration-300"
+													className="w-full aspect-4/5 object-cover group-hover:scale-105 transition-transform duration-300"
 												/>
 											) : (
-												<div className="w-full aspect-3/4 bg-dark-700 flex items-center justify-center text-2xl text-text-muted">?</div>
+												<div className="w-full aspect-4/5 bg-dark-700 flex items-center justify-center text-2xl text-text-muted">?</div>
 											)}
 											<div className="absolute inset-0 bg-linear-to-t from-black/85 via-black/30 to-transparent" />
 											<div className="absolute top-2 left-2">
