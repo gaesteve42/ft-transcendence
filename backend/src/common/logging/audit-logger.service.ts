@@ -30,7 +30,7 @@ export class AuditLoggerService {
 	this.logger.error(`${event}${this.format(meta)}`);
 	}
 
-	// Helpers “métier” (tu en ajoutes au fur et à mesure)
+	// Helpers “métier” 
 	authLoginAttempt(email: string): void {
 	this.log("auth.login.attempt", { email });
 	}

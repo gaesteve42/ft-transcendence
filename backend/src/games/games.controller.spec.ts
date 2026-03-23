@@ -7,6 +7,11 @@ import { IgdbService } from "src/igdb/igdb.service";
 import { SteamGamesService } from "src/steam-games/steam-games.service";
 import { SteamIgdbEnrichmentService } from "./steam-igdb-enrichment.service";
 
+/**
+ * Unit tests for GameController.
+ * Verifies that each endpoint correctly delegates to its underlying service
+ * and returns the service result without transformation (thin controller pattern).
+ */
 describe("GameController", () => {
 	let controller: GameController;
 	let gameService: {
@@ -63,6 +68,7 @@ describe("GameController", () => {
 		);
 	});
 
+	// Delegates popular games retrieval to SteamGamesService.
 	it("should call getMostPlayedGames and return popular games", async () => {
 		const popular = [
 			{
@@ -79,6 +85,7 @@ describe("GameController", () => {
 		expect(result).toEqual(popular);
 	});
 
+	// Verifies that the DTO's ISO string date is converted to a Date before delegation.
 	it("should call upsertFromExternal with a converted Date", async () => {
 		const dto: UpsertExternalGameDto = {
 			source: ExternalGameSource.STEAM,
@@ -119,6 +126,7 @@ describe("GameController", () => {
 		expect(result).toEqual(serviceResult);
 	});
 
+	// Verifies null optional fields are forwarded as-is to the service.
 	it("should pass null when firstReleaseDate is null", async () => {
 		const dto: UpsertExternalGameDto = {
 			source: ExternalGameSource.IGDB,
@@ -158,6 +166,7 @@ describe("GameController", () => {
 		});
 	});
 
+	// Verifies the controller returns the service result by reference, not a copy.
 	it("should return the service result", async () => {
 		const dto: UpsertExternalGameDto = {
 			source: ExternalGameSource.STEAM,
@@ -188,6 +197,7 @@ describe("GameController", () => {
 		expect(result).toBe(serviceResult);
 	});
 
+	// Verifies that service-layer exceptions bubble up unchanged.
 	it("should propagate service errors", async () => {
 		const dto: UpsertExternalGameDto = {
 			source: ExternalGameSource.STEAM,
@@ -232,6 +242,7 @@ describe("GameController", () => {
 		expect(result).toEqual(preview);
 	});
 
+	// Verifies that preview service errors bubble up unchanged.
 	it("should propagate preview import errors", async () => {
 		const error = new Error("preview failed");
 		steamImport.previewImport.mockRejectedValue(error);
@@ -284,6 +295,7 @@ describe("GameController", () => {
 		expect(result).toEqual(resultPayload);
 	});
 
+	// Verifies that import service errors bubble up unchanged.
 	it("should propagate import errors", async () => {
 		const error = new Error("import failed");
 		steamImport.importLibrary.mockRejectedValue(error);
@@ -310,6 +322,7 @@ describe("GameController", () => {
 		expect(result).toEqual(resultPayload);
 	});
 
+	// Verifies the default limit of 10 is applied when the caller omits the limit param.
 	it("should call searchCatalog with default limit when no limit is provided", async () => {
 		const catalog = [
 			{
@@ -328,6 +341,7 @@ describe("GameController", () => {
 		expect(result).toEqual(catalog);
 	});
 
+	// Verifies an explicit limit is forwarded to the IGDB service.
 	it("should call searchCatalog with the provided limit", async () => {
 		igdbService.searchCatalog.mockResolvedValue([]);
 
@@ -336,6 +350,7 @@ describe("GameController", () => {
 		expect(igdbService.searchCatalog).toHaveBeenCalledWith("hades", 5);
 	});
 
+	// Delegates library listing to GameService with the authenticated user's ID.
 	it("should call listOwnedGamesForUser with the authenticated user id", async () => {
 		const library = [
 			{
@@ -358,6 +373,7 @@ describe("GameController", () => {
 		expect(result).toEqual(library);
 	});
 
+	// Delegates game addition to GameService with user ID and IGDB ID from the request body.
 	it("should call addOwnedGameForUser with the authenticated user id and igdb id", async () => {
 		const payload = {
 			gameId: "game-1",
@@ -373,6 +389,7 @@ describe("GameController", () => {
 		expect(result).toEqual(payload);
 	});
 
+	// Delegates game removal to GameService with user ID and game ID from the route param.
 	it("should call removeOwnedGameForUser with the authenticated user id and game id", async () => {
 		const payload = {
 			gameId: "game-1",
@@ -386,6 +403,7 @@ describe("GameController", () => {
 		expect(result).toEqual(payload);
 	});
 
+	// Delegates IGDB enrichment to SteamIgdbEnrichmentService and wraps the count in an object.
 	it("should call enrichOwnedSteamGamesMissingIgdbData and return the number of processed games", async () => {
 		steamIgdbEnrichment.enrichOwnedSteamGamesMissingIgdbData.mockResolvedValue(9);
 

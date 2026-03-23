@@ -5,6 +5,12 @@ import request from "supertest";
 import { AppModule } from "../src/app.module";
 import { RecommendService } from "../src/lobbies/recommend.service";
 
+/**
+ * End-to-end tests for the lobby lifecycle and recommendation flow.
+ * Covers auth prerequisites, lobby create/join/leave, ownership transfer,
+ * and the recommendation endpoint with readiness and leader gating.
+ * Uses a mocked RecommendService and a real PostgreSQL database.
+ */
 describe("Lobbies (e2e)", () => {
 	let app: INestApplication;
 	let prisma: PrismaClient;
@@ -71,6 +77,7 @@ describe("Lobbies (e2e)", () => {
 		await prisma.$disconnect();
 	});
 
+	// Verifies that registration returns a valid access token (prerequisite for lobby tests).
 	it("POST /api/auth/register returns accessToken", async () => {
 		const res = await request(app.getHttpServer())
 			.post("/api/auth/register")
@@ -87,6 +94,7 @@ describe("Lobbies (e2e)", () => {
 		expect(res.body.accessToken.length).toBeGreaterThan(0);
 	});
 
+	// Verifies that registering with an already-used email returns 400 with a clear error message.
 	it("POST /api/auth/register rejects duplicate email", async () => {
 		const email = uniqueEmail();
 
@@ -113,12 +121,14 @@ describe("Lobbies (e2e)", () => {
 		expect(res.body.message).toBe("Email already used");
 	});
 
+	// Verifies that a registered user can log in and receive an access token.
 	it("POST /api/auth/login returns accessToken", async () => {
 		const account = await registerAndLogin();
 
 		expect(account.token).toEqual(expect.any(String));
 	});
 
+	// Verifies that /me returns the correct user profile for a valid token.
 	it("GET /api/auth/me returns user when token is valid", async () => {
 		const account = await registerAndLogin();
 
@@ -138,6 +148,7 @@ describe("Lobbies (e2e)", () => {
 		);
 	});
 
+	// Verifies that the lobby is deleted from the database when the last (and only) player leaves.
 	it("LEAVE /api/lobbies/:id/leave deletes lobby when last player leaves", async () => {
 		const user1 = await registerAndLogin();
 
@@ -169,6 +180,7 @@ describe("Lobbies (e2e)", () => {
 			.expect(404);
 	});
 
+	// Verifies that ownership is transferred to the next member when the current owner leaves a non-empty lobby.
 	it("LEAVE /api/lobbies/:id/leave transfers ownership if owner leaves and lobby not empty", async () => {
 		const user1 = await registerAndLogin();
 		const user2 = await registerAndLogin();
@@ -208,6 +220,7 @@ describe("Lobbies (e2e)", () => {
 		expect(getRes.body.players.length).toBe(1);
 	});
 
+	// Verifies that leaving a lobby the user never joined returns 400 with an appropriate error.
 	it("LEAVE /api/lobbies/:id/leave returns 400 if user is not in lobby", async () => {
 		const user1 = await registerAndLogin();
 		const user2 = await registerAndLogin();
@@ -230,6 +243,7 @@ describe("Lobbies (e2e)", () => {
 		expect(leaveRes.body.message).toBe("Player is not inside the lobby");
 	});
 
+	// Verifies that a non-leader member cannot trigger the recommendation algorithm (403 Forbidden).
 	it("POST /api/lobbies/:id/recommend returns 403 when the requester is not the lobby leader", async () => {
 		const owner = await registerAndLogin();
 		const member = await registerAndLogin();

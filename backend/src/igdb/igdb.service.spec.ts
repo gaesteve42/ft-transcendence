@@ -7,6 +7,11 @@ type MockResponse = {
 	json: jest.Mock<Promise<unknown>, []>;
 };
 
+/**
+ * Unit tests for IgdbService.
+ * Covers searchCatalog and getGameDetails: input validation, Twitch token management,
+ * IGDB response parsing, and tag normalization.
+ */
 describe("IgdbService", () => {
 	let service: IgdbService;
 	let configService: { get: jest.Mock };
@@ -190,12 +195,14 @@ describe("IgdbService", () => {
 	});
 
 	describe("getGameDetails", () => {
+		// Input validation: blank IGDB ID must be rejected before any external call.
 		it("rejects a blank IGDB ID after trim", async () => {
 			await expect(service.getGameDetails("   ")).rejects.toThrow(BadRequestException);
 			expect(configService.get).not.toHaveBeenCalled();
 			expect(fetchMock).not.toHaveBeenCalled();
 		});
 
+		// Input validation: IGDB IDs must be positive integers.
 		it("rejects a non-positive or non-integer IGDB ID", async () => {
 			await expect(service.getGameDetails("abc")).rejects.toThrow(BadRequestException);
 			await expect(service.getGameDetails("0")).rejects.toThrow(BadRequestException);
@@ -227,6 +234,7 @@ describe("IgdbService", () => {
 			await expect(service.getGameDetails("123")).rejects.toThrow("IGDB game details response is not an array");
 		});
 
+		// Verify that an empty IGDB response is surfaced as a clear 404.
 		it("returns NotFoundException when IGDB returns no matching game", async () => {
 			configService.get.mockImplementation((key: string) => {
 				if (key === "TWITCH_CLIENT_ID")
@@ -368,12 +376,14 @@ describe("IgdbService", () => {
 	});
 
 	describe("getGameIdBySteamAppId", () => {
+		// Input validation: blank Steam app ID must be rejected.
 		it("rejects a blank Steam app id after trim", async () => {
 			await expect(service.getGameIdBySteamAppId("   ")).rejects.toThrow(BadRequestException);
 			expect(configService.get).not.toHaveBeenCalled();
 			expect(fetchMock).not.toHaveBeenCalled();
 		});
 
+		// Verify that a missing IGDB mapping returns null instead of throwing.
 		it("returns null when IGDB external_games has no Steam match", async () => {
 			configService.get.mockImplementation((key: string) => {
 				if (key === "TWITCH_CLIENT_ID")
@@ -399,6 +409,7 @@ describe("IgdbService", () => {
 			expect((fetchMock.mock.calls[1][1] as { body: string }).body).toContain('uid = "1145360"');
 		});
 
+		// Happy path: verify the Steam-to-IGDB mapping is correctly extracted and returned as a string.
 		it("returns the IGDB game id as a string when a Steam mapping exists", async () => {
 			configService.get.mockImplementation((key: string) => {
 				if (key === "TWITCH_CLIENT_ID")
@@ -427,6 +438,7 @@ describe("IgdbService", () => {
 			expect(result).toBe("113112");
 		});
 
+		// Defensive parsing: non-numeric game field must trigger an InternalServerErrorException.
 		it("rejects an invalid external_games payload shape", async () => {
 			configService.get.mockImplementation((key: string) => {
 				if (key === "TWITCH_CLIENT_ID")

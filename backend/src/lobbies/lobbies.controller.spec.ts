@@ -4,6 +4,11 @@ import { LobbiesService } from "./lobbies.service";
 import { LobbyGateway } from "./lobby.gateway";
 import { RecommendService } from "./recommend.service";
 
+/**
+ * Unit tests for LobbiesController.
+ * Focuses on the /recommend endpoint: ownership gate, readiness gate,
+ * and delegation to the recommendation service.
+ */
 describe("LobbiesController", () => {
 	let controller: LobbiesController;
 	let service: {
