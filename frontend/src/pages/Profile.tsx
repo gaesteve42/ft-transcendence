@@ -50,7 +50,7 @@ function Profile() {
 	const [avatarUploading, setAvatarUploading] = useState(false)
 	const [avatarError, setAvatarError] = useState('')
 	const fileInputRef = useRef<HTMLInputElement>(null)
-	const [isFriend, setIsFriend] = useState(false)
+	const [friendStatus, setFriendStatus] = useState<'none' | 'pending_sent' | 'pending_received' | 'accepted'>('none')
 	const [friendLoading, setFriendLoading] = useState(false)
 
 	const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -115,37 +115,67 @@ function Profile() {
 	useEffect(() => {
 		if (isOwnProfile || !userId) return
 		const token = localStorage.getItem('accessToken')
-		fetch('/api/friendships', { headers: { Authorization: `Bearer ${token}` } })
-			.then((res) => res.ok ? res.json() : [])
-			.then((friends) => {
-				setIsFriend(friends.some((f: { id: string }) => f.id === userId))
-			})
-			.catch(() => setIsFriend(false))
+		fetch(`/api/friendships/${userId}/status`, { headers: { Authorization: `Bearer ${token}` } })
+			.then((res) => res.ok ? res.json() : { status: 'none' })
+			.then((data) => setFriendStatus(data.status))
+			.catch(() => setFriendStatus('none'))
 	}, [userId, isOwnProfile])
-	const handleToggleFriend = async () => {
+	const handleFriendAction = async (action: 'add' | 'accept' | 'remove') => {
 		const token = localStorage.getItem('accessToken')
 		setFriendLoading(true)
 		try {
-			if (isFriend) {
-				const res = await fetch(`/api/friendships/${userId}`, {
-					method: 'DELETE',
-					headers: { Authorization: `Bearer ${token}` },
-				})
-				if (res.ok) setIsFriend(false)
-			} else {
+			if (action === 'add') {
 				const res = await fetch(`/api/friendships/${userId}`, {
 					method: 'POST',
 					headers: { Authorization: `Bearer ${token}` },
 				})
-				if (res.ok) setIsFriend(true)
+				if (res.ok) setFriendStatus('pending_sent')
+			} else if (action === 'accept') {
+				const res = await fetch(`/api/friendships/${userId}/accept`, {
+					method: 'POST',
+					headers: { Authorization: `Bearer ${token}` },
+				})
+				if (res.ok) setFriendStatus('accepted')
+			} else {
+				const res = await fetch(`/api/friendships/${userId}`, {
+					method: 'DELETE',
+					headers: { Authorization: `Bearer ${token}` },
+				})
+				if (res.ok) setFriendStatus('none')
 			}
 		} catch { }
 		setFriendLoading(false)
 	}
 	const renderFriendButton = () => {
+		if (friendStatus === 'accepted') {
+			return (
+				<Button variant="white" onClick={friendLoading ? undefined : () => handleFriendAction('remove')}>
+					Remove friend
+				</Button>
+			)
+		}
+		if (friendStatus === 'pending_sent') {
+			return (
+				<button disabled className="px-5 py-2.5 rounded-lg text-sm font-medium border border-dark-600 text-text-muted opacity-50 cursor-not-allowed">
+					Request sent
+				</button>
+			)
+		}
+		if (friendStatus === 'pending_received') {
+			return (
+				<div className="flex gap-2">
+					<Button variant="blue" onClick={friendLoading ? undefined : () => handleFriendAction('accept')}>
+						Accept
+					</Button>
+					<Button variant="white" onClick={friendLoading ? undefined : () => handleFriendAction('remove')}>
+						Decline
+					</Button>
+				</div>
+			)
+		}
 		return (
-			<Button variant={isFriend ? 'white' : 'blue'} onClick={friendLoading ? undefined : handleToggleFriend}>
-				{isFriend ? 'Remove friend' : 'Add friend'}
+			<Button variant="blue" onClick={friendLoading ? undefined : () => handleFriendAction('add')}>
+				Add friend
 			</Button>
 		)
 	}
