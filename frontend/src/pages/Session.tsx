@@ -96,7 +96,8 @@ function Session() {
 		setChatInput('')
 	}
 	useEffect(() => {
-		fetch('/api/tags', { headers: { Authorization: `Bearer ${getToken()}` } })
+		fetch('/api/tags',
+			{ headers: { Authorization: `Bearer ${getToken()}` } })
 			.then((res) => res.ok ? res.json() : [])
 			.then((data) => setAvailableTags(data))
 			.catch(() => { })
@@ -104,7 +105,8 @@ function Session() {
 	// Load saved tags from backend on mount / when lobbyId changes
 	useEffect(() => {
 		if (!lobbyId) return
-		fetch(`/api/lobbies/${lobbyId}/tags/me`, { headers: { Authorization: `Bearer ${getToken()}` } })
+		fetch(`/api/lobbies/${lobbyId}/tags/me`,
+			{ headers: { Authorization: `Bearer ${getToken()}` } })
 			.then((res) => res.ok ? res.json() : [])
 			.then((tagIds: string[]) => {
 				if (tagIds.length > 0) {
@@ -114,16 +116,6 @@ function Session() {
 			})
 			.catch(() => { })
 	}, [lobbyId])
-	const openEditPrefs = async () => {
-		setPrefsOpen(true)
-		if (!lobbyId) return
-		try {
-			await fetch(`/api/lobbies/${lobbyId}/tags`, {
-				method: 'DELETE',
-				headers: { Authorization: `Bearer ${getToken()}` },
-			})
-		} catch { /* ignore */ }
-	}
 	const toggleTag = (tagId: string) => {
 		setSelectedTagIds((prev) =>
 			prev.includes(tagId) ? prev.filter((t) => t !== tagId) : prev.length < 3 ? [...prev, tagId] : prev
@@ -319,7 +311,7 @@ function Session() {
 											})}
 										</div>
 										<button
-											onClick={openEditPrefs}
+											onClick={() => setPrefsOpen(true)}
 											className="text-[11px] text-violet-400 hover:text-violet-300 font-medium transition-colors cursor-pointer"
 										>
 											Edit preferences
