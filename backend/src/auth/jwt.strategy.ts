@@ -18,12 +18,15 @@ export class JwtStrategy extends PassportStrategy(Strategy, "jwt")
 		private readonly users: UsersService,
 	)
 	{
+		// verification du Token JWT
 		super({
 			jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
 			ignoreExpiration: false,
 			secretOrKey: config.get<string>("JWT_SECRET")!,
 		});
 	}
+	// Une fois la validation du Token fait par le Passport, trouve l'user s'il existe et
+	// renvoie un objet qui sera attaché a request.user
 	async validate(payload: JwtPayload)
 	{
 		const user = await this.users.findById(payload.sub);
