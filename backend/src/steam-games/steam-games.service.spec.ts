@@ -7,6 +7,11 @@ type MockResponse = {
 	json: jest.Mock<Promise<unknown>, []>;
 };
 
+/**
+ * Unit tests for SteamGamesService.
+ * Validates Steam Web API integration: input sanitization, HTTP error handling,
+ * and normalization of the owned-games + recently-played merge flow.
+ */
 describe("SteamGamesService", () => {
 	let service: SteamGamesService;
 	let configService: { get: jest.Mock };
@@ -168,6 +173,7 @@ describe("SteamGamesService", () => {
 		]);
 	});
 
+	// Verify that getMostPlayedSteamGames fetches the Steam Charts endpoint and returns normalized appIds.
 	it("returns the raw Steam Charts app ids without applying a seed-specific limit", async () => {
 		fetchMock.mockResolvedValueOnce(makeResponse(true, {
 			response: {

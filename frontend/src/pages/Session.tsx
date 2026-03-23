@@ -96,7 +96,8 @@ function Session() {
 		setChatInput('')
 	}
 	useEffect(() => {
-		fetch('/api/tags', { headers: { Authorization: `Bearer ${getToken()}` } })
+		fetch('/api/tags',
+			{ headers: { Authorization: `Bearer ${getToken()}` } })
 			.then((res) => res.ok ? res.json() : [])
 			.then((data) => setAvailableTags(data))
 			.catch(() => { })
@@ -104,7 +105,8 @@ function Session() {
 	// Load saved tags from backend on mount / when lobbyId changes
 	useEffect(() => {
 		if (!lobbyId) return
-		fetch(`/api/lobbies/${lobbyId}/tags/me`, { headers: { Authorization: `Bearer ${getToken()}` } })
+		fetch(`/api/lobbies/${lobbyId}/tags/me`,
+			{ headers: { Authorization: `Bearer ${getToken()}` } })
 			.then((res) => res.ok ? res.json() : [])
 			.then((tagIds: string[]) => {
 				if (tagIds.length > 0) {
@@ -114,16 +116,6 @@ function Session() {
 			})
 			.catch(() => { })
 	}, [lobbyId])
-	const openEditPrefs = async () => {
-		setPrefsOpen(true)
-		if (!lobbyId) return
-		try {
-			await fetch(`/api/lobbies/${lobbyId}/tags`, {
-				method: 'DELETE',
-				headers: { Authorization: `Bearer ${getToken()}` },
-			})
-		} catch { /* ignore */ }
-	}
 	const toggleTag = (tagId: string) => {
 		setSelectedTagIds((prev) =>
 			prev.includes(tagId) ? prev.filter((t) => t !== tagId) : prev.length < 3 ? [...prev, tagId] : prev
@@ -319,7 +311,7 @@ function Session() {
 											})}
 										</div>
 										<button
-											onClick={openEditPrefs}
+											onClick={() => setPrefsOpen(true)}
 											className="text-[11px] text-violet-400 hover:text-violet-300 font-medium transition-colors cursor-pointer"
 										>
 											Edit preferences
@@ -423,10 +415,10 @@ function Session() {
 												<img
 													src={rec.coverUrl.replace('t_cover_big', 't_cover_big_2x')}
 													alt={rec.name}
-													className="w-full aspect-3/4 object-cover group-hover:scale-105 transition-transform duration-300"
+													className="w-full aspect-4/5 object-cover group-hover:scale-105 transition-transform duration-300"
 												/>
 											) : (
-												<div className="w-full aspect-3/4 bg-dark-700 flex items-center justify-center text-2xl text-text-muted">?</div>
+												<div className="w-full aspect-4/5 bg-dark-700 flex items-center justify-center text-2xl text-text-muted">?</div>
 											)}
 											<div className="absolute inset-0 bg-linear-to-t from-black/85 via-black/30 to-transparent" />
 											<div className="absolute top-2 left-2">

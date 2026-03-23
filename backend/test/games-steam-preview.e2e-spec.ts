@@ -5,6 +5,11 @@ import { AppModule } from "../src/app.module";
 import { SteamLibraryImportService } from "../src/games/steam-library-import.service";
 import { PrismaService } from "../src/prisma/prisma.service";
 
+/**
+ * End-to-end tests for the Steam library preview and import endpoints.
+ * Verifies that all Steam-related game routes require JWT authentication.
+ * Uses mocked SteamLibraryImportService and PrismaService.
+ */
 describe("Games Steam Preview/Import (e2e)", () => {
 	let app: INestApplication;
 	let steamImportMock: {
@@ -55,6 +60,7 @@ describe("Games Steam Preview/Import (e2e)", () => {
 		jest.clearAllMocks();
 	});
 
+	// Verifies that the Steam preview-by-steamId endpoint rejects unauthenticated requests.
 	it("GET /api/games/steam/:steamId/preview returns 401 without JWT", async () => {
 		const steamId = "76561198000000000";
 		await request(app.getHttpServer())
@@ -64,6 +70,7 @@ describe("Games Steam Preview/Import (e2e)", () => {
 		expect(steamImportMock.previewImport).not.toHaveBeenCalled();
 	});
 
+	// Verifies that the authenticated user's own preview endpoint rejects unauthenticated requests.
 	it("GET /api/games/steam/preview/me returns 401 without JWT", async () => {
 		// Le nouveau flux sécurisé /preview/me doit être inaccessible sans token,
 		// comme /import/me et toutes les autres routes privées.
@@ -74,6 +81,7 @@ describe("Games Steam Preview/Import (e2e)", () => {
 		expect(steamImportMock.previewImportForUser).not.toHaveBeenCalled();
 	});
 
+	// Verifies that the Steam import-by-steamId endpoint rejects unauthenticated requests.
 	it("POST /api/games/steam/:steamId/import returns 401 without JWT", async () => {
 		const steamId = "76561198000000000";
 		await request(app.getHttpServer())
@@ -83,6 +91,7 @@ describe("Games Steam Preview/Import (e2e)", () => {
 		expect(steamImportMock.importLibrary).not.toHaveBeenCalled();
 	});
 
+	// Verifies that the authenticated user's own import endpoint rejects unauthenticated requests.
 	it("POST /api/games/steam/import/me returns 401 without JWT", async () => {
 		await request(app.getHttpServer())
 			.post("/api/games/steam/import/me")

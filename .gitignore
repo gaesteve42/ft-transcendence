@@ -20,9 +20,6 @@ ssl/*.key
 # Miscellanous
 .idea/
 
-# claude
-.claude
-
 #Workspace settings
 .prettierrc
 

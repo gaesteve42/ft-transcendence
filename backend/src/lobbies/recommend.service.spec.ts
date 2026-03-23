@@ -7,6 +7,11 @@ type MockResponse = {
 	json: jest.Mock<Promise<unknown>, []>;
 };
 
+/**
+ * Unit tests for RecommendService.
+ * Validates the HTTP proxy to the external recommendation engine:
+ * transport errors, payload shape validation, and happy-path forwarding.
+ */
 describe("RecommendService", () => {
 	let service: RecommendService;
 	let lobbyService: jest.Mocked<LobbiesService>;

@@ -15,6 +15,11 @@ const makePrismaGame = (overrides: Partial<PrismaGame> = {}): PrismaGame => ({
       ...overrides,
 });
 
+/**
+ * Unit tests for GameService.
+ * Covers canonical game CRUD, external ID mapping, upsert-from-external idempotency,
+ * race-condition recovery, user game library operations, and metadata enrichment.
+ */
 describe("GameService", () => {
     let service: GameService;
     let prisma: {
@@ -63,6 +68,7 @@ describe("GameService", () => {
       jest.clearAllMocks();
   });
 
+  // Tests for resolving a canonical game from an external source + ID pair.
   describe("findByExternalId", () => {
     // Verifies the "not found" path: external mapping does not exist yet.
     it("returns null when external mapping is missing", async () => {
@@ -98,6 +104,7 @@ describe("GameService", () => {
       });
   });
 
+  // Tests for creating a new canonical game entry with input normalization.
   describe("createCanonicalGame", () => {
     // Verifies data normalization before insert (slug, trims, empty optional fields -> null).
     it("normalizes slug, trims fields, and converts empty optional strings to null", async () => {
@@ -175,6 +182,7 @@ describe("GameService", () => {
     });
   });
 
+  // Tests for associating an external source ID with an existing canonical game.
   describe("linkExternalId", () => {
     // Verifies mapping creation sanitizes inputs and converts empty URL to null.
     it("creates external mapping with trimmed values and null URL when empty", async () => {
@@ -223,6 +231,7 @@ describe("GameService", () => {
     });
   });
 
+  // Tests for the composite upsert flow: find-or-create canonical game + link external ID.
   describe("upsertFromExternal", () => {
     const input = {
       source: ExternalGameSource.STEAM,
@@ -302,6 +311,7 @@ describe("GameService", () => {
       expect(enrichSpy).not.toHaveBeenCalled();
     });
 
+    // Verifies the path where the canonical game exists by slug but the external mapping is new.
     it("links and enriches an existing canonical game when external mapping is missing", async () => {
       const canonical = {
         id: "game-2",
@@ -372,6 +382,7 @@ describe("GameService", () => {
       expect(result).toEqual(enriched);
     });
 
+    // Verifies race-condition recovery when the mapping is still missing after conflict.
     it("handles unique conflict race by linking and enriching the canonical game when mapping still does not exist", async () => {
       const uniqueError = new Error("race conflict unresolved");
       const canonical = {
@@ -432,6 +443,7 @@ describe("GameService", () => {
     });
   });
 
+  // Tests for looking up a canonical game by its normalized slug.
   describe("findByCanonicalSlug", () => {
     it("returns null when the canonical game does not exist", async () => {
       prisma.game.findUnique.mockResolvedValue(null);
@@ -463,6 +475,7 @@ describe("GameService", () => {
     });
   });
 
+  // Tests for selectively filling missing metadata on an existing canonical game.
   describe("enrichCanonicalGameIfMissing", () => {
     it("throws when game id is blank", async () => {
       await expect(
@@ -553,6 +566,7 @@ describe("GameService", () => {
     });
   });
 
+  // Tests for listing a user's owned game library.
   describe("listOwnedGamesForUser", () => {
     it("throws when user id is blank", async () => {
       await expect(service.listOwnedGamesForUser("   ")).rejects.toThrow(
@@ -639,6 +653,7 @@ describe("GameService", () => {
     });
   });
 
+  // Tests for manually adding a game to a user's library via IGDB ID.
   describe("addOwnedGameForUser", () => {
     it("throws when user id is blank", async () => {
       await expect(service.addOwnedGameForUser("   ", "113112")).rejects.toThrow(
@@ -714,6 +729,7 @@ describe("GameService", () => {
     });
   });
 
+  // Tests for removing a game from a user's library.
   describe("removeOwnedGameForUser", () => {
     it("throws when user id is blank", async () => {
       await expect(service.removeOwnedGameForUser("   ", "game-1")).rejects.toThrow(
