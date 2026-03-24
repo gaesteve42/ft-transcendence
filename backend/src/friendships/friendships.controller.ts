@@ -16,6 +16,11 @@ export class FriendshipsController {
 		return this.service.listPendingReceived(userId);
 	}
 
+	@Get(":userId/status")
+	getStatus(@CurrentUser("id") currentUserId: string, @Param("userId") otherUserId: string) {
+		return this.service.getStatus(currentUserId, otherUserId);
+	}
+
 	@Post(":userId")
 	@HttpCode(201)
 	sendRequest(@CurrentUser("id") requesterId: string, @Param("userId") addresseeId: string) {

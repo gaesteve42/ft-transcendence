@@ -41,7 +41,7 @@ export class FriendshipsService {
 			throw new BadRequestException("A friendship or pending request already exists with this user");
 
 		try {
-			await this.prisma.friendship.create({ data: { requesterId, addresseeId, status: 'ACCEPTED' } });
+			await this.prisma.friendship.create({ data: { requesterId, addresseeId, status: 'PENDING' } });
 		} catch (error: unknown) {
 			if (this.isUniqueConstraintError(error))
 				throw new BadRequestException("Friend request already sent");
@@ -92,6 +92,21 @@ export class FriendshipsService {
 		return friendships.map((f) =>
 			this.toProfile(f.requester.id === userId ? f.addressee : f.requester),
 		);
+	}
+
+	async getStatus(currentUserId: string, otherUserId: string): Promise<{ status: 'none' | 'pending_sent' | 'pending_received' | 'accepted' }> {
+		const friendship = await this.prisma.friendship.findFirst({
+			where: {
+				OR: [
+					{ requesterId: currentUserId, addresseeId: otherUserId },
+					{ requesterId: otherUserId, addresseeId: currentUserId },
+				],
+			},
+		});
+		if (!friendship) return { status: 'none' };
+		if (friendship.status === FriendshipStatus.ACCEPTED) return { status: 'accepted' };
+		if (friendship.requesterId === currentUserId) return { status: 'pending_sent' };
+		return { status: 'pending_received' };
 	}
 
 	async listPendingReceived(userId: string): Promise<PendingRequest[]> {
