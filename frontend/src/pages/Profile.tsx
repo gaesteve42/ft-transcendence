@@ -52,6 +52,8 @@ function Profile() {
 	const fileInputRef = useRef<HTMLInputElement>(null)
 	const [friendStatus, setFriendStatus] = useState<'none' | 'pending_sent' | 'pending_received' | 'accepted'>('none')
 	const [friendLoading, setFriendLoading] = useState(false)
+	const [friendsCount, setFriendsCount] = useState(0)
+	const [gamesCount, setGamesCount] = useState(0)
 
 	const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
 		const file = e.target.files?.[0]
@@ -112,6 +114,19 @@ function Profile() {
 				})
 		}
 	}, [userId, isOwnProfile])
+	useEffect(() => {
+		if (!isOwnProfile) return
+		const token = localStorage.getItem('accessToken')
+		if (!token) return
+		fetch('/api/friendships', { headers: { Authorization: `Bearer ${token}` } })
+			.then((res) => res.ok ? res.json() : [])
+			.then((data) => setFriendsCount(Array.isArray(data) ? data.length : 0))
+			.catch(() => setFriendsCount(0))
+		fetch('/api/games/me/library', { headers: { Authorization: `Bearer ${token}` } })
+			.then((res) => res.ok ? res.json() : [])
+			.then((data) => setGamesCount(Array.isArray(data) ? data.length : 0))
+			.catch(() => setGamesCount(0))
+	}, [isOwnProfile])
 	useEffect(() => {
 		if (isOwnProfile || !userId) return
 		const token = localStorage.getItem('accessToken')
@@ -369,6 +384,12 @@ function Profile() {
 								{isOwnProfile && (
 									<p className="text-text-white text-sm mt-1">{user.email || 'Steam account'}</p>
 								)}
+								{isOwnProfile && (
+									<div className="flex gap-4 mt-2">
+										<span className="text-text-muted text-sm"><span className="text-text-white font-semibold">{gamesCount}</span> games</span>
+										<span className="text-text-muted text-sm"><span className="text-text-white font-semibold">{friendsCount}</span> friends</span>
+									</div>
+								)}
 							</div>
 							{isOwnProfile ? (
 								user.email ? (
@@ -386,17 +407,6 @@ function Profile() {
 							) : (
 								renderFriendButton()
 							)}
-						</div>
-						{/* Stats row */}
-						<div className="grid grid-cols-2 gap-4 mt-8 pt-6 border-t border-dark-600">
-							<div className="text-center">
-								<p className="text-2xl font-bold text-gradient-main">0</p>
-								<p className="text-text-muted text-xs mt-1">Games in your personal library</p>
-							</div>
-							<div className="text-center">
-								<p className="text-2xl font-bold text-gradient-main">0</p>
-								<p className="text-text-muted text-xs mt-1">Sessions you participated in</p>
-							</div>
 						</div>
 					</div>
 					{/* Steam connection card — own profile only */}
