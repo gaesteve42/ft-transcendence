@@ -16,7 +16,8 @@ export default defineConfig({
 		},
 		watch: {
 			// Requis pour le hot-reload dans Docker
-			usePolling: true, ignored: ['**/Dockerfile']
+			usePolling: true, 
+			ignored: ['**/Dockerfile', '**/.dockerignore']
 		}
 	},
 })
