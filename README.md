@@ -137,18 +137,18 @@ Work was split by domain (backend, frontend, machine learning,  devops). Integra
 | Standard user management | Major | 2 | kpourcel / gaesteve | Register, login, JWT, avatar, password change, profile pages |
 | ML Recommendation | Major | 2 | picarlie | TF-IDF content-based + ALS collaborative filtering; adaptive ALPHA for cold-start; group scoring |
 | Prometheus + Grafana | Major | 2 | lpellegr | 4 scrape targets, 5 dashboards, 3 alert rules → Discord webhook |
-| Health check + status page | Minor | 1 | lpellegr | Docker healthchecks on all services + static status page at `/status/` |
+| Health check, status page, data recovery procedure | Minor | 1 | lpellegr | Docker healthchecks on all services + static status page at `/status/` and data recovery procedures explained for every dev working on the procject. |
+| OAuth 2.0 | Minor | 1 | kpourcel | Steam OpenID as OAuth provider. We don't stock any credential and perform the authentication with a token. This is the best provider according to our project nature. |
 
-- ### Sub-total : 15 points.
+- ### Sub-total : 16 points.
 
 ## Modules of choice
 
 | Module | Type | Pts | Author(s) | Justification |
 |--------|------|-----|-----------|---------------|
 | Loki log management (Module ) | Minor | 1 | lpellegr | Replaces ELK Major module with a stack way more adapted to the project size. It provides clear way for all developpers to check their logs while working |
-| Steam Auth (custom minor) | Minor | 1 | kpourcel | Steam OpenID as OAuth provider. More consistent with the project nature, it's a real OAuth without password saved in our database. |
 
-- ### Sub-total : 2 points
+- ### Sub-total : 1 points
 
 ### Total: 17 points
 
