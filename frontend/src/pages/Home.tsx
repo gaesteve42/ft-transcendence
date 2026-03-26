@@ -1,13 +1,52 @@
+import { motion } from 'motion/react'
 import Button from '../components/ui/Button'
+
+type FeatureCardProps = {
+	step: string
+	title: string
+	description: string
+	color: string
+	index: number
+}
+
+function FeatureCard({ step, title, description, color, index }: FeatureCardProps) {
+	return (
+		<motion.div
+			className="bg-dark-800/50 border border-dark-600/50 rounded-xl p-6 transition-all hover:-translate-y-1"
+			initial={{ opacity: 0, y: 20 }}
+			whileInView={{ opacity: 1, y: 0 }}
+			viewport={{ once: true }}
+			transition={{ delay: index * 0.1 }}
+		>
+			<span
+				className="inline-block text-xs font-bold mb-3 px-2 py-1 rounded"
+				style={{
+					color: color,
+					backgroundColor: `${color}15`,
+				}}
+			>
+				STEP {step}
+			</span>
+			<h3 className="text-xl font-semibold mb-3 transition-colors" style={{ color }}>
+				{title}
+			</h3>
+			<p className="text-text-white text-sm leading-relaxed">{description}</p>
+		</motion.div>
+	)
+}
 
 function Home() {
 	return (
 		<div className="relative">
-			{/* App name Section */}
+			{/* Hero Section */}
 			<section className="relative">
 				<div className="relative z-10 flex flex-col items-center justify-center text-center px-6 pt-28 pb-20">
-					<h1 className="relative text-5xl md:text-7xl font-bold mb-6 leading-tight">
-						{/* Glow layer — copie floue derrière le texte */}
+					<motion.h1
+						className="relative text-5xl md:text-7xl font-bold mb-6 leading-tight"
+						initial={{ opacity: 0, y: -20 }}
+						animate={{ opacity: 1, y: 0 }}
+					>
+						{/* Glow layer */}
 						<span
 							className="absolute inset-0 text-5xl md:text-7xl font-bold"
 							aria-hidden="true"
@@ -22,68 +61,96 @@ function Home() {
 						>
 							GameFinder
 						</span>
-						{/* Texte principal */}
 						<span className="relative text-gradient-main">GameFinder</span>
-					</h1>
-					<p className="text-xl md:text-2xl text-text-secondary mb-6 max-w-2xl">
-						Trouvez le jeu parfait pour votre groupe d'amis
-					</p>
-					<p className="text-xl text-text-secondary max-w-2xl">
-						Créez une session, partagez vos envies, et laissez notre algorithme
-						vous recommander les meilleurs jeux pour votre groupe.
-					</p>
+					</motion.h1>
+					<motion.p
+						className="text-xl md:text-2xl text-text-white mb-6 max-w-2xl"
+						initial={{ opacity: 0, y: 10 }}
+						animate={{ opacity: 1, y: 0 }}
+						transition={{ delay: 0.1 }}
+					>
+						Find the perfect game for your group of friends
+					</motion.p>
+					<motion.p
+						className="text-xl text-text-white max-w-2xl"
+						initial={{ opacity: 0, y: 10 }}
+						animate={{ opacity: 1, y: 0 }}
+						transition={{ delay: 0.15 }}
+					>
+						Create a session, share your preferences, and let our algorithm recommend the best games for your group.
+					</motion.p>
 				</div>
 			</section>
-			{/* Qui sommes-nous Section */}
-			<section className="relative z-10 max-w-4xl mx-auto px-6 py-24">
-				<h2 className="text-3xl font-bold text-center mb-10">
-					Qui sommes-nous ?
-				</h2>
-				<div className="bg-dark-800/50 border border-dark-600/50 rounded-xl p-8 md:p-10">
-					<p className="text-text-secondary leading-relaxed mb-4">
-						On est quatre potes — Leo, Gauthier, Kevin et Pierre — et comme beaucoup de joueurs,
-						on a perdu des heures à débattre de ce qu'on allait jouer le soir même.
-					</p>
-					<p className="text-text-secondary leading-relaxed mb-4">
-						Entre les goûts différents, les jeux que tout le monde n'a pas, et
-						la difficulté à se mettre d'accord, on a eu l'idée de
-						GameFinder : un outil qui fait le taf à notre place.
-					</p>
-					<p className="text-text-secondary leading-relaxed">
-						Le concept ? Vous créez une session, chacun indique son mood et ses envies
-						du moment, et notre algorithme vous sort les jeux qui vont
-						vous plaire selon vos critères. Simple, rapide, efficace.
-					</p>
-				</div>
-			</section>
-			{/* Features Section */}
-			<section className="relative z-10 max-w-5xl mx-auto px-6 py-24">
-				<h2 className="text-3xl font-bold text-center mb-4">
-					Comment ça marche ?
-				</h2>
-				<p className="text-text-muted text-center mb-14 max-w-lg mx-auto">
-					En trois étapes simples, trouve le jeu idéal pour ta prochaine session.
-				</p>
+			{/* How does it work */}
+			<section className="relative z-10 max-w-5xl mx-auto px-6 py-16">
+				<motion.h2
+					className="text-3xl font-bold text-center mb-4"
+					initial={{ opacity: 0, y: 20 }}
+					whileInView={{ opacity: 1, y: 0 }}
+					viewport={{ once: true }}
+				>
+					How does it work?
+				</motion.h2>
+				<motion.p
+					className="text-text-muted text-center mb-14 max-w-lg mx-auto"
+					initial={{ opacity: 0 }}
+					whileInView={{ opacity: 1 }}
+					viewport={{ once: true }}
+					transition={{ delay: 0.05 }}
+				>
+					In three simple steps, find the ideal game for your next session.
+				</motion.p>
 				<div className="grid md:grid-cols-3 gap-6">
 					<FeatureCard
 						step="01"
-						title="Construis ta bibliothèque"
-						description="Parcours notre catalogue et coche les jeux que tu possèdes ou que tu as déjà testés. Plus ton profil est complet, meilleures sont les recommandations."
+						title="Build your library"
+						description="Browse our catalog and check the games you own, or connect your Steam account. The more complete your profile, the better the recommendations."
 						color="#00bfff"
+						index={0}
 					/>
 					<FeatureCard
 						step="02"
-						title="Créer une session"
-						description="Lance une session, invite tes amis, et chacun indique son mood du moment : chill, compétitif, coopératif... Notre algorithme fait le reste."
+						title="Create a session"
+						description="Start a session, invite your friends, and everyone shares their preferences. Our algorithm will find the best games for your group."
 						color="#9239e4"
+						index={1}
 					/>
 					<FeatureCard
 						step="03"
-						title="L'algorithme vous aide"
-						description="Recevez 3 à 5 jeux recommandés qui correspondent aux goûts et aux envies de tout le groupe. Plus qu'à voter et lancer la partie !"
+						title="Get recommendations"
+						description="Receive 3 to 5 recommended games that match the tastes and preferences of your entire group. All that's left is to pick one and play!"
 						color="#22c55e"
+						index={2}
 					/>
 				</div>
+			</section>
+			{/* About Section */}
+			<section className="relative z-10 max-w-4xl mx-auto px-6 py-16">
+				<motion.h2
+					className="text-3xl font-bold text-center mb-10"
+					initial={{ opacity: 0, y: 20 }}
+					whileInView={{ opacity: 1, y: 0 }}
+					viewport={{ once: true }}
+				>
+					Who are we?
+				</motion.h2>
+				<motion.div
+					className="bg-dark-800/50 border border-dark-600/50 rounded-xl p-8 md:p-10"
+					initial={{ opacity: 0, y: 20 }}
+					whileInView={{ opacity: 1, y: 0 }}
+					viewport={{ once: true }}
+					transition={{ delay: 0.05 }}
+				>
+					<p className="text-text-white leading-relaxed mb-4">
+						We&apos;re four friends — Leo, Gauthier, Kevin and Pierre — and like many gamers, we&apos;ve wasted hours debating what to play on any given evening.
+					</p>
+					<p className="text-text-white leading-relaxed mb-4">
+						Between different tastes, games that not everyone owns, and everyone&apos;s needs, we came up with GameFinder: a tool that puts an end to the debate.
+					</p>
+					<p className="text-text-white leading-relaxed mb-4">
+						The concept? You create a session, everyone shares their preferences, and our algorithm suggests games that the whole group will enjoy. Simple, fast, effective.
+					</p>
+				</motion.div>
 			</section>
 			{/* CTA Section */}
 			<section className="relative overflow-hidden py-24 px-6">
@@ -93,43 +160,18 @@ function Home() {
 						background: 'radial-gradient(ellipse at center, rgba(146,57,228,0.08) 0%, transparent 60%)',
 					}}
 				/>
-				<div className="relative z-10 max-w-2xl mx-auto text-center">
-					<h2 className="text-3xl md:text-4xl font-bold mb-10">
-						Prêt à trouver ton prochain jeu ?
-					</h2>
-					<Button to="/register" variant="blue">Rejoins-nous</Button>
-				</div>
+				<motion.div
+					className="relative z-10 max-w-2xl mx-auto text-center"
+					initial={{ opacity: 0, y: 20 }}
+					whileInView={{ opacity: 1, y: 0 }}
+					viewport={{ once: true }}
+				>
+					<h2 className="text-3xl md:text-4xl font-bold mb-10">Ready to find your next game?</h2>
+					<Button to="/register" variant="blue">
+						Join us
+					</Button>
+				</motion.div>
 			</section>
-		</div>
-	)
-}
-
-type FeatureCardProps = {
-	step: string
-	title: string
-	description: string
-	color: string
-}
-
-function FeatureCard({ step, title, description, color }: FeatureCardProps) {
-	return (
-		<div className="bg-dark-800/50 border border-dark-600/50 rounded-xl p-6 transition-all hover:-translate-y-1">
-			<span
-				className="inline-block text-xs font-bold mb-3 px-2 py-1 rounded"
-				style={{
-					color: color,
-					backgroundColor: `${color}15`,
-				}}
-			>
-				ÉTAPE {step}
-			</span>
-			<h3
-				className="text-xl font-semibold mb-3 transition-colors"
-				style={{ color }}
-			>
-				{title}
-			</h3>
-			<p className="text-text-secondary text-sm leading-relaxed">{description}</p>
 		</div>
 	)
 }

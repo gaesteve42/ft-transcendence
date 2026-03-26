@@ -1,10 +1,19 @@
-.PHONY: all up logs down clean fclean prune re re-nocache
+.PHONY: all up pydev restart logs down clean reset-db fclean prune re re-nocache backup
 
 all: up
 
 up:
 	@echo "Starting services..."
-	@docker compose up -d --build
+	@docker compose -f docker-compose.yml up -d --build
+
+pydev:
+	@echo "Starting services with ML override (Pierre's setup: ports 8080/8443/8001)..."
+	@docker compose -f docker-compose.yml -f docker-compose.override.yml up -d --build
+
+restart:
+	@echo "Restarting services without deleting volumes (DB persists)..."
+	@docker compose down
+	@docker compose -f docker-compose.yml up -d --build
 
 logs:
 	@docker compose logs -f
@@ -14,6 +23,12 @@ down:
 	@docker compose down
 
 clean: down
+
+reset-db:
+	@echo "Stopping services and deleting database volume..."
+	@docker compose down -v
+	@echo "Rebuilding and restarting services..."
+	@docker compose up -d --build
 
 fclean:
 	@echo "Stopping services..."
@@ -32,3 +47,6 @@ re: fclean all
 
 re-nocache: prune
 	@docker compose up -d --build --no-cache
+
+backup:
+	@bash scripts/backup.sh

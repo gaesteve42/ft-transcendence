@@ -1,0 +1,175 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "darwin-arm64", "linux-arm64-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum AuthProvider {
+  LOCAL
+  STEAM
+}
+
+enum FriendshipStatus {
+  PENDING
+  ACCEPTED
+}
+
+enum ExternalGameSource {
+  STEAM
+  IGDB
+}
+
+model User {
+  id               String       @id @default(uuid())
+  steamId          String?      @unique
+  avatarUrl        String?
+  email            String?      @unique
+  username         String       @unique
+  passwordHash     String?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  steamLinkedAt    DateTime?
+  lastSteamUpdated DateTime?
+  lastSeenAt       DateTime?
+  authProvider     AuthProvider @default(LOCAL)
+
+  ownedLobbies   Lobby[]              @relation("LobbyOwner")
+  memberships    LobbyMember[]
+  tagPreferences LobbyTagPreference[]
+  userGames      UserGame[]
+
+  sentFriendRequests     Friendship[] @relation("FriendshipRequester")
+  receivedFriendRequests Friendship[] @relation("FriendshipAddressee")
+}
+
+model Lobby {
+  id         String   @id @default(uuid())
+  name       String
+  maxPlayers Int
+  ownerId    String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  owner          User                 @relation("LobbyOwner", fields: [ownerId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  members        LobbyMember[]
+  tagPreferences LobbyTagPreference[]
+}
+
+model LobbyMember {
+  lobbyId  String
+  userId   String
+  joinedAt DateTime @default(now())
+
+  lobby Lobby @relation(fields: [lobbyId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@id([lobbyId, userId])
+  @@unique([userId])
+}
+
+model LobbyTagPreference {
+  lobbyId   String
+  userId    String
+  tagId     String
+  createdAt DateTime @default(now())
+
+  lobby Lobby @relation(fields: [lobbyId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  tag   Tag   @relation(fields: [tagId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@id([lobbyId, userId, tagId])
+  @@index([lobbyId, userId])
+  @@index([tagId])
+}
+
+model Tag {
+  id             String               @id @default(uuid())
+  slug           String               @unique
+  label          String
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+  preferences    LobbyTagPreference[]
+  gameSourceTags GameSourceTag[]
+}
+
+model Game {
+  id               String    @id @default(uuid())
+  canonicalSlug    String    @unique
+  name             String
+  summary          String?
+  coverUrl         String?
+  firstReleaseDate DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  externalIds GameExternalId[]
+  sourceTags  GameSourceTag[]
+  userGames   UserGame[]
+}
+
+model GameExternalId {
+  id          String             @id @default(uuid())
+  gameId      String
+  source      ExternalGameSource
+  externalId  String
+  externalUrl String?
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  game Game @relation(fields: [gameId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@unique([source, externalId])
+  @@index([gameId])
+}
+
+model GameSourceTag {
+  gameId          String
+  source          ExternalGameSource
+  externalTagId   String
+  label           String
+  weight          Float?
+  normalizedTagId String?
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  game          Game @relation(fields: [gameId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  normalizedTag Tag? @relation(fields: [normalizedTagId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+
+  @@id([gameId, source, externalTagId])
+  @@index([source, externalTagId])
+  @@index([normalizedTagId])
+}
+
+model Friendship {
+  requesterId String
+  addresseeId String
+  status      FriendshipStatus @default(PENDING)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  requester User @relation("FriendshipRequester", fields: [requesterId], references: [id], onDelete: Cascade)
+  addressee User @relation("FriendshipAddressee", fields: [addresseeId], references: [id], onDelete: Cascade)
+
+  @@id([requesterId, addresseeId])
+  @@index([addresseeId])
+}
+
+model UserGame {
+  userId          String
+  gameId          String
+  owned           Boolean   @default(true)
+  playtimeMinutes Int?
+  lastSyncedAt    DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  game Game @relation(fields: [gameId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@id([userId, gameId])
+  @@index([gameId])
+}

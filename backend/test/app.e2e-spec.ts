@@ -4,6 +4,9 @@ import request from 'supertest';
 import { App } from 'supertest/types';
 import { AppModule } from './../src/app.module';
 
+process.env.JWT_SECRET = "test-secret";
+process.env.JWT_EXPIRES_IN = "900";
+
 describe('AppController (e2e)', () => {
   let app: INestApplication<App>;
 

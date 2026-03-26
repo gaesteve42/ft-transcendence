@@ -4,10 +4,13 @@ WORKDIR /usr/src/app
 
 COPY package*.json ./
 
-RUN npm install
+RUN npm ci
+
+COPY prisma ./prisma
+RUN npx --no-install prisma generate
 
 COPY . .
 
 EXPOSE 3001
 
-CMD ["npm", "run", "start:dev"]
+CMD ["sh", "-c", "npx prisma migrate deploy && npm run start:dev"]

@@ -3,11 +3,6 @@ node_modules/
 npm-debug.log*
 yarn-error.log*
 
-# Python
-venv/
-.venv/
-__pycache__/
-
 # Build
 dist/
 build/
@@ -18,7 +13,16 @@ build/
 
 # DevOps
 .env
+backups/
 
 # Miscellanous
 .idea/
 
+#Workspace settings
+.prettierrc
+
+#Python cache
+__pycache__/
+
+#frontend
+frontend.md
