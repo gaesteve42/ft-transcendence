@@ -1,0 +1,3 @@
+# k6 raw output (huge JSON) and run artifacts — keep the suite, not the runs
+results/
+*.log
